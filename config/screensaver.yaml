@@ -1,0 +1,70 @@
+#
+# screensaver cards
+#
+cards:
+  - name: flur.screensaver #name of the nspanel where this screensacer should be shown + ".screensaver" suffix
+    group: home
+    type: screensaver
+    backgroundColor: #0f0f0f
+    barColor: blue
+    slots:
+      - class: ohItem               #current weather
+        type: openweathermap
+        item: W_IconID_0
+        textItem: W_Temperatur_0
+        timeItem: W_Messung_0
+      - class: ohItem               #first weather forecast
+        type: openweathermap
+        item: W_IconID_6
+        textItem: W_Temperatur_6
+        timeItem: W_Messung_6
+      - class: ohItem               #second weather forecast
+        type: openweathermap
+        item: W_IconID_9
+        textItem: W_Temperatur_9
+        timeItem: W_Messung_9
+      - class: ohItem               #third weather forecast
+        type: openweathermap
+        item: W_IconID_15
+        textItem: W_Temperatur_15
+        timeItem: W_Messung_15
+      - class: ohItem               #forth weather forecast
+        type: openweathermap
+        item: W_IconID_24
+        textItem: W_Temperatur_24
+        timeItem: W_Messung_24
+  - name: .screensaver #Default screensaver name
+    type: screensaver
+    backgroundColor: #0f0f0f
+    barColor: yellow
+    slots:
+      - class: ohItem               #current weather
+        type: openweathermap
+        item: W_IconID_0
+        textItem: W_Rain_0
+        timeItem: W_Messung_0
+      - class: ohItem               #first weather forecast
+        type: openweathermap
+        item: W_IconID_6
+        textItem: W_Rain_6
+        timeItem: W_Messung_6
+      - class: ohItem               #second weather forecast
+        type: openweathermap
+        item: W_IconID_9
+        textItem: W_Rain_9
+        timeItem: W_Messung_9
+      - class: ohItem               #third weather forecast
+        type: openweathermap
+        item: W_IconID_15
+        textItem: W_Rain_15
+        timeItem: W_Messung_15
+      - class: ohItem               #Unused forecast slot
+        type: openweathermap
+        item: W_IconID_24
+        textItem: W_Rain_24
+        timeItem: W_Messung_24
+      - class: ohItem               #Alternative forecast slot
+        type: openweathermap
+        item: W_IconID_24
+        textItem: W_Rain_24
+        timeItem: W_Messung_24

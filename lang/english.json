@@ -1,0 +1,20 @@
+{
+    "time": "%-I:%M ?%p",
+    "weatherTime": "%-I:%M%p",
+    "temperature": "°C",
+    "weekdays": [ "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Synday" ],
+    "months": [ "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct",  "Nov", "Dez" ], 
+    "light": {
+        "color": "Color",
+        "colTemp": "Color temperature",
+        "brightness": "Brightness"
+    },
+    "shutter": {
+        "position": "Position",
+        "tilt": "Tilt"
+    },
+    "openhabStates": {
+        "ON": "On",
+        "OFF": "Off"
+    }
+}

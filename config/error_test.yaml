@@ -1,0 +1,138 @@
+#
+# Card definitions with error and warnings to test error handling
+#
+cards:
+  - title: Test1 #no name defined
+  - name: 1 #name is number
+  - group:  test_errors #type not defined
+  - group: 1 #class is number
+    type: cardGrid
+  - group:  test_errors #No name defined in card class
+  - group:  test_errors #card name is number
+    name: 1
+    type: cardGrid
+  - group:  test_errors #card type is number
+    name: Test3b
+    type: 1
+  - group:  test_errors #No slots defined
+    name: Test4
+    type: cardGrid
+  - group:  test_errors #Unknown slot in slots
+    name: Test5
+    type: cardGrid
+    slots:
+  - group:  test_errors #Unknown slot in slots
+    name: Test5a
+    type: cardGrid
+    slots: True
+  - group:  test_errors #Unknown slot in slots
+    name: Test5b
+    type: cardGrid
+    slots: 0
+  - group:  test_errors #Unknown slot in slots
+    name: Test5c
+    type: cardGrid
+    slots: testString
+  - group:  test_errors #Unknown slot class
+    name: Test6
+    type: cardGrid
+    slots:
+      - class: blabla
+  - group:  test_errors #ohItem slot without type
+    name: Test7
+    type: cardGrid
+    slots:
+      - class: ohItem
+  - group:  test_errors #ohItem slot without name
+    name: Test8
+    type: cardGrid
+    slots:
+      - class: ohItem
+      - type: light
+  - group:  test_errors #navigation slot without navTo
+    name: Test9
+    type: cardGrid
+    slots:
+      - class: navigation
+  - group:  test_errors #navigation slot without text attrinute
+    name: Test10
+    type: cardGrid
+    slots:
+      - class: navigation
+        navTo: nav.test10
+  - group:  test_errors #ohItem slot without item attribute
+    name: Test11a
+    type: cardGrid
+    slots:
+      - class: ohItem
+        type: button
+  - group:  test_errors #ohItem slot without text attrinute
+    name: Test11b
+    type: cardGrid
+    slots:
+      - class: ohItem
+        item: myOHItem
+  - group:  test_errors #wrong icon type
+    name: Test12
+    type: cardGrid
+    slots:
+      - class: ohItem
+        item: myOHItem
+        icon: \XXXXX
+  - group:  test_errors #wrong icon hex code 1
+    name: Test13
+    type: cardGrid
+    slots:
+      - class: ohItem
+        item: myOHItem
+        icon: \hXXXX
+  - group:  test_errors #wrong icon hex code 2
+    name: Test14
+    type: cardGrid
+    slots:
+      - class: ohItem
+        item: myOHItem
+        icon: \uXXXX
+  - group:  test_errors #wrong icon hex code 3
+    name: Test15
+    type: cardGrid
+    slots:
+      - class: ohItem
+        item: myOHItem
+        icon: 1
+  - group:  test_errors #warning no type defined in ohItem
+    name: Test16
+    type: cardGrid
+    slots:
+      - class: ohItem
+        item: myOHItem
+  - group:  test_errors #warning no min defined in ohItem number
+    name: Test17
+    type: cardGrid
+    slots:
+      - class: ohItem
+        type: number
+        item: myOHItem
+        max: 8
+  - group:  test_errors #warning no max defined in ohItem number
+    name: Test18
+    type: cardGrid
+    slots:
+      - class: ohItem
+        type: number
+        item: myOHItem
+        max: 1001
+  - group:  test_errors #warning no dimmerItem defined in ohItem light
+    name: Test19
+    type: cardGrid
+    slots:
+      - class: ohItem
+        type: light
+        item: myOHItem
+  - group:  test_errors #no "-" in slots
+    name: Test20
+    type: cardGrid
+    slots:
+      class: ohItem
+      type: light
+      item: myOHItem

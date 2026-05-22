@@ -1,0 +1,701 @@
+# python
+#
+# This file is part of the NspanelMqttBridge distribution
+# (https://github.com/olialb/NspanelMqttBridge).
+# Copyright (c) 2026 Oliver Albold.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, version 3.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
+#
+"""
+Module implements a MQTT client as bridge to openhab for NsPanels with lovelance ui
+This file implements the nspanel main classes to interact with different panels
+"""
+
+#general imports
+from datetime import datetime
+import json
+import os
+import sys
+import yaml
+
+# project specific imports:
+from nspanel.nspanel_globals import name_to_16bit_color
+from nspanel.nspanel_cards import NSPanelCard, NSPanelCardScreenSaver
+from nspanel.nspanel_card_slots import NsPanelCardSlotOhItem, NSPanelCardSlot
+from skin import skin
+from file_logger import file_logger as FLOGGER
+from lang import translate
+
+#
+# global constants
+#
+SEND_COMMAND_TOPIC = "/cmnd/CustomSend"
+RESULT_CUSTOM_RECV="CustomRecv"
+RESULT_CUSTOM_SEND="CustomSend"
+PAGES_FILE_EXT = '.yaml'
+SCREENSAVER_NAME = ".screensaver"
+
+def nspanel_create_oh_connector(host, port, timeout, api_key):
+    """
+    create on openhab connector
+    """
+    NSPanelCard.all_connected_panels = {}
+    NsPanelCardSlotOhItem.create_openhab_connector(host, port, timeout, api_key)
+
+def nspanel_set_language( path ):
+    """
+    set the translator for the panels
+    """
+    translate.set_language_file( path )
+    NSPanelCard.set_translator_db( translate.get_translator_db() )
+    NSPanelCardSlot.set_translator_db ( translate.get_translator_db() )
+
+def nspanel_set_skin( path ):
+    """
+    set the skin for the panels
+    """
+    skin.set_skin_file( path )
+    NSPanelCard.set_skin_db( skin.get_skin_db() )
+    NSPanelCardSlot.set_skin_db ( skin.get_skin_db() )
+#
+# Class wich represent one NSPanel instance
+#
+class NSPanel(): #pylint: disable=too-many-instance-attributes, too-many-public-methods
+    """
+    NS Panel instance
+    """
+    CMD_TIME="time~"
+    CMD_DATE="date~"
+    CMD_DIMMODE="dimmode~"
+    CMD_TIMEOUT="timeout~"
+    CMD_PAGETYPE="pageType~"
+
+    LOG = FLOGGER.create_log_handler("NSPanel")
+
+    def __init__(self, client, name, topic ):
+        #nspanel root topic
+        self.topic = topic
+        #nspanel name
+        self.name = name
+        #mqtt client instance
+        self.mqtt = client
+        #topics unpublished flag
+        self.unpublished = True
+        #last time and date strings send to panel
+        self.last_time = None
+        self.last_date = None
+        #current visible card
+        self.current_card = None
+        self.current_group = NSPanelCard.CARDS_HOME
+        #command handling
+        self._cmd_queue = []
+        self._cmd_timeout_counter = 0
+        self._time_tick = client.publish_delay
+        self._time_cmd_timeout_value = client.cmd_timeout_value
+        #cyclic processing scennsaver update
+        self.saver_tick_counter = client.saver_update
+        #status updates:
+        self.alert_icon_left=skin.key("default", "alertIconLeft")
+        self.alert_icon_left_color=str(name_to_16bit_color(skin.key("default", "alertIconLeftColor")))
+        self.alarm_left=False
+        self.alert_icon_right=skin.key("default", "alertIconRight")
+        self.alert_icon_right_color=str(name_to_16bit_color(skin.key("default", "alertIconRightColor")))
+        self.alarm_right=False
+
+        #logger for this class
+        self.log = FLOGGER.create_log_handler(f"NSPanel:{name.upper()}" )
+
+        self.log.debug("NSPanel with name '%s' created.", name)
+
+    def publish_card( self ):
+        """
+        publish current "group/card" in mqtt broker
+        """
+        card_path = self.current_group.lower() + '/' + self.current_card.name.lower()
+        self.mqtt.set_card(self.name, card_path)
+
+    def publish_version( self, hmi_version, panel_version ):
+        """
+        publish hmi and panel in mqtt broker
+        """
+        json_data = {}
+        json_data["hmi"] = hmi_version
+        json_data["panel"] = panel_version
+
+        self.mqtt.set_version(self.name, json.dumps( json_data))
+
+    def send_mqtt_msg(self, topic, msg):
+        """
+        sends an mqtt message
+        """
+        result = self.mqtt.client.publish(topic, msg)
+        # result: [0, 1]
+        status = result[0]
+        if status == 0:
+            self.log.debug("Send '%s' to topic %s", msg, topic )
+            return True
+        self.log.error("Failed to send message to topic %s", topic)
+        return False
+
+    def set_brightness_mqtt(self, my_config, msg):
+        """
+        mqtt command to set the brightness
+        """
+        # Synax OK we can call the command to set the brightness
+        msg = msg.strip()
+
+        try:
+            value = int(msg)
+            value = min(100, max( 0, value ))
+        except ValueError as error:
+            self.log.warning("Error in brightness payload %s: %s", msg, error)
+            return
+
+        #publish the new value
+        if self.send_mqtt_msg(my_config["topic"], value):
+            my_config["value"] = value
+
+        #set new values in panel
+        self.send_dimmode()
+        self.log.info("Set screen brightness to '%s' for panel '%s'.", str(value), self.name)
+
+    def set_brightness_saver_mqtt(self, my_config, msg):
+        """
+        mqtt command to set the screensaver brightness
+        """
+        # Synax OK we can call the command to set the brightness
+        msg = msg.strip()
+
+        try:
+            value = int(msg)
+            value = min(100, max( 0, value ))
+        except ValueError as error:
+            self.log.warning("Error in brightness payload for screensaver %s: %s", msg, error)
+            return
+
+        #publish the new value
+        if self.send_mqtt_msg(my_config["topic"], value):
+            my_config["value"] = value
+
+        #set new values in panel
+        self.send_dimmode()
+        self.log.info("Set screensaver brightness to '%s' for panel '%s'.", str(value), self.name)
+
+    def set_timeout_mqtt(self, my_config, msg):
+        """
+        mqtt command to set the screensaver timeout
+        """
+        # Synax OK we can call the command to set the brightness
+        msg = msg.strip()
+
+        try:
+            value = int(msg)
+        except ValueError as error:
+            self.log.warning("Error in timeout payload %s: %s", msg, error)
+            return
+
+        #publish the new value
+        if self.send_mqtt_msg(my_config["topic"], str(value)):
+            my_config["value"] = str(value)
+
+        #set new value in panel
+        self.send_timeout()
+        self.log.info("Set screensaver timeout to '%s' for panel '%s'.", str(value), self.name)
+
+    def set_card_mqtt(self, my_config, msg):
+        """
+        mqtt command to set the card in the ns panel
+        """
+        # Synax OK we can call the command to set the brightness
+        msg = msg.strip().lower()
+
+        #set new value in panel
+        card = self.card_by_path(msg)
+        if card is None:
+            self.log.warning("Error in card path payload %s: Can not find card at this path.", msg)
+        else:
+            self.navigate(card)
+            #publish the new value
+            path = card.group.lower() + '/' + card.name.lower()
+            if self.send_mqtt_msg(my_config["topic"], path):
+                my_config["value"] = path
+            self.log.info("Navigate to '%s' for panel '%s'.", path, self.name)
+
+
+    def set_alarm_left_mqtt(self, my_config, msg):
+        """
+        mqtt command to set the alarm indicator left on/off
+        """
+        # Synax OK we can call the command to set the brightness
+        msg = msg.strip().upper()
+
+        if msg not in ["ON", "OFF"]:
+            self.log.warning("Unknown command payload in mqtt message for alarm left state: '%s'", msg)
+            return
+
+        #publish the new value
+        if self.send_mqtt_msg(my_config["topic"], msg):
+            my_config["value"] = msg
+
+        #set new value in panel
+        if msg == 'ON':
+            self.alarm_left = True
+        else:
+            self.alarm_left = False
+
+        self.update_status()
+        self.log.info("Switch alarm left '%s' for panel '%s'.", msg, self.name)
+
+    def set_alarm_right_mqtt(self, my_config, msg):
+        """
+        mqtt command to set the alarm indicator right on/off
+        """
+        # Synax OK we can call the command to set the brightness
+        msg = msg.strip().upper()
+
+        if msg not in ["ON", "OFF"]:
+            self.log.warning("Unknown command payload in mqtt message for alarm right state: '%s'", msg)
+            return
+
+        #publish the new value
+        if self.send_mqtt_msg(my_config["topic"], msg):
+            my_config["value"] = msg
+
+        #set new value in panel
+        if msg == 'ON':
+            self.alarm_right = True
+        else:
+            self.alarm_right = False
+
+        self.update_status()
+        self.log.info("Switch alarm right '%s' for panel '%s'.", msg, self.name)
+
+    def set_notification_mqtt(self, my_config, msg):
+        """
+        mqtt command to set a notification in panel or in the notification queue
+        """
+        # Synax OK we can call the command to set the brightness
+        notify_text = msg.strip().split("|")
+
+        if len(notify_text) < 2:
+            self.log.warning("Wrong command payload in mqtt message for notifications: '%s'", msg)
+            return
+        heading = notify_text[0]
+        notify_text = notify_text[1]
+
+        payload = "notify~"+heading+"~"+notify_text
+        self.send_panel_cmd(payload)
+        self.log.info("Send notification with heading '%s' and text '%s' to panel '%s'.", heading, notify_text, self.name)
+
+        #publish the new value
+        msg = heading+"|"+notify_text
+        if self.send_mqtt_msg(my_config["topic"], msg):
+            my_config["value"] = msg
+
+    def panel_callback(self, my_config, msg): #pylint: disable=too-many-return-statements, too-many-branches, too-many-statements
+        """
+        mqtt messages received from the panel
+        """
+        # Synax OK we can call the command to set the brightness
+        msg = msg.strip()
+        try:
+            js_payload = json.loads(msg)
+        except ValueError:
+            self.log.warning("Error parsing json payload: %s", msg)
+            return
+        #event examples:
+        #"event,buttonPress2,Switch_Flurdecke,OnOff,1"
+        #"event,buttonPress2,navigate.next,button"
+        #"event,buttonPress2,Switch_Esszimmerspots,button"
+        #"event,buttonPress2,Switch_Esszimmerspots,brightnessSlider,34"
+        #"event,buttonPress2,navigate.prev,button"
+        #"event,buttonPress2,screensaver,bExit,2"
+        #"event,buttonPress2,screensaver,swipeRight"
+        #"event,buttonPress2,slot_0,button"
+        #"event,pageOpenDetail,popupShutter,slot_1
+        #"event,buttonPress2,popupShutter,bExit"
+        #event,buttonPress2,slot_1,down
+        #event,buttonPress2,slot_1,tiltOpen
+        #event,buttonPress2,slot_2,mode-Test,1
+        if RESULT_CUSTOM_RECV in js_payload: #pylint: disable=too-many-nested-blocks
+            #seams to be a relavalnt message
+            self.log.debug("Message received from Panel: %s topic: %s", js_payload[RESULT_CUSTOM_RECV], my_config["topic"])
+            params = js_payload[RESULT_CUSTOM_RECV].split(',')
+
+            #process events
+            if params[0] == "event":
+                if params[1] == "startup":
+                    #panel made reset. Reinit the panel
+                    self.log.debug("'startup' event received from panel. Panel made reset. Reinit it now.")
+                    self.publish_version( params[2], params[3])
+                    self.init_panel()
+                    return
+                if params[1] == "renderCurrentPage":
+                    self.log.debug("'renderCurrentPage' event received from panel. Nothing to do.")
+                    return
+                #all button Press 2 events
+                if params[1] == "buttonPress2":
+                    #check for swipe events
+                    if len(params) >=4 and params[2] == "screensaver" and params[3] == "swipeRight":
+                        self.log.info("Screensaver swipe right event received.")
+                        return
+                    if len(params) >=4 and params[2] == "screensaver" and params[3] == "swipeLeft":
+                        self.log.info("Screensaver swipe left event received.")
+                        return
+                    if len(params) >=4 and params[2] == "screensaver" and params[3] == "swipeUp":
+                        self.log.info("Screensaver swipe up event received.")
+                        return
+                    if len(params) >=4 and params[2] == "screensaver" and params[3] == "swipeDown":
+                        self.log.info("Screensaver swipe down event received.")
+                        return
+                    #check for screensaver leave event
+                    if len(params) >=5 and params[2] == "screensaver" and params[3] == "bExit":
+                        if params[4] >= "2":
+                            #user want to leave the screensaver screen. Navigate to default page
+                            self.log.debug("Leave Screensaver card.")
+                            #navigate to home card for this panel in current group
+                            card = NSPanelCard.get_card(self.current_group, self.name)
+                            if card is None:
+                                card = NSPanelCard.get_first_card(self.current_group)
+                            self.navigate(card)
+                            return
+                        #do nothing
+                        self.log.debug("Screensaver card event: %s.", params[4])
+                        return
+                    #check for popup card leave event
+                    if len(params) >= 4 and params[2] in ['popupLight','popupShutter','popupInSel','popupThermo'] and params[3] == 'bExit':
+                        self.log.debug("Leave popup card '%s.", params[2])
+                        self.navigate( self.current_card )
+                        return
+                    #check for all other card events
+                    if len(params) >= 4:
+                        #send the now state over rest api
+                        new_card = self.current_card.event_button_press( params[2], params[3:], self )
+                        if new_card is not None:
+                            if new_card == self.current_card:
+                                #just update content
+                                self.update()
+                                return
+                            #vavigate to new card
+                            self.navigate(new_card)
+                            return
+
+                #all pop up detail events
+                if params[1] == 'pageOpenDetail':
+                    #popup for lights opened
+                    if len(params) >= 4 and self.current_card is not None:
+                        self.current_card.popup_card(params[2], params[3])
+                        self.update()
+                        self.publish_card()
+                        return
+
+                if params[1] == "sleepReached":
+                    #switch back to screensaver
+                    self.log.debug("Sleep of display reached. Activate Screensaver.")
+                    self.navigate(self.get_screensaver_card())
+                    return
+
+        if RESULT_CUSTOM_SEND in js_payload:
+            if  js_payload[RESULT_CUSTOM_SEND] == "Done":
+                self.log.debug("'Done' received from panel. Last command is processed.")
+                #command processed. pop next one from queue
+                self.pop_cmd()
+
+    def publish_mqtt(self, topic, my_config):
+        """
+        publish the brightness topic
+        """
+        msg = my_config["value"]
+        # send message to broker
+        if self.mqtt.unpublished is True and msg is not None:
+            #publish the value
+            if self.send_mqtt_msg(topic, msg):
+                my_config["value"] = msg
+
+    def send_panel_cmd(self, cmd):
+        """
+        send a command to the nspanel or put it in the queue if timeout is running
+        """
+        if cmd is None or cmd == "":
+            return False
+
+        if self._cmd_timeout_counter > 0:
+            #there is currently a command running. Put cmd in the qeueu
+            self._cmd_queue.append(cmd)
+            return True
+        if self.send_mqtt_msg( self.topic+SEND_COMMAND_TOPIC, cmd ):
+            self._cmd_timeout_counter = self._time_cmd_timeout_value
+            return True
+        #something went wrong
+        return False
+
+    def pop_cmd(self):
+        """
+        pops the next command from the command queue
+        """
+        self._cmd_timeout_counter = 0
+        if len(self._cmd_queue) > 0:
+            #other commands are pending. Send next one from queue
+            self.log.debug("Pop next command from queue: %s", self._cmd_queue[0])
+            return self.send_panel_cmd( self._cmd_queue.pop(0))
+        return False
+
+
+    def time_tick(self):
+        """
+        time tick to supervise command timeouts and other cyclic things
+        """
+        #check date and time changes
+        self.check_time()
+        self.check_date()
+
+        #command qeueue processing
+        if self._cmd_timeout_counter > self._time_tick:
+            self._cmd_timeout_counter = self._cmd_timeout_counter - self._time_tick
+        else:
+            if self._cmd_timeout_counter != 0:
+                self.log.warning("Panel command timeout!")
+                self.pop_cmd()
+            else:
+                self._cmd_timeout_counter = 0
+
+        #waether content update handling
+        self.saver_tick_counter = self.saver_tick_counter - self.mqtt.publish_delay
+        if self.saver_tick_counter <= 0:
+            #update screensaver
+            if self.current_card.MY_TYPE == NSPanelCard.CARD_SCREENSAVER:
+                self.send_panel_cmd( self.current_card.create_update_payload() )
+            self.saver_tick_counter = self.mqtt.saver_update
+
+    def check_time(self):
+        """
+        check if the current time string is different to last published time
+        """
+        #Cmd format: "time~XX:XX?am" (12h) or "time~XX:XX" (24h)
+        now = datetime.now()
+        current_time = NSPanel.CMD_TIME+now.strftime(translate.time_templ())
+        #current_time = NSPanel.CMD_TIME+"9:00"+ "?am"
+        if current_time != self.last_time:
+            if self.send_panel_cmd( current_time):
+                self.last_time=current_time
+
+    def check_date(self):
+        """
+        check if the current time string is different to last published time
+        """
+        now = datetime.now()
+        try:
+            #try to build date
+            current_date = f"{NSPanel.CMD_DATE}{translate.weekdays(now.weekday())}, {now.day}. {translate.months_short(now.month)}"
+        except (KeyError, RuntimeError, ValueError) as error:
+            self.log.error("Error while creating date string: %s", error)
+            current_date = f"Day {now.day}, Weekday {now.weekday()}, Month {now.month}"
+
+        if current_date != self.last_date:
+            if self.send_panel_cmd( current_date):
+                self.last_date=current_date
+
+    def update_status(self):
+        """
+        send status update command to panel
+        """
+        #Format: "statusUpdate~iconLeft~iconCOlorLeft~iconRight~iconColorRight")
+
+        payload = "statusUpdate"
+        if self.alarm_left is True:
+            payload = payload + "~" + self.alert_icon_left + '~' + self.alert_icon_left_color
+        else:
+            payload = payload + "~~"
+        if self.alarm_right is True:
+            payload = payload + "~" + self.alert_icon_right + '~' + self.alert_icon_right_color
+        else:
+            payload = payload + "~~"
+
+        self.send_panel_cmd(payload)
+
+    def card_by_path(self, path):
+        """
+        return the correct card from a specific card path
+        """
+        nav_to = path.strip().split("/")
+        if len(nav_to) == 1:
+            card_name = nav_to[0].strip()
+            #navigate to card in same group
+            if card_name in NSPanelCard.cards_by_group[self.current_group]:
+                self.log.debug("Navigate to card '%s' in group '%s' with panel name.", card_name, self)
+                return NSPanelCard.cards_by_group[self.current_group][card_name]
+            self.log.error("Can not navigate to card '%s'. Not defined in group '%s'.", card_name, self.current_group)
+            return None
+        if len(nav_to) == 2:
+            group = nav_to[0].strip()
+            card_name = nav_to[1].strip()
+            if group in NSPanelCard.cards_by_group:
+                if card_name == '.':
+                    if self.name.lower() in NSPanelCard.cards_by_group[group]:
+                        #check for a card with same name as panel in the group
+                        self.log.debug("Navigate to card '%s' in group '%s' with panel name.", card_name, group)
+                        return NSPanelCard.cards_by_group[group][self.name.lower()]
+                    #take first card in group:
+                    cards = list(NSPanelCard.cards_by_group[group].values())
+                    i=0
+                    while i < len(cards) and cards[i].type == cards[i].CARD_SCREENSAVER:
+                        i=i+1
+                    if len(cards) > i:
+                        self.log.debug("Navigate to first card '%s' in group '%s'.", cards[0].name, group)
+                        return cards[i]
+                    self.log.debug("Can not navigate to card in group '%s'. Group has no card inside.", group)
+                else:
+                    if card_name in NSPanelCard.cards_by_group[group]:
+                        self.log.debug("Navigate to card '%s' in group '%s'.", card_name, group)
+                        return NSPanelCard.cards_by_group[group][card_name]
+                    self.log.error("Can not navigate to card '%s' in group '%s'. Card does not exist", card_name, group)
+            else:
+                self.log.error("Unknown group '%s' in navTo '%s'.", group, path )
+        else:
+            self.log.error("Illegal navigation format '%s'.", path )
+        return None
+
+    def navigate(self,card):
+        """
+        navigate to a specific page type
+        """
+        self.log.debug("Navigate to card '%s'.", card.name )
+
+        #disconnect current card from openhab
+        if self.current_card is not None and self.current_card.MY_TYPE != NSPanelCard.CARD_SCREENSAVER:
+            if self.current_card.popup is not None:
+                self.current_card.popup.disconnect(self)
+                self.current_card.popup = None
+            self.current_card.disconnect(self)
+
+        self.send_panel_cmd( card.create_cmd_payload() )
+        if card.MY_TYPE != NSPanelCard.CARD_SCREENSAVER:
+            #only for other cards as screnn saver is somthing to do
+            card.connect(self)
+
+        #fill card with content
+        self.send_panel_cmd( card.create_color_payload() )
+        self.send_panel_cmd( card.create_update_payload() )
+        self.current_card = card
+        self.current_group = card.group
+        if card.type == NSPanelCard.CARD_SCREENSAVER:
+            self.update_status()
+        self.publish_card()
+
+
+    def update(self):
+        """
+        update current card content
+        """
+        self.log.debug("Update to card '%s'.", self.current_card.name )
+
+        if self.current_card is not None:
+            #chek if there is no popup card active
+            if self.current_card.popup is None:
+                self.send_panel_cmd( self.current_card.create_update_payload() )
+            else:
+                self.send_panel_cmd( self.current_card.popup.create_update_payload() )
+
+
+    def send_dimmode(self,addon=""):
+        """
+        send dimmmode message to nspanel
+        """
+        msg = self.CMD_DIMMODE + self.mqtt.get_brightness_saver(self.name) \
+              + "~" + self.mqtt.get_brightness(self.name) \
+              + addon
+        self.send_panel_cmd( msg)
+
+    def send_timeout(self):
+        """
+        send timeout message to nspanel
+        """
+        msg = self.CMD_TIMEOUT + self.mqtt.get_timeout(self.name)
+        self.send_panel_cmd(msg)
+
+    @classmethod
+    def get_home_screensaver_card(cls):
+        """
+        get the screensaver for the home group
+        """
+        #no default sceensaver in current group. Do the same for home group:
+        screensaver_card = NSPanelCard.get_card( NSPanelCard.CARDS_HOME, SCREENSAVER_NAME )
+        return screensaver_card
+
+    def get_screensaver_card(self):
+        """
+        Try to get the best screensaver card object for this panel
+        """
+        screensaver_card = NSPanelCard.get_card( self.current_group, self.name+SCREENSAVER_NAME )
+        if screensaver_card is None:
+            #no screensaver for this panel and current group defined. Look for a default one
+            screensaver_card = NSPanelCard.get_card( self.current_group, SCREENSAVER_NAME )
+            if screensaver_card is None:
+                #no sceensaver found in current group: fall back to home
+                self.current_group = NSPanelCard.CARDS_HOME
+                screensaver_card = NSPanelCard.get_card( self.current_group, self.name+SCREENSAVER_NAME )
+                if screensaver_card is None:
+                    screensaver_card = self.get_screensaver_card()
+        return screensaver_card
+
+    def init_panel(self):
+        """
+        send all needed messages to initialize the panel
+        """
+        self.last_date = ""
+        self.last_time = ""
+        self.check_time()
+        self.check_date()
+        self.send_timeout()
+        self.send_dimmode("~6371") #not shure for whot this ~637 is added in the init sequence documentation
+        if self.get_screensaver_card() is None:
+            #Fatal error no screensaver card defined for this panel
+            self.log.fatal("No Screensaver defined for the panel: %s", self.name )
+            sys.exit()
+        self.navigate(self.get_screensaver_card())
+
+    @classmethod
+    def load_cards( cls, path ):
+        """
+        Load all page definitions in the given path
+        """
+        #clean up existing cards
+        NSPanelCard.cards_by_group = {}
+        cls.LOG.debug("Load cards from path '%s'", path )
+        for root, dirs, files in os.walk(path):
+            for filename in files:
+                cls.LOG.debug("Load cards from file '%s'", filename )
+                #check for yaml file extention
+                if os.path.splitext(filename)[1] == PAGES_FILE_EXT:
+                    with open(os.path.join( root, filename ), encoding='utf-8') as stream:
+                        try:
+                            cards_yaml = yaml.safe_load(stream)
+                            if "cards" in cards_yaml:
+                                for card_yaml in cards_yaml["cards"]:
+                                    if "name" in card_yaml:
+                                        if NSPanelCard.factory_yaml_file(filename, card_yaml) is True:
+                                            cls.LOG.error("Card '%s' in file '%s' could not be created.", card_yaml["name"], filename)
+                                    else:
+                                        cls.LOG.error("Attribute 'name' not defined in file %s.", filename)
+                        except yaml.YAMLError:
+                            cls.LOG.error("Yaml syntak error in %s.", filename)
+            for d in dirs:
+                cls.LOG.info("Ignoring directory '%s' in card config folder", os.path.join(root, d))
+
+
+        #check if a sreensaver is defined in the yaml file. If not create a default one for the panels
+        if cls.get_home_screensaver_card() is None:
+            if NSPanelCard.CARDS_HOME not in NSPanelCard.cards_by_group:
+                NSPanelCard.cards_by_group[NSPanelCard.CARDS_HOME] = {}
+            NSPanelCard.cards_by_group[NSPanelCard.CARDS_HOME][SCREENSAVER_NAME] = NSPanelCardScreenSaver(SCREENSAVER_NAME)
+            cls.LOG.info("No default screensaver '%s' defined in yaml files. Created a default one for group '%s'", SCREENSAVER_NAME, NSPanelCard.CARDS_HOME)

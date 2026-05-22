@@ -1,0 +1,336 @@
+#
+# Home cards
+#
+cards:
+  - name: Flur
+    title: Flur
+    type: cardGrid
+    slots:
+      - class: ohItem
+        type: light
+        text: Deckenlampe
+        icon: track-light
+        item: Switch_Flurdecke
+        dimmerItem: Dimmer_Flurdecke
+      - class: ohItem
+        type: shutter
+        text: Rolladen
+        item: R_RolladenWintergarten
+        #tiltItem: Dimmer_Flurdecke
+      - class: navigate
+        icon: \uebaa
+        iconColor: pink
+        text: Test cards
+        navTo: test/.
+  - name: Esszimmer
+    title: Esszimmer
+    type: cardGrid
+    slots:
+      - class: ohItem
+        type: light
+        text: Deckenspots
+        icon: \ue913
+        item: Switch_Esszimmerspots
+        dimmerItem: Dimmer_Esszimmerspots
+        colTempItem: Dimmer_Esszimmerspots_Temp
+      - class: ohItem
+        type: light
+        text: Kugellampe
+        icon: \ue6b4 #lamp
+        item: Switch_Kugellampe
+        dimmerItem: Dimmer_Kugellampe
+        colTempItem: Dimmer_Kugellampe_Temp
+        colorItem: Color_Kugellampe
+      - class: ohItem
+        type: light
+        text: Esstisch
+        icon: \uf8dc #lamp
+        item: Switch_Esstisch
+        dimmerItem: Dimmer_Esstisch
+      - class: ohItem
+        type: light
+        text: Vitrinenschrank
+        icon: \ue836 #table-row
+        item: Switch_Esszimmerschrank
+        dimmerItem: Dimmer_Esszimmerschrank
+  - name: Wohnzimmer
+    title: Wohnzimmer
+    type: cardGrid
+    slots:
+      - class: ohItem
+        type: light
+        text: Deckenspots
+        icon: \ue913
+        item: Switch_Wohnzimmerspots
+        dimmerItem: Dimmer_Wohnzimmerspots
+        colTempItem: Dimmer_Wohnzimmerspots_Temp
+      - class: ohItem
+        type: light
+        text: Stehlampe
+        icon: \ue6b4 #lamp
+        item: Switch_Stehlampe
+        dimmerItem: Dimmer_Stehlampe
+        colTempItem: Dimmer_Stehlampe_temp
+        #colorItem: Color_Kugellampe
+      - class: ohItem
+        type: light
+        text: Deckenfluter
+        icon: \ue8dc #floor lamp
+        item: Switch_Deckenfluter
+        dimmerItem: Dimmer_Deckenfluter
+      - class: ohItem
+        type: light
+        text: Couchtisch
+        icon: \ue5bb #floor lamp
+        item: Switch_Wohnzimmertisch
+        dimmerItem: Dimmer_Wohnzimmertisch
+      - class: ohItem
+        type: light
+        text: Küchenschrank
+        icon: \ue334  #lightbulb
+        item: Switch_Kuechenschrank
+        dimmerItem: Dimmer_Kuechenschrank
+  - name: Schlafzimmer
+    title: Schlafzimmer
+    group: home
+    type: cardGrid
+    slots:
+      - class: ohItem
+        type: light
+        text: Deckenlampen
+        icon: \uf8dc
+        item: Switch_Schlafzimmerdeckenlampen
+        dimmerItem: Dimmer_Schlafzimmerdeckenlampen
+        colTempItem: Dimmer_Schlafzimmerdeckenlampen_Temp
+      - class: ohItem
+        type: light
+        text: Schreibtischlampe
+        icon: \ue95e #desk-lamp
+        item: Switch_Schreibtisch
+        dimmerItem: Dimmer_Schreibtisch
+      - class: ohItem
+        type: light
+        text: Bett
+        icon: \ue2e2 #floor lamp
+        item: Switch_BettLEDs
+        dimmerItem: Dimmer_BettLEDs
+  - name: Wintergarten
+    title: Wintergarten
+    group: home
+    type: cardGrid
+    slots:
+      - class: ohItem
+        type: light
+        text: Deckenlampe
+        icon: \uf2d6
+        item: Switch_Wintergratenlampe
+        dimmerItem: Dimmer_Wintergartenlampe
+      - class: ohItem
+        type: light
+        text: Tischlampe
+        icon: \ue6b4 #lamp
+        item: Switch_Tischlampe
+        dimmerItem: Dimmer_Tischlampe
+        colTempItem: Dimmer_Tischlampe_Temp
+      - class: ohItem
+        type: light
+        text: Glastischlampe
+        icon: \ue6b4 #lamp
+        item: Switch_Flurtischlampe
+        dimmerItem: Dimmer_Flurtischlampe
+        colTempItem: Dimmer_Flurtischlampe_temp
+  - name: Kueche
+    title: Küche
+    group: home
+    type: cardGrid
+    slots:
+      - class: ohItem
+        type: light
+        text: Deckenlampe
+        icon: \ue768
+        item: Switch_Wintergratenlampe
+        dimmerItem: Dimmer_Wintergartenlampe
+      - class: ohItem
+        type: light
+        text: Einbaustrahler
+        icon: \uf79a
+        item: Switch_Kuechenspots
+        dimmerItem: Dimmer_Kuchenspots
+        colTempItem: Dimmer_Kuchenspots_Temp
+      - class: ohItem
+        type: light
+        text: Arbeitsplatten
+        icon: \uf79a
+        item: Switch_Kueche_Arbeitsplatten
+        dimmerItem: Dimmer_Kueche_Arbeitsplatten
+  - name: Bad
+    title: Bad
+    group: home
+    type: cardGrid
+    slots:
+      - class: ohItem
+        type: light
+        text: Deckenspots
+        icon: \ue913
+        item: Switch_BadDeckenspots
+        dimmerItem: Dimmer_BadDeckenspots
+        colTempItem: Dimmer_BadDeckenspots_Temp
+      - class: ohItem
+        type: light
+        text: Kugellampen
+        icon: \uF2D6 #lamp
+        item: Switch_Badkugellampe
+        dimmerItem: Dimmer_Badkugellampe
+        colTempItem: Dimmer_Stehlampe_temp
+        colorItem: Color_Kugellampe
+      - class: ohItem
+        type: light
+        text: Spiegelring
+        icon: \uF1FC
+        item: Switch_Badspiegelring
+        dimmerItem: Dimmer_Badspiegelring
+      - class: ohItem
+        type: light
+        text: Badspiegelspots
+        icon: "\ue913"
+        item: Switch_Badspiegellampen
+        dimmerItem: Dimmer_Badspiegellampen
+  - name: Garten
+    title: Garten
+    group: home
+    type: cardGrid
+    slots:
+      - class: ohItem
+        type: light
+        text: Kette Pergola
+        icon: "\uF2B9"
+        item: S_LichterketteMueller
+        dimmerItem: Dimmer_LichterMueller
+        colTempItem: Dimmer_LichterMueller_temp
+      - class: None
+      - class:
+      - class: ohItem
+        type: light
+        text: Kette Baum
+        icon: "\uF2B9"
+        item: S_LichterketteInnr
+        dimmerItem: Dimmer_LichterInnr
+  - name: guestWifi
+    title: Gäste Wifi
+    type: cardQRWifi
+    security: WPA2
+    slots:
+      - class: ohItem
+        type: text
+        item: NsPanels_STRNG_SSID
+      - class: ohItem
+        type: text
+        item: NsPanels_STRNG_Password
+  - name: LinkMealie
+    title: Mealie Link
+    type: cardQR
+    slots:
+      - class: ohItem
+        type: text
+        text: Link
+        item: NsPanels_STRNG_Link_Mealie
+  - name: Alarm
+    title: Alarm
+    type: cardAlarm
+    slots:
+      - class: ohItem
+        type: text
+        item: NsPanels_STRNG_AlarmKey
+      - class: ohItem
+        type: input_sel
+        item: NsPanels_STRNG_AlarmMode
+        #options: mode1="Vollschutz",mode2="Zuhause",mode3="Nacht",mode4="Besuch"
+      - class: ohItem
+        type: text
+        item: NsPanels_STRNG_AlarmIcon
+        icon: "\ue482"
+        iconColor: "red"
+      - class: ohItem
+        type: switch
+        item: NsPanels_SW_AlarmKeypadEnable
+      - class: ohItem
+        type: switch
+        item: Switch_Kugellampe
+        icon: "\ue482"
+        iconColor: "red"
+  - name: Thermo
+    title: Schafzimmerthermostat
+    type: cardThermo
+    slots:
+      - class: ohItem
+        type: number
+        item: H_Schlafzimmer_SetHeatTemp
+      - class:
+      - class: ohItem
+        type: text
+        item: H_Schlafzimmer_Temperatur
+      - class: ohItem
+        type: text
+        item: H_Schlafzimmer_OpMode
+      - class: ohItem
+        type: text
+        item: H_Schlafzimmer_SysMode
+      - class: ohItem
+        type: text
+        item: H_Schlafzimmer_RunState
+      - class: ohItem
+        type: switch
+        item: H_Schlafzimmer_Lock
+        iconColor: "yellow"
+        icon: "\uE305"
+      - class: ohItem
+        type: switch
+        item: H_Schlafzimmer_boost
+        iconColor: "red"
+        icon: "\uFA44"
+      - class: ohItem
+        type: switch
+        item: H_Schlafzimmer_windowOpen
+        iconColor: "yellow"
+        icon: "\uF1DB"
+  - name: ThermoExt
+    title: Schafzimmerthermostat
+    type: cardThermo
+    min: 5.0
+    max: 30.0
+    steps: 0.5
+    details: True
+    slots:
+      - class: ohItem
+        type: number
+        item: H_Schlafzimmer_SetHeatTemp
+      - class: ohItem
+        type: number
+        item: H_Schlafzimmer_SetCoolTemp
+      - class: ohItem
+        type: text
+        item: H_Schlafzimmer_Temperatur
+      - class: ohItem
+        type: input_sel
+        item: H_Schlafzimmer_OpMode
+      - class: ohItem
+        type: input_sel
+        item: H_Schlafzimmer_SysMode
+      - class: ohItem
+        type: input_sel
+        item: H_Schlafzimmer_RunState
+      - class: ohItem
+        type: switch
+        item: H_Schlafzimmer_Lock
+        iconColor: "yellow"
+        icon: "\uE305"
+      - class: ohItem
+        type: switch
+        item: H_Schlafzimmer_boost
+        iconColor: "red"
+        icon: "\uFA44"
+      - class: ohItem
+        type: switch
+        item: H_Schlafzimmer_windowOpen
+        iconColor: "yellow"
+        icon: "\uF1DB"
