@@ -121,8 +121,8 @@ Thing topic nspanel01 "nspanel01" @ "Flur" {
         Type dimmer  : brightness_saver "Screensaver brightness" [ stateTopic="nspanel-bridge/flur/brightness_saver", commandTopic="nspanel-bridge/flur/brightness_saver/set"]
         Type number  : timeout          "Screensaver timeout"    [ stateTopic="nspanel-bridge/flur/timeout", commandTopic="nspanel-bridge/flur/timeout/set" ]
         Type string  : current_card     "Currend card"           [ stateTopic="nspanel-bridge/flur/card", commandTopic="nspanel-bridge/flur/card/set" ]
-        Type switch  : state_left       "Info Left"             [ stateTopic="nspanel-bridge/flur/state_left", commandTopic="nspanel-bridge/flur/state_left/set" ]
-        Type switch  : state_right      "Info Right"            [ stateTopic="nspanel-bridge/flur/state_right", commandTopic="nspanel-bridge/flur/state_right/set" ]
+        Type switch  : alarm_left       "Alarm Left"             [ stateTopic="nspanel-bridge/flur/alarm_left", commandTopic="nspanel-bridge/flur/alarm_left/set" ]
+        Type switch  : alarm_right      "Alarm Right"            [ stateTopic="nspanel-bridge/flur/alarm_right", commandTopic="nspanel-bridge/flur/alarm_right/set" ]
         Type string  : notification     "Notification"           [ stateTopic="nspanel-bridge/flur/notfication", commandTopic="nspanel-bridge/flur/notfication/set" ]
         Type string  : version_hmi      "Version HMI"            [ stateTopic="nspanel-bridge/flur/version_hmi", transformationPattern="JSONPATH:$.hmi" ]
         Type string  : version_panel    "Version Panel"          [ stateTopic="nspanel-bridge/flur/version_panel", transformationPattern="JSONPATH:$.panel" ]
@@ -206,17 +206,20 @@ You can change some default colors and icons with the json file. More details in
 ## Card configuration
 The following sections describe the yaml file format of cards. Cards are instances of the page types defined in [nspanel-lovelace-ui](https://github.com/joBr99/nspanel-lovelace-ui/blob/main/HMI/README.md).
 
-All files with extention *.yaml* in the *config* folder defined in ini file section [[configpath]](#section-configpath) are loaded during startup. They must contain all cards which you want to show in your different NSPanles. Cards are instances of the different pages defined for [nspanel-lovelace-ui](https://github.com/joBr99/nspanel-lovelace-ui/blob/main/HMI/README.md).
+### Yaml files in card folder
+All files with extention *.yaml* in the *cards* folder defined in ini file section [[configpath]](#section-configpath) are loaded during startup. They must contain all cards which you want to show in your different NSPanles. Cards are instances of the different pages defined for [nspanel-lovelace-ui](https://github.com/joBr99/nspanel-lovelace-ui/blob/main/HMI/README.md). After installation you find some example yaml files in the *cards* folder:
 
-### Example yaml files in config folder
-After installation you find some example yaml files in the *config* folder:
+#### error_test.yaml
+You can delete this file. Its a test file to test wrong card configuration.
 
-| yaml file | Description
-|--- |---
-| home.yaml | Example configuration of some cards in group *home*. You can copy it to your config folder and adapt it to your needs according to next section.
-| screensaver.yaml | Examples for a fully configured screensaver with weather forecast. You can copy it to your config folder and adapt it to your needs
-| state_cards.yaml | Example file for a [stateCard](#status-slots-of-screensavers).  You can copy it to your config folder and adapt it to your needs.
-|error_test.yaml| You can delete this file. Its a test file to test wrong card configuration.
+#### test_cards.yaml
+You can delete this file. Its a test file to test all the different combinations of attributes for cards. I kept it as reference for the different configuration possibilities
+
+#### screensaver.yaml
+Examples for a fully configured screensaver with weather forecast. You can keep it and adapt it to your needs
+
+#### home.yaml
+Example configuration of some cards in group *home*. You can keep it and adapt it to your needs according to next section.
 
 ### Card configuration format of yaml files
 
@@ -1135,13 +1138,13 @@ The current timeout in seconds until the screensaver is activated is published i
 ### card (string)
 The current active card in the panel is published in format *groupName/cardName* over `{rootTopic}/{panelName}/card`. A new card value can be set over the command topic `{rootTopic}/{panelName}/card/set` or over `{rootTopic}/card/set` to change to the same card in all connected panels.. You can set the groupname and card name with the format *groupName/cardName* or just the card in current group with *cardName*
 
-### state_left (switch)
-Status of the left info slot in the screensaver (*ON/OFF*): `{rootTopic}/{panelName}/state_left`. The info can be set over `{rootTopic}/{panelName}/state_left/set` *ON* and *OFF* or over `{rootTopic}/state_left/set` to change the value in all connected panels.
+### alarm_left (switch)
+Status of the left alert icon in the screensaver (ON/OFF): `{rootTopic}/{panelName}/alarm_left`. The alarm can be set over `{rootTopic}/{panelName}/alarm_left/set` or over `{rootTopic}/alarm_left/set` to change the value in all connected panels.
 
 ![image](doc/screensaverAlertLeft.jpg)
 
-### state_right (switch)
-Status of the right ifo slot in the screensaver (*ON/OFF*): `{rootTopic}/{panelName}/state_right`. The info can be set over `{rootTopic}/{panelName}/state_right/set` *ON* and *OFF* or over `{rootTopic}/state_right/set` to change the value in all connected panels.
+### alarm_right (switch)
+Status of the right alert icon in the screensaver (ON/OFF): `{rootTopic}/{panelName}/alarm_right`. The alarm can be set over `{rootTopic}/{panelName}/alarm_right/set` or over `{rootTopic}/alarm_right/set` to change the value in all connected panels.
 
 ![image](doc/screensaverAlertRight.jpg)
 
