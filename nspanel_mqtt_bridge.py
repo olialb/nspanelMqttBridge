@@ -34,7 +34,7 @@ from nspanel.nspanel_config_observer import CardConfigFileObserver
 #
 # global constants
 #
-CONFIG_FILE = "nsPanelMqttBridge.ini"  # name of the ini file
+CONFIG_FILE = "nspanelMqttBridge.ini"  # name of the ini file
 
 #
 # define main class

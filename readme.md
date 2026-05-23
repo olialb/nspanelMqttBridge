@@ -63,11 +63,11 @@ Configure mqtt in tasmota. In this installation guide was the tasmota mqtt setup
 ### Step 1:
 Clone this project with:
 ```
-git clone https://github.com/olialb/nspanel-mqtt-bridge
+git clone https://github.com/olialb/nspanelMqttBridge
 ```
 and go inside the project directory:
 ```
-cd nspanel-mqtt-bridge
+cd nspanelMqttBridge
 ```
 ### Step 2:
 Call setup:
@@ -121,8 +121,8 @@ Thing topic nspanel01 "nspanel01" @ "Flur" {
         Type dimmer  : brightness_saver "Screensaver brightness" [ stateTopic="nspanel-bridge/flur/brightness_saver", commandTopic="nspanel-bridge/flur/brightness_saver/set"]
         Type number  : timeout          "Screensaver timeout"    [ stateTopic="nspanel-bridge/flur/timeout", commandTopic="nspanel-bridge/flur/timeout/set" ]
         Type string  : current_card     "Currend card"           [ stateTopic="nspanel-bridge/flur/card", commandTopic="nspanel-bridge/flur/card/set" ]
-        Type switch  : alarm_left       "Alarm Left"             [ stateTopic="nspanel-bridge/flur/alarm_left", commandTopic="nspanel-bridge/flur/alarm_left/set" ]
-        Type switch  : alarm_right      "Alarm Right"            [ stateTopic="nspanel-bridge/flur/alarm_right", commandTopic="nspanel-bridge/flur/alarm_right/set" ]
+        Type switch  : state_left       "Info Left"             [ stateTopic="nspanel-bridge/flur/state_left", commandTopic="nspanel-bridge/flur/state_left/set" ]
+        Type switch  : state_right      "Info Right"            [ stateTopic="nspanel-bridge/flur/state_right", commandTopic="nspanel-bridge/flur/state_right/set" ]
         Type string  : notification     "Notification"           [ stateTopic="nspanel-bridge/flur/notfication", commandTopic="nspanel-bridge/flur/notfication/set" ]
         Type string  : version_hmi      "Version HMI"            [ stateTopic="nspanel-bridge/flur/version_hmi", transformationPattern="JSONPATH:$.hmi" ]
         Type string  : version_panel    "Version Panel"          [ stateTopic="nspanel-bridge/flur/version_panel", transformationPattern="JSONPATH:$.panel" ]
@@ -206,20 +206,17 @@ You can change some default colors and icons with the json file. More details in
 ## Card configuration
 The following sections describe the yaml file format of cards. Cards are instances of the page types defined in [nspanel-lovelace-ui](https://github.com/joBr99/nspanel-lovelace-ui/blob/main/HMI/README.md).
 
-### Yaml files in card folder
-All files with extention *.yaml* in the *cards* folder defined in ini file section [[configpath]](#section-configpath) are loaded during startup. They must contain all cards which you want to show in your different NSPanles. Cards are instances of the different pages defined for [nspanel-lovelace-ui](https://github.com/joBr99/nspanel-lovelace-ui/blob/main/HMI/README.md). After installation you find some example yaml files in the *cards* folder:
+All files with extention *.yaml* in the *config* folder defined in ini file section [[configpath]](#section-configpath) are loaded during startup. They must contain all cards which you want to show in your different NSPanles. Cards are instances of the different pages defined for [nspanel-lovelace-ui](https://github.com/joBr99/nspanel-lovelace-ui/blob/main/HMI/README.md).
 
-#### error_test.yaml
-You can delete this file. Its a test file to test wrong card configuration.
+### Example yaml files in config folder
+After installation you find some example yaml files in the *config* folder:
 
-#### test_cards.yaml
-You can delete this file. Its a test file to test all the different combinations of attributes for cards. I kept it as reference for the different configuration possibilities
-
-#### screensaver.yaml
-Examples for a fully configured screensaver with weather forecast. You can keep it and adapt it to your needs
-
-#### home.yaml
-Example configuration of some cards in group *home*. You can keep it and adapt it to your needs according to next section.
+| yaml file | Description
+|--- |---
+| home.yaml | Example configuration of some cards in group *home*. You can copy it to your config folder and adapt it to your needs according to next section.
+| screensaver.yaml | Examples for a fully configured screensaver with weather forecast. You can copy it to your config folder and adapt it to your needs
+| state_cards.yaml | Example file for a [stateCard](#status-slots-of-screensavers).  You can copy it to your config folder and adapt it to your needs.
+|error_test.yaml| You can delete this file. Its a test file to test wrong card configuration.
 
 ### Card configuration format of yaml files
 
@@ -267,25 +264,39 @@ This will end up in a card like this:
 I think you see, that the card definition is straight forward, if you worked with yaml definition in openHAB Main UI.
 
 #### Remarks to *name* and *group* of a cards
-You must define a unique name for your card and and assign it to a group. This two attributes are used to navigate between cards (see [Navigation](#navigation)). You can define the names freely but there are some exceptions:
+You must define a unique name for your card and and assign it to a group. This two attributes are used to navigate between cards (see [Navigation](#navigation)). You can define the names freely but there are special names reserved:
 
-* group *home* is the default group after startup. In case you give a group the name of a panel, this group will be the default group for that panel.
-* In case you give a card the name of your panel, than this card will be shown first after leaving the *screensaver* card. If you do not define a card with your panel name in a card group, than the first card of the group will be shown after leaving the *screensaver*.
-* The *name* of a *screensaver* type follow must end with *.screensaver*. See section [Card type *screensaver*](#card-type-screensaver)
+Reserved *group* names:
+
+| Group name | Description
+| ---       | ---
+| *home*    | group *home* is the default group after startup. It will be used as default *home* group  for all panels
+| *\_state_cards\_* | group *\_state_cards\_* contains all cards of type [stateCard](#status-slots-of-screensavers)
+| {*panelName*} | In case you give a group the name of a one of your panels, this group will be the home group for that panel.
+
+Reserved *card* names:
+
+| Card name | Description
+| ---       | ---
+| *.screensaver*    | card *.screensaver* is the default screensaver in grpup *home*. In case you do not define your own screensaver card, a default screensaver will be used. See also section [Card type *screensaver*](#card-type-screensaver)
+| {*panelName*}.screensaver | In case you give a card the name of a panel with the extention *.screensaver*, this card will be the screensaver for that panel
+| *\_default_status\_* | *\_default_status\_* is the default [stateCard](#status-slots-of-screensavers)
+
+
 
 
 ### Different *type*s of a card
 The *type* attribute is the link to the page types in [nspanel-lovelace-ui](https://github.com/joBr99/nspanel-lovelace-ui/blob/main/HMI/README.md) but there are also specific types defined for this bridge. Here is a list of the supported types:
 
-| Card type | max. number of slots in EU NSPanel | Description | Example |
-| ---       | ---             |---          |--- |
-| screensaver | 6             | Screen saver card with weather content. Details in section [Card type *screensaver*](#card-type-screensaver) | ![image](doc/ExampleScreensaverMini.jpg)|
-| cardEntities | 4             | Card with the slots shown as a list. Details in section [Card type *cardEntities*](#card-types-cardentities-and-cardgrid)| ![image](doc/ExampleEntitiesCardMini.jpg) |
-| cardGrid | 6             | Card with 6 slots as a 2x3 icon grid. Details in section [Card type *cardGrid*](#card-types-cardEntities-and-cardGrid) | ![image](doc/ExampleGridCardMini.jpg)
-| cardQR | 1             | Card to show QR code for a weblink . Details in section [Card type cardQR](#card-type-cardqr) | ![image](doc/ExampleCardQRMini.jpg)
-| cardQRWifi | 2             | Card to show QR code Wifi access . Details in section [Card type cardQRWifi](#card-type-cardqrwifi) | ![image](doc/ExampleCardQRWIfiMini.jpg)
-| cardAlarm | 5             | Card to show a Keypad to activate/deactivate alarm states. Details in section [Card type cardAlarm](#card-type-cardalarm) | ![image](doc/ExampleCardAlarm.jpg)
-| cardThermo | 14             | Card to control a thermostat. Details in section [Card type cardThermo](#card-type-cardthermo) | ![image](doc/ExampleCardThermoMini.jpg)
+| Card type | max. number of slots in EU NSPanel | max. number of slots in US NSPanel |Description | Example |
+| ---       | ---             |---          |--- |---|
+| screensaver | 6             | 6             | Screen saver card with weather content. Details in section [Card type *screensaver*](#card-type-screensaver) | ![image](doc/ExampleScreensaverMini.jpg)|
+| cardEntities | 4            | 6              | Card with the slots shown as a list. Details in section [Card type *cardEntities*](#card-types-cardentities-and-cardgrid)| ![image](doc/ExampleEntitiesCardMini.jpg) ![image](doc/ExampleEntitiesCardUSPort.jpg) |
+| cardGrid | 6             | 6             | Card with 6 slots as a 2x3 icon grid. Details in section [Card type *cardGrid*](#card-types-cardEntities-and-cardGrid) | ![image](doc/ExampleGridCardMini.jpg)
+| cardQR | 1             | 1             | Card to show QR code for a weblink . Details in section [Card type cardQR](#card-type-cardqr) | ![image](doc/ExampleCardQRMini.jpg)
+| cardQRWifi | 2            | 2              | Card to show QR code Wifi access . Details in section [Card type cardQRWifi](#card-type-cardqrwifi) | ![image](doc/ExampleCardQRWIfiMini.jpg)
+| cardAlarm | 5            | 5              | Card to show a Keypad to activate/deactivate alarm states. Details in section [Card type cardAlarm](#card-type-cardalarm) | ![image](doc/ExampleCardAlarm.jpg)
+| cardThermo | 14             | 14             | Card to control a thermostat. Details in section [Card type cardThermo](#card-type-cardthermo) | ![image](doc/ExampleCardThermoMini.jpg)
 
 ## Slot types and classes
 ### Slot class *ohItem*
@@ -752,6 +763,9 @@ If you do not define any screensaver in yaml files a default screensaver with na
 
 If you define a screensaver card in a secific group this screensaver is shown after the screensaver timeout. If you do not define a sceensaver in a group. The bridge will move back to group *home* and the show the screensaver defined in home after screensaver timeout.
 
+#### Status slots of screensavers
+
+
 ### Card type *cardQR*
 The card type *cardQR* can for example be used to show a QR code with an html link as easy access to a local html server.
 
@@ -1121,13 +1135,13 @@ The current timeout in seconds until the screensaver is activated is published i
 ### card (string)
 The current active card in the panel is published in format *groupName/cardName* over `{rootTopic}/{panelName}/card`. A new card value can be set over the command topic `{rootTopic}/{panelName}/card/set` or over `{rootTopic}/card/set` to change to the same card in all connected panels.. You can set the groupname and card name with the format *groupName/cardName* or just the card in current group with *cardName*
 
-### alarm_left (switch)
-Status of the left alert icon in the screensaver (ON/OFF): `{rootTopic}/{panelName}/alarm_left`. The alarm can be set over `{rootTopic}/{panelName}/alarm_left/set` or over `{rootTopic}/alarm_left/set` to change the value in all connected panels.
+### state_left (switch)
+Status of the left info slot in the screensaver (*ON/OFF*): `{rootTopic}/{panelName}/state_left`. The info can be set over `{rootTopic}/{panelName}/state_left/set` *ON* and *OFF* or over `{rootTopic}/state_left/set` to change the value in all connected panels.
 
 ![image](doc/screensaverAlertLeft.jpg)
 
-### alarm_right (switch)
-Status of the right alert icon in the screensaver (ON/OFF): `{rootTopic}/{panelName}/alarm_right`. The alarm can be set over `{rootTopic}/{panelName}/alarm_right/set` or over `{rootTopic}/alarm_right/set` to change the value in all connected panels.
+### state_right (switch)
+Status of the right ifo slot in the screensaver (*ON/OFF*): `{rootTopic}/{panelName}/state_right`. The info can be set over `{rootTopic}/{panelName}/state_right/set` *ON* and *OFF* or over `{rootTopic}/state_right/set` to change the value in all connected panels.
 
 ![image](doc/screensaverAlertRight.jpg)
 

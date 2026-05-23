@@ -57,7 +57,6 @@ echo "service name: nsPanelMqttBridge"
 eval "echo \"user        : $USER\""
 echo "################################################"
 echo ""
-chmod +x nsPanelMqttBridge
 eval "echo \"$(cat nsPanelMqttBridge.service.template)\"" >nsPanelMqttBridge.service
 sudo mv nsPanelMqttBridge.service /lib/systemd/system/nsPanelMqttBridge.service
 sudo chmod 644 /lib/systemd/system/nsPanelMqttBridge.service

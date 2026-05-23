@@ -31,7 +31,7 @@ import sys
 #
 # global constants
 #
-CONFIG_FILE = "nsPanelMqttBridge.ini"  # name of the ini file
+CONFIG_FILE = "nspanelMqttBridge.ini"  # name of the ini file
 
 # import from the configuration file only the feature configuraion
 LOGGING_CFG = configparser.ConfigParser()
