@@ -45,6 +45,7 @@ RESULT_CUSTOM_SEND="CustomSend"
 PAGES_FILE_EXT = '.yaml'
 SCREENSAVER_NAME = ".screensaver"
 
+
 def nspanel_create_oh_connector(host, port, timeout, api_key):
     """
     create on openhab connector
@@ -80,6 +81,8 @@ class NSPanel(): #pylint: disable=too-many-instance-attributes, too-many-public-
     CMD_TIMEOUT="timeout~"
     CMD_PAGETYPE="pageType~"
 
+    STATUS_CARD_GROUP = "_status_cards_"
+
     LOG = FLOGGER.create_log_handler("NSPanel")
 
     def __init__(self, client, name, topic ):
@@ -104,18 +107,29 @@ class NSPanel(): #pylint: disable=too-many-instance-attributes, too-many-public-
         self._time_cmd_timeout_value = client.cmd_timeout_value
         #cyclic processing scennsaver update
         self.saver_tick_counter = client.saver_update
-        #status updates:
-        self.alert_icon_left=skin.key("default", "alertIconLeft")
-        self.alert_icon_left_color=str(name_to_16bit_color(skin.key("default", "alertIconLeftColor")))
-        self.alarm_left=False
-        self.alert_icon_right=skin.key("default", "alertIconRight")
-        self.alert_icon_right_color=str(name_to_16bit_color(skin.key("default", "alertIconRightColor")))
-        self.alarm_right=False
 
         #logger for this class
         self.log = FLOGGER.create_log_handler(f"NSPanel:{name.upper()}" )
 
         self.log.debug("NSPanel with name '%s' created.", name)
+
+    def get_status_card( self ):
+        """
+        returns active status card for screensaver
+        """
+        return self.mqtt.get_status_card( self.name )
+
+    def get_status_left( self ):
+        """
+        returns true or false for left status in screensaver
+        """
+        return self.mqtt.get_status_left( self.name )
+
+    def get_status_right( self ):
+        """
+        returns true or false for left status in screensaver
+        """
+        return self.mqtt.get_status_right( self.name )
 
     def publish_card( self ):
         """
@@ -158,12 +172,11 @@ class NSPanel(): #pylint: disable=too-many-instance-attributes, too-many-public-
             value = int(msg)
             value = min(100, max( 0, value ))
         except ValueError as error:
-            self.log.warning("Error in brightness payload %s: %s", msg, error)
+            self.log.warning("Error in '%s' payload %s: %s", my_config["topic"], msg, error)
             return
 
         #publish the new value
-        if self.send_mqtt_msg(my_config["topic"], value):
-            my_config["value"] = value
+        self.mqtt.set_brightness( self.name, str(value))
 
         #set new values in panel
         self.send_dimmode()
@@ -180,12 +193,11 @@ class NSPanel(): #pylint: disable=too-many-instance-attributes, too-many-public-
             value = int(msg)
             value = min(100, max( 0, value ))
         except ValueError as error:
-            self.log.warning("Error in brightness payload for screensaver %s: %s", msg, error)
+            self.log.warning("Error in '%s' payload %s: %s", my_config["topic"], msg, error)
             return
 
         #publish the new value
-        if self.send_mqtt_msg(my_config["topic"], value):
-            my_config["value"] = value
+        self.mqtt.set_brightness_saver( self.name, str(value))
 
         #set new values in panel
         self.send_dimmode()
@@ -201,12 +213,11 @@ class NSPanel(): #pylint: disable=too-many-instance-attributes, too-many-public-
         try:
             value = int(msg)
         except ValueError as error:
-            self.log.warning("Error in timeout payload %s: %s", msg, error)
+            self.log.warning("Error in '%s' payload %s: %s", my_config["topic"], msg, error)
             return
 
         #publish the new value
-        if self.send_mqtt_msg(my_config["topic"], str(value)):
-            my_config["value"] = str(value)
+        self.mqtt.set_timeout( self.name, str(value))
 
         #set new value in panel
         self.send_timeout()
@@ -222,17 +233,16 @@ class NSPanel(): #pylint: disable=too-many-instance-attributes, too-many-public-
         #set new value in panel
         card = self.card_by_path(msg)
         if card is None:
-            self.log.warning("Error in card path payload %s: Can not find card at this path.", msg)
+            self.log.warning("Unknown card path '%s' in command payload for '%s'.", msg, my_config["topic"])
         else:
             self.navigate(card)
             #publish the new value
             path = card.group.lower() + '/' + card.name.lower()
-            if self.send_mqtt_msg(my_config["topic"], path):
-                my_config["value"] = path
+            self.mqtt.set_card( self.name, path )
             self.log.info("Navigate to '%s' for panel '%s'.", path, self.name)
 
 
-    def set_alarm_left_mqtt(self, my_config, msg):
+    def set_status_left_mqtt(self, my_config, msg):
         """
         mqtt command to set the alarm indicator left on/off
         """
@@ -240,23 +250,16 @@ class NSPanel(): #pylint: disable=too-many-instance-attributes, too-many-public-
         msg = msg.strip().upper()
 
         if msg not in ["ON", "OFF"]:
-            self.log.warning("Unknown command payload in mqtt message for alarm left state: '%s'", msg)
+            self.log.warning("Unknown command payload '%s' in mqtt message for '%s'", msg, my_config["topic"])
             return
 
-        #publish the new value
-        if self.send_mqtt_msg(my_config["topic"], msg):
-            my_config["value"] = msg
-
         #set new value in panel
-        if msg == 'ON':
-            self.alarm_left = True
-        else:
-            self.alarm_left = False
+        self.mqtt.set_status_left( self.name, msg)
 
         self.update_status()
         self.log.info("Switch alarm left '%s' for panel '%s'.", msg, self.name)
 
-    def set_alarm_right_mqtt(self, my_config, msg):
+    def set_status_right_mqtt(self, my_config, msg):
         """
         mqtt command to set the alarm indicator right on/off
         """
@@ -264,21 +267,39 @@ class NSPanel(): #pylint: disable=too-many-instance-attributes, too-many-public-
         msg = msg.strip().upper()
 
         if msg not in ["ON", "OFF"]:
-            self.log.warning("Unknown command payload in mqtt message for alarm right state: '%s'", msg)
+            self.log.warning("Unknown command payload '%s' in mqtt message for '%s'", msg, my_config["topic"])
             return
 
-        #publish the new value
-        if self.send_mqtt_msg(my_config["topic"], msg):
-            my_config["value"] = msg
-
         #set new value in panel
-        if msg == 'ON':
-            self.alarm_right = True
-        else:
-            self.alarm_right = False
+        self.mqtt.set_status_right( self.name, msg)
 
         self.update_status()
         self.log.info("Switch alarm right '%s' for panel '%s'.", msg, self.name)
+
+    def set_status_card_mqtt(self, my_config, msg):
+        """
+        mqtt command to set the current status catd
+        """
+        msg = msg.strip().lower()
+
+        if msg not in NSPanelCard.cards_by_group[self.STATUS_CARD_GROUP]:
+            if msg != NSPanelCard.CARD_DEFAULT_STATUS:
+                self.log.warning("Unknown command payload '%s' in mqtt message for '%s'", msg, my_config["topic"])
+                return
+
+        #disconnect old status card:
+        if self.get_status_card() in NSPanelCard.cards_by_group[self.STATUS_CARD_GROUP]:
+            NSPanelCard.cards_by_group[self.STATUS_CARD_GROUP][self.get_status_card()].disconnect(self)
+
+        #set new value in panel
+        self.mqtt.set_status_card( self.name, msg )
+
+        #connect the status card
+        if self.get_status_card() in NSPanelCard.cards_by_group[self.STATUS_CARD_GROUP]:
+            NSPanelCard.cards_by_group[self.STATUS_CARD_GROUP][self.get_status_card()].connect(self)
+
+        self.update_status()
+        self.log.info("Status card changed to '%s' for panel '%s'.", msg, self.name)
 
     def set_notification_mqtt(self, my_config, msg):
         """
@@ -288,7 +309,7 @@ class NSPanel(): #pylint: disable=too-many-instance-attributes, too-many-public-
         notify_text = msg.strip().split("|")
 
         if len(notify_text) < 2:
-            self.log.warning("Wrong command payload in mqtt message for notifications: '%s'", msg)
+            self.log.warning("Wrong command payload in mqtt message '%s' for notifications: '%s'",my_config["topic"], msg)
             return
         heading = notify_text[0]
         notify_text = notify_text[1]
@@ -299,8 +320,7 @@ class NSPanel(): #pylint: disable=too-many-instance-attributes, too-many-public-
 
         #publish the new value
         msg = heading+"|"+notify_text
-        if self.send_mqtt_msg(my_config["topic"], msg):
-            my_config["value"] = msg
+        self.mqtt.set_notification(self.name, msg )
 
     def panel_callback(self, my_config, msg): #pylint: disable=too-many-return-statements, too-many-branches, too-many-statements
         """
@@ -509,17 +529,25 @@ class NSPanel(): #pylint: disable=too-many-instance-attributes, too-many-public-
         """
         send status update command to panel
         """
-        #Format: "statusUpdate~iconLeft~iconCOlorLeft~iconRight~iconColorRight")
+        if self.get_status_card() in NSPanelCard.cards_by_group[NSPanel.STATUS_CARD_GROUP]:
+            status_card = NSPanelCard.cards_by_group[NSPanel.STATUS_CARD_GROUP][self.get_status_card()]
+            payload = status_card.create_status_payload(self.get_status_left(), self.get_status_right())
+        else:
+            #Format: "statusUpdate~iconLeft~iconCOlorLeft~iconRight~iconColorRight")
 
-        payload = "statusUpdate"
-        if self.alarm_left is True:
-            payload = payload + "~" + self.alert_icon_left + '~' + self.alert_icon_left_color
-        else:
-            payload = payload + "~~"
-        if self.alarm_right is True:
-            payload = payload + "~" + self.alert_icon_right + '~' + self.alert_icon_right_color
-        else:
-            payload = payload + "~~"
+            payload = "statusUpdate"
+            if self.get_status_left() is True:
+                icon=skin.key("default", "stateIconLeft")
+                color=str(name_to_16bit_color(skin.key("default", "stateIconLeftColor")))
+                payload = payload + "~" + icon + '~' + color
+            else:
+                payload = payload + "~~"
+            if self.get_status_right() is True:
+                icon=skin.key("default", "stateIconRight")
+                color=str(name_to_16bit_color(skin.key("default", "stateIconRightColor")))
+                payload = payload + "~" + icon + '~' + color
+            else:
+                payload = payload + "~~"
 
         self.send_panel_cmd(payload)
 
@@ -600,7 +628,7 @@ class NSPanel(): #pylint: disable=too-many-instance-attributes, too-many-public-
         self.log.debug("Update to card '%s'.", self.current_card.name )
 
         if self.current_card is not None:
-            #chek if there is no popup card active
+            #check if there is no popup card active
             if self.current_card.popup is None:
                 self.send_panel_cmd( self.current_card.create_update_payload() )
             else:
@@ -699,3 +727,8 @@ class NSPanel(): #pylint: disable=too-many-instance-attributes, too-many-public-
                 NSPanelCard.cards_by_group[NSPanelCard.CARDS_HOME] = {}
             NSPanelCard.cards_by_group[NSPanelCard.CARDS_HOME][SCREENSAVER_NAME] = NSPanelCardScreenSaver(SCREENSAVER_NAME)
             cls.LOG.info("No default screensaver '%s' defined in yaml files. Created a default one for group '%s'", SCREENSAVER_NAME, NSPanelCard.CARDS_HOME)
+
+        #check if status card group exist
+        if NSPanel.STATUS_CARD_GROUP not in NSPanelCard.cards_by_group:
+            #create an empty status card group
+            NSPanelCard.cards_by_group[NSPanel.STATUS_CARD_GROUP] = {}

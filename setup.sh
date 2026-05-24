@@ -43,6 +43,7 @@ pip install pyyaml
 pip install webcolors
 pip install requests
 pip install watchdog
+#pip install debugpy
 #pip install -U pytest
 #pip install pylint
 

@@ -53,6 +53,8 @@ class NSPanelCard():
     CARD_SCREENSAVER="screensaver"
     CARD_GRID="cardGrid"
     CARD_CHARD="cardChart"
+    CARD_STATUS="statusCard"
+    CARD_DEFAULT_STATUS="_default_status_"
 
     # all derived classes from the base class
     card_types = {}
@@ -437,9 +439,8 @@ class NSPanelCardWithSlots(NSPanelCardWithNav):
         """
         this callback is called from OHItensDB if the state of an item in this card is updated
         """
-        self.log.debug("Call from item listner. Item state in card has changed")
+        self.log.debug("Call from item listner of card '%s'. Item state in card has changed", self.name)
         for panel in self.connected_panels.values():
-
             panel.update()
 
     def event_button_press( self, slot_name, params, panel=None ): #pylint: disable=too-many-return-statements, disable=too-many-branches
@@ -490,3 +491,4 @@ class NSPanelCardWithSlots(NSPanelCardWithNav):
             self.log.warning("Event not processed for '%s'", slot_name)
 
         return super().event_button_press( slot_name, params )
+

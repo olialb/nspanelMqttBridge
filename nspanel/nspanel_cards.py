@@ -110,6 +110,53 @@ class NSPanelCardGrid(NSPanelCardWithSlots):
 #add this card class type to the factory
 NSPanelCard.card_types[NSPanelCardGrid.MY_TYPE] = NSPanelCardGrid
 
+class NSPanelStatusCard(NSPanelCardWithSlots):
+    """
+    Represent an card of type "statusCard"
+    """
+    MY_TYPE = NSPanelCard.CARD_STATUS
+
+    def create_status_payload(self, status_left, status_right):
+        """
+        send status update command to panel
+        """
+        #Format: "statusUpdate~iconLeft~iconCOlorLeft~iconRight~iconColorRight")
+
+        payload = "statusUpdate"
+        if status_left is True:
+            icon=skin.key("default", "stateIconLeft")
+            color=str(name_to_16bit_color(skin.key("default", "stateIconLeftColor")))
+            if "slot_0" in self.slots and self.slots["slot_0"] is not None:
+                payload = payload + self.slots["slot_0"].create_status_payload(icon,color)
+            else:
+                payload = payload + "~" + icon + '~' + color
+        else:
+            payload = payload + "~~"
+
+        if status_right is True:
+            icon=skin.key("default", "stateIconRight")
+            color=str(name_to_16bit_color(skin.key("default", "stateIconRightColor")))
+            if "slot_1" in self.slots and self.slots["slot_1"] is not None:
+                payload = payload + self.slots["slot_1"].create_status_payload(icon,color)
+            else:
+                payload = payload + "~" + icon + '~' + color
+        else:
+            payload = payload + "~~"
+        return payload
+
+    def item_update_callback(self):
+        """
+        this callback is called from OHItensDB if the state of an item in this card is updated
+        """
+        self.log.debug("Call from item listner of state card '%s'. Item state in card has changed", self.name)
+        for panel in self.connected_panels.values():
+            panel.update_status()
+
+
+
+#add this card class type to the factory
+NSPanelCard.card_types[NSPanelStatusCard.MY_TYPE] = NSPanelStatusCard
+
 class NSPanelCardQR(NSPanelCardWithSlots):
     """
     Base class for cards with QR codes

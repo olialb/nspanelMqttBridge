@@ -254,6 +254,34 @@ class NsPanelCardSlotOhItem( NSPanelCardSlot ):
         payload = payload + text + "~"
         return payload
 
+    def get_icon_color(self):
+        """
+        returns the best matching icon color
+        """
+        return self.icon_color
+
+    def create_status_payload(self, icon, color):
+        """
+        send status update command to panel
+        """
+        #Format: "statusUpdate~iconLeft~iconCOlorLeft~iconRight~iconColorRight")
+
+        slot_text=icon
+        slot_color=color
+        self.item.update_item(self.options)
+        #take label from openhab item as text if no text available
+        text = self.text
+        if text is None:
+            text = self.item.label
+        else:
+            if text == "=itemState":
+                text = translate.key( "openhabStates", self.item.state_formated )
+        slot_text = self.icon+text
+        slot_color = self.get_icon_color()
+
+        return "~" + slot_text + '~' + slot_color
+
+
 #add ohItem class to factory dictionary
 NSPanelCardSlot.all_slot_classes["ohItem"] = {}
 
@@ -366,17 +394,25 @@ class NsPanelCardSlotOhItemSwitch( NsPanelCardSlotOhItem ):
             self.icon_color = str(name_to_16bit_color(skin.key(self.MY_TYPE, 'default_icon_color')))
         self.log.debug("Constructed!")
 
-    def create_payload(self, stateText="empty"):
+    def get_icon_color(self):
         """
-        create update payload for switch slot
+        returns the best matching icon color
         """
-        #overwrite options in openhab item with locally defined options, if availbale:
         self.item.update_item()
         state = map_state_oh2panel("switch", self.item.state)
         if state == "1":
             self.icon_color = self.icon_state_color[0]
         else:
             self.icon_color = self.icon_state_color[1]
+        return self.icon_color
+
+    def create_payload(self, stateText="empty"):
+        """
+        create update payload for switch slot
+        """
+        #overwrite options in openhab item with locally defined options, if availbale:
+        self.get_icon_color()
+        state = map_state_oh2panel("switch", self.item.state)
         payload = super().create_payload(translate.key( "openhabStates", self.item.state_formated ))
 
         #create payload with new state now
