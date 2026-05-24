@@ -108,6 +108,11 @@ class NspanelMqttBridge(BMC.BaseMqttClient): # pylint: disable=too-many-instance
         #now load the yaml files again to update the card data
         NSPanel.load_cards( self.card_files )
         for panel_name, panel in self.panels.items():
+            #first check the active status card. Does it still exist?
+            if self.get_status_card(panel_name) not in NSPanelCard.cards_by_group[NSPanel.STATUS_CARD_GROUP]:
+                self.log.debug("Status card for panel '%s'. Card is no longer valid.", panel_name)
+                self.set_status_card(panel_name, NSPanelCard.CARD_DEFAULT_STATUS)
+            #first check the active group and card. Do they still exist?
             if panel.current_group in NSPanelCard.cards_by_group and panel_name in old_card_names:
                 card = NSPanelCard.get_card(panel.current_group, old_card_names[panel_name])
                 if card is not None:
@@ -154,17 +159,23 @@ class NspanelMqttBridge(BMC.BaseMqttClient): # pylint: disable=too-many-instance
         nspanel_set_skin( self.skin_file )
 
         #define topic configuration for all panels
-        self.topic_config["alarm_left"] = {
-            "topic": self.topic_root + "/alarm_left",
+        self.topic_config["status_left"] = {
+            "topic": self.topic_root + "/status_left",
             "publish": None,
-            "set":  self.set_alarm_left_mqtt,
+            "set":  self.set_status_left_mqtt,
             "value":"OFF"
             }
-        self.topic_config["alarm_right"] = {
-            "topic": self.topic_root + "/alarm_right",
+        self.topic_config["status_right"] = {
+            "topic": self.topic_root + "/status_right",
             "publish": None,
-            "set":  self.set_alarm_right_mqtt,
+            "set":  self.set_status_right_mqtt,
             "value": "OFF"
+            }
+        self.topic_config["status_card"] = {
+            "topic": self.topic_root + "/status_card",
+            "publish": None,
+            "set":  self.set_status_card_mqtt,
+            "value": NSPanelCard.CARD_DEFAULT_STATUS
             }
         self.topic_config["notification"] = {
             "topic": self.topic_root + "/notification",
@@ -240,17 +251,23 @@ class NspanelMqttBridge(BMC.BaseMqttClient): # pylint: disable=too-many-instance
                 "publish": panel.publish_mqtt,
                 "value": None
                 }
-            self.topic_config[name+"_"+"alarm_left"] = {
-                "topic": self.topic_root + '/'+ name + "/alarm_left",
+            self.topic_config[name+"_"+"status_left"] = {
+                "topic": self.topic_root + '/'+ name + "/status_left",
                 "publish": panel.publish_mqtt,
-                "set":  panel.set_alarm_left_mqtt,
+                "set":  panel.set_status_left_mqtt,
                 "value":"OFF"
                 }
-            self.topic_config[name+"_"+"alarm_right"] = {
-                "topic": self.topic_root + '/'+ name + "/alarm_right",
+            self.topic_config[name+"_"+"status_right"] = {
+                "topic": self.topic_root + '/'+ name + "/status_right",
                 "publish": panel.publish_mqtt,
-                "set":  panel.set_alarm_right_mqtt,
+                "set":  panel.set_status_right_mqtt,
                 "value": "OFF"
+                }
+            self.topic_config[name+"_"+"status_card"] = {
+                "topic": self.topic_root + '/'+ name + "/status_card",
+                "publish": panel.publish_mqtt,
+                "set":  panel.set_status_card_mqtt,
+                "value": NSPanelCard.CARD_DEFAULT_STATUS
                 }
             self.topic_config[name+"_"+"notification"] = {
                 "topic": self.topic_root + '/'+ name + "/notification",
@@ -333,6 +350,7 @@ https://github.com/olialb/nspanelMqttBridge#card-configuration""")
             my_config = self.topic_config[panel_name+"_"+"brightness"]
             panel.set_brightness_mqtt(my_config, msg)
 
+
     def set_brightness_saver_mqtt(self, my_config, msg):
         """
         mqtt command to set the brightness saver in all panels
@@ -365,21 +383,29 @@ https://github.com/olialb/nspanelMqttBridge#card-configuration""")
             my_config = self.topic_config[panel_name+"_"+"notification"]
             panel.set_notification_mqtt(my_config, msg)
 
-    def set_alarm_left_mqtt(self, my_config, msg):
+    def set_status_left_mqtt(self, my_config, msg):
         """
         mqtt command to set the left alarm in all panels
         """
         for panel_name, panel in self.panels.items():
-            my_config = self.topic_config[panel_name+"_"+"alarm_left"]
-            panel.set_alarm_left_mqtt(my_config, msg)
+            my_config = self.topic_config[panel_name+"_"+"status_left"]
+            panel.set_status_left_mqtt(my_config, msg)
 
-    def set_alarm_right_mqtt(self, my_config, msg):
+    def set_status_right_mqtt(self, my_config, msg):
         """
         mqtt command to set the right alarm in all panels
         """
         for panel_name, panel in self.panels.items():
-            my_config = self.topic_config[panel_name+"_"+"alarm_right"]
-            panel.set_alarm_right_mqtt(my_config, msg)
+            my_config = self.topic_config[panel_name+"_"+"status_right"]
+            panel.set_status_right_mqtt(my_config, msg)
+
+    def set_status_card_mqtt(self, my_config, msg):
+        """
+        mqtt command to set the right alarm in all panels
+        """
+        for panel_name, panel in self.panels.items():
+            my_config = self.topic_config[panel_name+"_"+"status_card"]
+            panel.set_status_card_mqtt(my_config, msg)
 
     #
     # set/get methods for the topics in this bridge
@@ -408,11 +434,47 @@ https://github.com/olialb/nspanelMqttBridge#card-configuration""")
         """
         return self.topic_config[panel_name+"_"+"card"]["value"]
 
-    def get_home( self, panel_name ):
+    def get_status_card( self, panel_name ):
         """
-        returns the current home value
+        returns the current status card value
         """
-        return self.topic_config[panel_name+"_"+"home"]["value"]
+        return self.topic_config[panel_name+"_"+"status_card"]["value"]
+
+    def get_status_left( self, panel_name ):
+        """
+        returns the current status left value
+        """
+        return self.topic_config[panel_name+"_"+"status_left"]["value"] == 'ON'
+
+    def get_status_right( self, panel_name ):
+        """
+        returns the current status right value
+        """
+        return self.topic_config[panel_name+"_"+"status_right"]["value"] == 'ON'
+
+    def set_brightness( self, panel_name, value ):
+        """
+        set the current brightness value
+        """
+        topic_config = self.topic_config[panel_name+"_"+"brightness"]
+        topic_config["value"] = value
+        self.client.publish( topic_config["topic"], value )
+
+    def set_brightness_saver( self, panel_name, value ):
+        """
+        set the current brightness_saver value
+        """
+        topic_config = self.topic_config[panel_name+"_"+"brightness_saver"]
+        topic_config["value"] = value
+        self.client.publish( topic_config["topic"], value )
+
+    def set_timeout( self, panel_name, value ):
+        """
+        set the current timeout value
+        """
+        topic_config = self.topic_config[panel_name+"_"+"timeout"]
+        topic_config["value"] = value
+        self.client.publish( topic_config["topic"], value )
 
     def set_card( self, panel_name, value ):
         """
@@ -422,11 +484,27 @@ https://github.com/olialb/nspanelMqttBridge#card-configuration""")
         topic_config["value"] = value
         self.client.publish( topic_config["topic"], value )
 
-    def set_home( self, panel_name, value ):
+    def set_status_card( self, panel_name, value ):
         """
-        set the current home card value
+        set the current card value
         """
-        topic_config = self.topic_config[panel_name+"_"+"home"]
+        topic_config = self.topic_config[panel_name+"_"+"status_card"]
+        topic_config["value"] = value
+        self.client.publish( topic_config["topic"], value )
+
+    def set_status_left( self, panel_name, value ):
+        """
+        set the current status_left value
+        """
+        topic_config = self.topic_config[panel_name+"_"+"status_left"]
+        topic_config["value"] = value
+        self.client.publish( topic_config["topic"], value )
+
+    def set_status_right( self, panel_name, value ):
+        """
+        set the current status_right value
+        """
+        topic_config = self.topic_config[panel_name+"_"+"status_right"]
         topic_config["value"] = value
         self.client.publish( topic_config["topic"], value )
 
@@ -435,6 +513,14 @@ https://github.com/olialb/nspanelMqttBridge#card-configuration""")
         set the current version value
         """
         topic_config = self.topic_config[panel_name+"_"+"version"]
+        topic_config["value"] = value
+        self.client.publish( topic_config["topic"], value )
+
+    def set_notification( self, panel_name, value ):
+        """
+        set the current notification value
+        """
+        topic_config = self.topic_config[panel_name+"_"+"notification"]
         topic_config["value"] = value
         self.client.publish( topic_config["topic"], value )
 
