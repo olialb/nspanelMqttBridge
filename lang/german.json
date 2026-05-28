@@ -21,6 +21,6 @@
     "cardChart": {
         "until": "bis",
         "time_templ": "%H:%M",
-        "date_templ": "%d.%m.%Y"
+        "date_templ": "%d.%m"
     }
 }
