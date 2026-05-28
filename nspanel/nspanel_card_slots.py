@@ -17,7 +17,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 #
 """
-Module implements a MQTT client as bridge to openhab for NsPanels with lovelance ui
+Module implements a MQTT client as bridge to openhab for NsPanels with lovelace ui
 This file contain the differnt card slots shown in the panel.
 """
 
@@ -43,7 +43,7 @@ class NSPanelCardSlot(): #pylint: disable=too-many-instance-attributes
     """
     MY_TYPE = "NSPanelCardSlot"
 
-    #Slot types constants in lovelance
+    #Slot types constants in lovelace
     SLOT_NUMBER = "number"
     SLOT_LIGHT = "light"
     SLOT_SHUTTER = "shutter"

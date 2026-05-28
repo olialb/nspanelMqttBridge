@@ -17,7 +17,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 #
 """
-Module implements a MQTT client as bridge to openhab for NsPanels with lovelance ui
+Module implements a MQTT client as bridge to openhab for NsPanels with lovelace ui
 This file implements the nspanel main classes to interact with different panels
 """
 
@@ -284,8 +284,13 @@ class NSPanel(): #pylint: disable=too-many-instance-attributes, too-many-public-
 
         if msg not in NSPanelCard.cards_by_group[self.STATUS_CARD_GROUP]:
             if msg != NSPanelCard.CARD_DEFAULT_STATUS:
-                self.log.warning("Unknown command payload '%s' in mqtt message for '%s'", msg, my_config["topic"])
+                self.log.warning("Unknown card in command payload '%s' in mqtt message for '%s'", msg, my_config["topic"])
                 return
+        else:
+            if NSPanelCard.cards_by_group[self.STATUS_CARD_GROUP][msg].type != NSPanelCard.CARD_STATUS:
+                self.log.warning("Status card '%s' in mqtt message for '%s' should be of type stausCard", msg, my_config["topic"])
+                return
+
 
         #disconnect old status card:
         if self.get_status_card() in NSPanelCard.cards_by_group[self.STATUS_CARD_GROUP]:
@@ -630,6 +635,9 @@ class NSPanel(): #pylint: disable=too-many-instance-attributes, too-many-public-
         if self.current_card is not None:
             #check if there is no popup card active
             if self.current_card.popup is None:
+                if self.current_card.MY_TYPE in [NSPanelCard.CARD_CHARD]:
+                    #some cards need to be cleaned up before content can be updated.
+                    self.send_panel_cmd( self.current_card.create_cmd_payload() )
                 self.send_panel_cmd( self.current_card.create_update_payload() )
             else:
                 self.send_panel_cmd( self.current_card.popup.create_update_payload() )
@@ -691,6 +699,10 @@ class NSPanel(): #pylint: disable=too-many-instance-attributes, too-many-public-
             self.log.fatal("No Screensaver defined for the panel: %s", self.name )
             sys.exit()
         self.navigate(self.get_screensaver_card())
+        #self.send_panel_cmd("pageType~cardChart")
+        #self.send_panel_cmd("entityUpd~Stromverbrauch~button~navigate.prev~~65535~~~button~navigate.next~~65535~~~65535~Power~~10~20~30~40~50~60~70~80~90~196~10~20~30~40~50~60~70~80~90~196~10~20~30~40~50~60~70~80~90~196~10~20~30~40~50~60~70~80~90~196~10~20~30~40~50~60~70~80~90~196~10~20~30~40~196")
+        #self.send_panel_cmd("entityUpd~Chart Demo~button~navigate.prev~<~65535~~~button~navigate.next~>~65535~~~65535~Gas [kWh]~20:40:60:80:100~20~7^2:00~7~6^4:00~6~7^6:00~0~7^8:00~5~1^10:00~1~10^12:00~5~6^14:00~8")
+        #self.send_panel_cmd("entityUpd~Chart Demo~button~navigate.prev~<~65535~~~button~navigate.next~>~65535~~~65535~Gas [kWh]~2:4:6:8:10~10~1^X1|1~10~1^X2~10~1^X3~10~1^X4~10~1^X5~10~1^X6~10~1^X7~10")
 
     @classmethod
     def load_cards( cls, path ):

@@ -3,6 +3,7 @@
     "weatherTime": "%-I:%M%p",
     "temperature": "°C",
     "weekdays": [ "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday" ],
+    "weekdays_short": [ "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun" ],
     "months": [ "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct",  "Nov", "Dez" ],
     "light": {
         "color": "Color",
@@ -16,5 +17,10 @@
     "openhabStates": {
         "ON": "On",
         "OFF": "Off"
+    },
+    "cardChart": {
+        "until": "until",
+        "time_templ": "%-I:%M%p",
+        "date_templ": "%d/%m"
     }
 }

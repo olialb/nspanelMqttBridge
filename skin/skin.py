@@ -44,7 +44,7 @@ def key(section, entry):
     """
     if section in SKIN_DB and entry in SKIN_DB[section]:
         val = SKIN_DB[section][entry]
-        if val[:len(ICON_KEY)] == ICON_KEY:
+        if isinstance(val,str) and val[:len(ICON_KEY)] == ICON_KEY:
             return icon((val[len(ICON_KEY):]))
         return val
     LOGGER.debug( "No entry for section '%s' with entry '%s'.", section, entry)

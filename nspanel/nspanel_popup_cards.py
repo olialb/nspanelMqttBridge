@@ -16,7 +16,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 #
 """
-Module implements a MQTT client as bridge to openhab for NsPanels with lovelance ui
+Module implements a MQTT client as bridge to openhab for NsPanels with lovelace ui
 This file contain the differnt cards shown in the panel.
 """
 
@@ -210,7 +210,7 @@ class NSPanelCardPopupThermo(NSPanelCardPopup):
         """
         #Fromat:
         #entityUpdateDetail~{entity_id}~{icon_id}~{icon_color}~{heading}~{slotID}~{mode}~mode1~mode1?mode2?mode3~{heading}~{slotID}~{mode}~mode1~mode1?mode2?mode3~{heading}~{slotID}~{mode}~mode1~mode1?mode2?mode3~
-        #Error in documentation of lovelance ui! There is one additonal parameter after each heading with the slot id!
+        #Error in documentation of lovelace ui! There is one additonal parameter after each heading with the slot id!
 
         payload = "entityUpdateDetail~CardThermo~" + skin.key(self.MY_TYPE, "icon") + '~'+\
                                                      str(name_to_16bit_color(skin.key(self.MY_TYPE, "icon_color")))

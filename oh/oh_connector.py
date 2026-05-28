@@ -21,6 +21,7 @@ Module implements a class to connect with openhab items
 """
 
 import json
+import datetime
 import threading
 import requests
 
@@ -34,31 +35,6 @@ from file_logger import file_logger as FLOGGER
 #
 # helper functions
 #
-def toggle_oh_state( item_type, state, options=None ): #pylint: disable=too-many-branches, too-many-return-statements
-    """
-    toggles the state of an openhab item if possible
-    """
-    if item_type == "Switch":
-        if state == 'ON':
-            return 'OFF'
-        return 'ON'
-    if options is not None:
-        state = str(state) #be shure that state is a string
-        if state in options:
-            #toggle threw the option list
-            index = options.index(state)
-            if index+1 < len(options):
-                return options[index+1]
-            return options[0]
-        if len(options) > 0:
-            return options[0]
-        return None
-    if item_type == "Dimmer":
-        if float(state) == 0:
-            return '100'
-        return '0'
-    return None
-
 def oh_options_to_dict( options ):
     """
     builds a simpe dictionary from value and labels in oh options list
@@ -101,11 +77,21 @@ class OHConnection():
                                           data=state, timeout=self.timeout, verify=False)
     def get_item(self, name):
         """
-        get item json
+        get item json for given item
         """
         #In case of https the certificate from openHAB should not be checked
         return self.session.get( self.url + "/rest/items/" + name, timeout=self.timeout, verify=False)
 
+    def get_persistance(self, name, start, end):
+        """
+        get persistance json for the given item and period
+        """
+        params = { "starttime": start.isoformat(), "endtime": end.isoformat()}
+        #In case of https the certificate from openHAB should not be checked
+        return self.session.get( self.url + "/rest/persistence/items/" + name, timeout=self.timeout,
+                                headers={ "Content-Type": "application/json"},
+                                params=params,
+                                verify=False)
 #
 # class implementation
 #
@@ -130,7 +116,10 @@ class OHItem: #pylint: disable=too-many-instance-attributes
         self.state_int = "None"
         self.state_formated = "None"
         self.type = "None"
+        self.group_type = None
         self.label = "No OH Label"
+        self.unit = ""
+        self.pattern = None
         self.options = {}
 
         self.log.debug("OHItem '%s' constructed!", name)
@@ -147,15 +136,40 @@ class OHItem: #pylint: disable=too-many-instance-attributes
             self.log.error( "Exception while getting item data: %s", error)
             return json.loads( '{ "error": {"message": "OH connection error!"} }' )
 
+    def toggle_oh_state( self,options=None ): #pylint: disable=too-many-branches, too-many-return-statements
+        """
+        toggles the state of an openhab item if possible
+        """
+        if self.type == "Switch" or self.group_type == "Switch":
+            if self.state == 'ON':
+                return 'OFF'
+            return 'ON'
+        if options is not None:
+            state = str(state) #be shure that state is a string
+            if state in options:
+                #toggle threw the option list
+                index = options.index(state)
+                if index+1 < len(options):
+                    return options[index+1]
+                return options[0]
+            if len(options) > 0:
+                return options[0]
+            return None
+        if self.type == "Dimmer" or self.group_type == "Dimmer":
+            if float(self.state) == 0:
+                return '100'
+            return '0'
+        return None
+
     def toggle_item_state(self, local_options=None):
         """
         toggle the state of the item if possible
         """
         self.log.debug("Toggle state of item %s", self.name)
         if local_options is not None:
-            new_state = toggle_oh_state( self.type, self.state, list(local_options.keys()))
+            new_state = self.toggle_oh_state(list(local_options.keys()))
         else:
-            new_state = toggle_oh_state( self.type, self.state, list(self.options.keys()))
+            new_state = self.toggle_oh_state(list(self.options.keys()))
         if new_state is not None and new_state != self.state:
             return self.set_item_state( new_state )
         self.log.warning("Item state %s of item %s can not be toggled", self.state, self.name)
@@ -182,9 +196,15 @@ class OHItem: #pylint: disable=too-many-instance-attributes
         if "error" not in item_json:
             #valid item data receiver
             self.state = item_json["state"]
-            self.type = item_json["type"]
+            self.type = item_json["type"].split(":")[0] #take only the type name without unit of measurements
+            if "unitSymbol" in item_json:
+                self.unit = item_json["unitSymbol"]
+            if "pattern" in item_json:
+                self.pattern = item_json["pattern"]
             if "label" in item_json and item_json["label"] != "":
                 self.label = item_json["label"]
+            if "groupType" in item_json and item_json["groupType"] != "":
+                self.group_type = item_json["groupType"]
             #evaluate options in this item:
             if local_options is not None:
                 self.options = local_options
@@ -219,6 +239,51 @@ class OHItem: #pylint: disable=too-many-instance-attributes
         self.log.error("Could not get item data for item '%s'. Got error: %s", self.name, item_json["error"]["message"])
         return "None"
 
+    def persistance_data_string(self, start_time, end_time):
+        """
+        returns the persitance data for this item in the last period in min
+        """
+        values = []
+
+        persist_json = self.OHConnection.get_persistance( self.name, start_time, end_time ).json()
+
+        if "error" not in persist_json:
+            for value_json in persist_json["data"]:
+                try:
+                    entry = {}
+                    entry["time"] = datetime.datetime.fromtimestamp(value_json["time"]/1e3)
+                    entry["state"] = value_json["state"]
+                    values.append(entry)
+                except (ValueError,TypeError):
+                    self.log.error("Could interpret persistance data for item '%s'. Got error: %s", self.name, str(value_json))
+                    return None
+        else:
+            self.log.error("Could not get persistance data for item '%s'. Got error: %s", self.name, persist_json["error"]["message"])
+            return None
+        return values
+
+    def persistance_data_float(self, start_time, end_time):
+        """
+        returns the persitance data for this item in the last period in min
+        """
+        values = []
+
+        persist_json = self.OHConnection.get_persistance( self.name, start_time, end_time ).json()
+
+        if "error" not in persist_json:
+            for value_json in persist_json["data"]:
+                try:
+                    entry = {}
+                    entry["time"] = datetime.datetime.fromtimestamp(value_json["time"]/1e3)
+                    entry["state"] = float(value_json["state"])
+                    values.append(entry)
+                except (ValueError,TypeError):
+                    self.log.error("Could interpret persistance data for item '%s'. Got error: %s", self.name, str(value_json))
+                    return None
+        else:
+            self.log.error("Could not get persistance data for item '%s'. Got error: %s", self.name, persist_json["error"]["message"])
+            return None
+        return values
 
 class OHItemDB:
     """

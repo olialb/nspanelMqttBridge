@@ -16,11 +16,12 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 #
 """
-Module implements a MQTT client as bridge to openhab for NsPanels with lovelance ui
+Module implements a MQTT client as bridge to openhab for NsPanels with lovelace ui
 This file contain the differnt cards shown in the panel.
 """
 
 #general imports
+import datetime
 
 # project specific imports:
 from nspanel.nspanel_globals import name_to_16bit_color, map_state_oh2panel
@@ -94,7 +95,7 @@ NSPanelCard.card_types[NSPanelCardScreenSaver.MY_TYPE] = NSPanelCardScreenSaver
 
 class NSPanelCardEntities(NSPanelCardWithSlots):
     """
-    Represent an card of type CardEntities in lovlance ui for NSPanels
+    Represent an card of type CardEntities in lovelace ui for NSPanels
     """
     MY_TYPE = NSPanelCard.CARD_ENTITIES
 
@@ -103,7 +104,7 @@ NSPanelCard.card_types[NSPanelCardEntities.MY_TYPE] = NSPanelCardEntities
 
 class NSPanelCardGrid(NSPanelCardWithSlots):
     """
-    Represent an card of type CardEntities in lovlance ui for NSPanels
+    Represent an card of type CardEntities in lovelace ui for NSPanels
     """
     MY_TYPE = NSPanelCard.CARD_GRID
 
@@ -237,6 +238,8 @@ class NSPanelCardQR(NSPanelCardWithSlots):
         """
         return "pageType~"+NSPanelCardQR.MY_TYPE
 
+
+
 #add this card class type to the factory
 NSPanelCard.card_types[NSPanelCardQR.MY_TYPE] = NSPanelCardQR
 
@@ -298,7 +301,7 @@ NSPanelCard.card_types[NSPanelCardQRWifi.MY_TYPE] = NSPanelCardQRWifi
 
 class NSPanelCardAlarm(NSPanelCardWithSlots):
     """
-    Represent an card of type cardAlarm in lovlance ui for NSPanels
+    Represent an card of type cardAlarm in lovelace ui for NSPanels
     """
     MY_TYPE = NSPanelCard.CARD_ALARM
 
@@ -437,7 +440,7 @@ NSPanelCard.card_types[NSPanelCardAlarm.MY_TYPE] = NSPanelCardAlarm
 
 class NSPanelCardThermo(NSPanelCardWithSlots):
     """
-    Represent an card of type cardThermo in lovlance ui for NSPanels
+    Represent an card of type cardThermo in lovelace ui for NSPanels
     """
     MY_TYPE = NSPanelCard.CARD_THERMO
 
@@ -486,7 +489,7 @@ class NSPanelCardThermo(NSPanelCardWithSlots):
                  ~~65504~1~button1~~65504~1~button2~~65504~1~button3~~65504~1~button4~~65504~1~button5~~65504~1~button6~~65504~1~button7~~65504~1~button8
                  ~cl1stTb~state2~~°C~200~1
         """
-        payload = "~CardThermo"
+        payload = "~CardThermo" #Button ID
 
         #Unit
         unit = translate.temperture_unit()
@@ -606,3 +609,256 @@ class NSPanelCardThermo(NSPanelCardWithSlots):
 
 #add this card class type to the factory
 NSPanelCard.card_types[NSPanelCardThermo.MY_TYPE] = NSPanelCardThermo
+
+class NSPanelCardChart(NSPanelCardWithSlots):
+    """
+    Represent an card of type cardChart in lovelace ui for NSPanels
+    """
+    MY_TYPE = NSPanelCard.CARD_CHARD
+    MAX_Y = 196   #Maximal y value allowed in chart
+    MAX_BAR = 50  #maximal number of bars
+    SUPPORTED_NUMBER_TYPES = ["Number", "Dimmer", "Rollershutter"]
+    SUPPORTED_STRING_TYPES = ["String","Switch","Contact"]
+    MAX_STATES = 10 #maximal number of different states shown in chart (for string items)
+
+    def __init__(self, name, group=NSPanelCard.CARDS_HOME):
+        """
+        Constructor of a NSPanel card with slots
+        """
+        super().__init__( name, group )
+        self.bar_max = self.MAX_BAR  #maximal number of bars shown in the chart
+        self.period = 60 #one hour
+        self.past = 0 #from now back
+        self.color = str(name_to_16bit_color(skin.key( self.MY_TYPE, "color")))
+        self.life = False
+
+    def load_card_yaml(self, card_yaml):
+        """
+        Loads the panel definition from yaml dictionary
+        """
+        ret = super().load_card_yaml( card_yaml )
+
+        if "barMax" in card_yaml and card_yaml["barMax"] is not None:
+            try:
+                self.bar_max = min(int(card_yaml["barMax"]), self.MAX_BAR)
+            except ValueError:
+                self.log.error("No valid defined attribute barMax '%s'", card_yaml["barMax"])
+        if self.bar_max > self.MAX_BAR:
+            self.log.error("No valid value for attribute barMax '%s'. Should be max %d", card_yaml["barMax"],self.MAX_BAR)
+            self.bar_max = self.MAX_BAR
+
+        if "period" in card_yaml and card_yaml["period"] is not None:
+            if skin.key("periods", str(card_yaml["period"]).lower()) is not None:
+                self.period = skin.key("periods", str(card_yaml["period"]).lower())
+            else:
+                try:
+                    self.period = int(card_yaml["period"])
+                except ValueError:
+                    self.log.error("No valid defined attribute period '%s'", card_yaml["period"])
+
+        if "past" in card_yaml and card_yaml["past"] is not None:
+            if skin.key("periods", card_yaml["past"]) is not None:
+                self.past = skin.key("periods", card_yaml["past"])
+            else:
+                try:
+                    self.past = int(card_yaml["past"])
+                except ValueError:
+                    self.log.error("No valid defined attribute past '%s'", card_yaml["past"])
+
+        if "color" in card_yaml and card_yaml["color"] is not None:
+            self.color =  str(name_to_16bit_color(card_yaml["color"]))
+
+        if "life" in card_yaml and card_yaml["life"] is not None:
+            if card_yaml["life"] is True:
+                self.life =  True
+
+        return ret
+
+    def name_from_dt(self, time):
+        """
+        create a string from a date time object
+        """
+        now = datetime.datetime.now()
+        if (now-time).days < 1:
+            text = time.strftime(translate.key(self.MY_TYPE, "time_templ"))
+        else:
+            if (now-time).days <= 7:
+                text = translate.weekdays_short(time.weekday())+','+time.strftime(translate.key(self.MY_TYPE, "time_templ"))
+            else:
+                text = time.strftime(translate.key(self.MY_TYPE, "date_templ"))
+        return text
+
+    def create_number_chart_payload(self, y_axis_label,slot, start_time, end_time): #pylint: disable=too-many-locals
+        """
+        create a payload for a number chart with the given values
+        """
+        values = slot.item.persistance_data_float(start_time, end_time)
+        if values is None or len(values) == 0:
+            self.log.error("No persistance or no float data for cardChart '%s' and item '%s'", self.name, slot.item.name)
+            return "~65535~No data/float!~~~"
+
+        #go over all values:
+        entry_count = len(values)
+        if entry_count > self.bar_max:
+            bar_period = (self.period*60) / self.bar_max
+        else:
+            bar_period = (self.period*60) / entry_count
+        #find max_value for scaling
+        max_val = 0
+        min_val = values[0]["state"]
+        for val in values:
+            max_val = max(val["state"], max_val)
+            min_val = min(val["state"], min_val)
+        if y_axis_label is None:
+            if max_val > 1000:
+                y_axis_label = f"{min_val/1000:.3f}-{max_val/1000:.3f}k"+ slot.item.unit
+            else:
+                y_axis_label = f"{min_val:.1f}-{max_val:.1f}"+ slot.item.unit
+            #start chart from 0
+            max_val -= min_val
+        scale = max_val / self.MAX_Y
+
+        #loop to create the bar values
+        bar_index=0
+        i=0
+        bar_average=0
+        chart_bars = []
+        bar_start_time=start_time
+        for val in values:
+            #calculate delta time in this bar
+            bar_average+=val["state"]
+            i+=1
+            delta = (val["time"] - bar_start_time).seconds
+            if val["time"] > bar_start_time and delta > bar_period:
+                while delta > bar_period:
+                    chart_bars.append(str(int(((bar_average/i)-min_val)/scale)))
+                    bar_index+=1
+                    delta -= bar_period
+                bar_average=0
+                i=0
+                bar_start_time = val["time"]
+        if i > 0:
+            #add last entry
+            chart_bars.append(str(int(((bar_average/i)-min_val)/scale)))
+            bar_index+=1
+
+        self.log.debug("Chart '%s' has %d bars. Max value is %f. Scale is %f. Bar period is %f seconds.", self.name, bar_index, max_val, scale, bar_period)
+
+        chart_bars[-1] += "^"+self.name_from_dt(end_time)
+        chart_bars[int(len(chart_bars)/2)] += "^"+translate.key(self.MY_TYPE, "until")
+        chart_bars[0] += "^"+self.name_from_dt(start_time)
+
+        val_payload = ""
+        for chart_bar in chart_bars:
+            val_payload += '~' + chart_bar
+
+        payload =  "~"+self.color+"~"+y_axis_label+"~"+val_payload
+        return payload
+
+    def create_string_chart_payload(self, y_axis_label,slot, start_time, end_time ):
+        """
+        create a payload for a string type chart with the given values
+        """
+        #if slot.item.label is not None:
+        #    y_axis_label = slot.item.label
+
+        values = slot.item.persistance_data_string(start_time, end_time)
+        if values is None or len(values) == 0:
+            self.log.error("No persistance data for cardChart '%s' and item '%s'", self.name, slot.item.name)
+            return "~65535~No data!~~~"
+
+        #go over all values:
+        state_dict = {}
+        num_states = 0
+        state = None
+        time = None
+        total_time = 0
+        for val in values:
+            if time is not None:
+                delta = (val["time"] - time).seconds
+                if state in state_dict:
+                    state_dict[state] += delta
+                else:
+                    state_dict[state] = delta
+                    num_states += 1
+                    if num_states > self.MAX_STATES:
+                        self.log.error("Too many different states '%d' for string chart '%s'. Max is %d", num_states, self.name, self.MAX_STATES)
+                        return "~65535~Too many states!~~~"
+            else:
+                delta = 0
+            total_time += delta
+            time=val["time"]
+            state=val["state"]
+
+        y_axis_label = self.name_from_dt(start_time)+"-"+self.name_from_dt(end_time)
+        val_payload = ""
+        for state, time in state_dict.items():
+            val_payload += '~' + str(round(time/total_time*self.MAX_Y)) + '^' + state+':'+str(round(time/total_time*100)) + '%'
+
+        payload =  "~"+self.color+"~"+y_axis_label+"~"+val_payload
+        return payload
+
+    def create_slots_payload(self):
+        """
+        evaluate the chart card data and create the payload:
+
+        Examples:
+        65535~         color of the chart bars
+        Gas [kWh]~     Label on y axis
+        2:4:6:8:10~    Tick labels on y axis multiplied by 10
+        10~            1. bar value
+        1^X1           2. bar value with label "X1"
+        ~10            3. bar value
+        ~1^X2          4. bar value with label "X2"
+        ~10            5. bar value
+        ~1^X3          6. bar value with label "X3" and so on
+        ....~10~1^X4~10~1^X5~10~1^X6~10~1^X7~10")
+        """
+
+        payload = "~65535~Slot error~~~"
+
+        #Check for valis slot 0
+        if "slot_0" in self.slots and self.slots["slot_0"] is not None and self.slots["slot_0"].slot_class == "ohItem":
+            #slot 1 must contain an item with numbers
+
+            #create y axis label
+            y_axis_label = "no label"
+            slot = self.slots["slot_0"]
+            slot.item.update_item()
+            y_axis_label = None
+            if slot.text is not None:
+                y_axis_label = slot.text
+
+            #get persiatance values
+            end_time =  datetime.datetime.now()-datetime.timedelta(minutes=self.past)
+            start_time = end_time - datetime.timedelta(minutes=self.period)
+            self.log.debug("Get persistence data for chart '%s' and item '%s' from %s to %s", self.name, slot.item.name, start_time, end_time)
+
+            if slot.item.type in self.SUPPORTED_NUMBER_TYPES or slot.item.group_type in self.SUPPORTED_NUMBER_TYPES:
+                 return self.create_number_chart_payload(y_axis_label, slot, start_time, end_time)
+            if slot.item.type in self.SUPPORTED_STRING_TYPES or slot.item.group_type in self.SUPPORTED_STRING_TYPES:
+                 return self.create_string_chart_payload(y_axis_label, slot, start_time, end_time)
+            self.log.error("Unsupported item type '%s', group type '%s' for cardChart '%s'", slot.item.type, slot.item.group_type, self.name)
+            payload = "~65535~OH item type error!~~~"
+        else:
+            self.log.error("No valid slot 1 defined in cardChart '%s'", self.name)
+
+        return payload
+
+    def disconnect(self, nspanel):
+        """
+        disconnect from openhab
+        """
+        if self.life:
+            super().disconnect(nspanel)
+
+    def connect(self, nspanel):
+        """
+        connect to openhab
+        """
+        if self.life:
+            super().connect(nspanel)
+
+
+#add this card class type to the factory
+NSPanelCard.card_types[NSPanelCardChart.MY_TYPE] = NSPanelCardChart

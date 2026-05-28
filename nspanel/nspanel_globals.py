@@ -17,7 +17,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 #
 """
-Module implements a MQTT client as bridge to openhab for NsPanels with lovelance ui
+Module implements a MQTT client as bridge to openhab for NsPanels with lovelace ui
 This file contain some small helper functions
 """
 import math

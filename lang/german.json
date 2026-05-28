@@ -1,8 +1,9 @@
-{ 
+{
     "time": "%H:%M",
     "weatherTime": "%H:%M",
     "temperature": "°C",
     "weekdays": [ "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag" ],
+    "weekdays_short": [ "Mo", "Di", "Mi", "Do", "Fr", "Sa", "So" ],
     "months": [ "Jan", "Feb", "Mrz", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt",  "Nov", "Dez" ],
     "light": {
         "color": "Farbe",
@@ -16,5 +17,10 @@
     "openhabStates": {
         "ON": "An",
         "OFF": "Aus"
+    },
+    "cardChart": {
+        "until": "bis",
+        "time_templ": "%H:%M",
+        "date_templ": "%d.%m.%Y"
     }
 }

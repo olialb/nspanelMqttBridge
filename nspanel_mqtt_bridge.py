@@ -17,7 +17,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 #
 """
-Module implements a MQTT client as bridge to openhab for NsPanels with lovelance ui
+Module implements a MQTT client as bridge to openhab for NsPanels with lovelace ui
 """
 
 #general imports
@@ -41,7 +41,7 @@ CONFIG_FILE = "nspanelMqttBridge.ini"  # name of the ini file
 #
 class NspanelMqttBridge(BMC.BaseMqttClient): # pylint: disable=too-many-instance-attributes
     """
-    Main class of MQTT client for Nspanels with lovelance UI
+    Main class of MQTT client for Nspanels with lovelace UI
     """
 
     def __init__(self, config_file):

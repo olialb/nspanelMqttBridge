@@ -39,6 +39,12 @@ def weekdays(day):
     """
     return TRANSLATE_DB["weekdays"][day]
 
+def weekdays_short(day):
+    """
+    return the short day name as string
+    """
+    return TRANSLATE_DB["weekdays_short"][day]
+
 def months_short(month):
     """
     return the short month name as string
