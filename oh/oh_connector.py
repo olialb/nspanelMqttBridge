@@ -120,6 +120,7 @@ class OHItem: #pylint: disable=too-many-instance-attributes
         self.label = "No OH Label"
         self.unit = ""
         self.pattern = None
+        self.last_state_change = None
         self.options = {}
 
         self.log.debug("OHItem '%s' constructed!", name)
@@ -187,7 +188,7 @@ class OHItem: #pylint: disable=too-many-instance-attributes
             return False
         return True
 
-    def update_item(self, local_options=None):
+    def update_item(self, local_options=None): #pylint: disable=too-many-branches
         """
         update the item if needed and request update from openhab
         """
@@ -205,6 +206,8 @@ class OHItem: #pylint: disable=too-many-instance-attributes
                 self.label = item_json["label"]
             if "groupType" in item_json and item_json["groupType"] != "":
                 self.group_type = item_json["groupType"]
+            if "lastStateChange" in item_json and item_json["lastStateChange"] is not None:
+                self.last_state_change = datetime.datetime.fromtimestamp(item_json["lastStateChange"]/1e3)
             #evaluate options in this item:
             if local_options is not None:
                 self.options = local_options
@@ -252,7 +255,11 @@ class OHItem: #pylint: disable=too-many-instance-attributes
                 try:
                     entry = {}
                     entry["time"] = datetime.datetime.fromtimestamp(value_json["time"]/1e3)
-                    entry["state"] = value_json["state"]
+                    if value_json["state"] in self.options:
+                        #take the value from options dictionary
+                        entry["state"] = self.options[value_json["state"]]
+                    else:
+                        entry["state"] = value_json["state"]
                     values.append(entry)
                 except (ValueError,TypeError):
                     self.log.error("Could interpret persistance data for item '%s'. Got error: %s", self.name, str(value_json))

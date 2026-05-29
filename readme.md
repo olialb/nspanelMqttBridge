@@ -297,6 +297,7 @@ The *type* attribute is the link to the page types in [nspanel-lovelace-ui](http
 | cardQRWifi | 2            | 2              | Card to show QR code Wifi access . Details in section [Card type cardQRWifi](#card-type-cardqrwifi) | ![image](doc/ExampleCardQRWIfiMini.jpg)
 | cardAlarm | 5            | 5              | Card to show a Keypad to activate/deactivate alarm states. Details in section [Card type cardAlarm](#card-type-cardalarm) | ![image](doc/ExampleCardAlarm.jpg)
 | cardThermo | 14             | 14             | Card to control a thermostat. Details in section [Card type cardThermo](#card-type-cardthermo) | ![image](doc/ExampleCardThermoMini.jpg)
+| cardChart | 1             | 1             | Card to show a chart based on the persistance data of an item. Details in section [Card type cardChard](#card-type-cardchart) | ![image](doc/ExampleCardCardMini.jpg)
 
 ## Slot types and classes
 ### Slot class *ohItem*
@@ -317,9 +318,9 @@ Icons are encoded as unicode characters. You find all possible icon unicodes on 
 
 Examples:
 ```yaml
-icon: "\uE1C8"
-icon: \ue1c8
-icon: ab-testing
+icon: ab-testing     #By name
+icon: "\uE1C8"       #As character
+icon: \ue1c8         #As hex value
 ```
 
 ### *ohItem* slot type *switch*
@@ -1096,6 +1097,57 @@ Example card with cooling, popup and all card attributes:
 As you can see attribute *details: True*. The 3 dots can be clicked and a popup with the 3 input_sel items in slot 4-6 can be controlled over it:
 
 ![image](doc/ExampleCardThermoPopup.jpg)
+
+### Card type *cardCart*
+The card type *cardCahrt* can be used to show a bar graph of the openHAB persistance data fo one item.
+
+You can define the following card attributes and one slot with references to an items in openHAB:
+
+| card attribute | default value | optional / Mandetory | Description |
+|--- |--- |--- |---
+| color |	violet  | O | color of the graph
+| period | 60min | O | Periods in minutes which will be shown in the chart. You can also use keywords like: h, 2h, d, 3d, w, m, to define an hour, 2 hours a day, 3days, a week or a month. see also: [openHAB chart periods](https://www.openhab.org/docs/ui/components/oh-chart.html#period)
+|	past | 0min | O | Minutes in the past from where the defined perios starts. You can also use keywords like: 2h, 2M etc. See [openHAB chart periods](https://www.openhab.org/docs/ui/components/oh-chart.html#period)
+| life | False | O | When you set this attribute to True the cahrt is updated when the item change the state. Note: If the state is changes every few seconds this result in the sitation, that the screensaver is not activated.
+
+
+| Slot number | OH item type |slot types| default value | optional / Mandetory | Description |
+|--- |--- |--- |--- |--- |---
+| 1 |	Number, Dimmer, Rollershutter |any|-| M | A char based on numbers will be genarated
+| 1 |	String, Switch, Contact | any |-| M | A chart with a percentage of each state inside the defined period will be generated
+
+Simple example for a number chart:
+
+```yaml
+  - name: PowerChart
+    title: Stromverbrauch
+    type: cardChart
+    slots:
+      - class: ohItem
+        type: number
+        item: Stromzaehler_power
+```
+![image](doc/ExampleCardCard.jpg)
+
+The y axis label is used to show the maximum and minimum values during the period. The minimum value in the chart is scaled that 0 on the y axis is equivalent to the minimum value in the defined period. The labels on the x axis show the start and end of the defined period. The date and time is formated dependant on the language you specified in the ini file.
+
+Another example for a chart with the states of a *Switch* item:
+
+```yaml
+  - name: StateChart
+    title: Küchenlicht
+    type: cardChart
+    period: d
+    past: w
+    color: yellow
+    slots:
+      - class: ohItem
+        type: switch
+        item: Switch_Kueche
+```
+![image](doc/ExampleCardCard2.jpg)
+
+This example shows a yellow chart. You can see how long the kitchen light where active on the same day as today one week ago.
 
 ## Navigation between cards
 This chapter describe the navigation concept between cards of the bridge. There are the following triggers how the bridge navigates between cards.

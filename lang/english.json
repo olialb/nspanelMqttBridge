@@ -16,7 +16,9 @@
     },
     "openhabStates": {
         "ON": "On",
-        "OFF": "Off"
+        "OFF": "Off",
+        "OPEN": "Open",
+        "CLOSED": "Closed"
     },
     "cardChart": {
         "until": "until",

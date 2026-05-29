@@ -619,7 +619,7 @@ class NSPanelCardChart(NSPanelCardWithSlots):
     MAX_BAR = 50  #maximal number of bars
     SUPPORTED_NUMBER_TYPES = ["Number", "Dimmer", "Rollershutter"]
     SUPPORTED_STRING_TYPES = ["String","Switch","Contact"]
-    MAX_STATES = 10 #maximal number of different states shown in chart (for string items)
+    MAX_STATES = 5 #maximal number of different states shown in chart (for string items)
 
     def __init__(self, name, group=NSPanelCard.CARDS_HOME):
         """
@@ -762,10 +762,14 @@ class NSPanelCardChart(NSPanelCardWithSlots):
         #if slot.item.label is not None:
         #    y_axis_label = slot.item.label
 
-        values = slot.item.persistance_data_string(start_time, end_time)
-        if values is None or len(values) == 0:
-            self.log.error("No persistance data for cardChart '%s' and item '%s'", self.name, slot.item.name)
-            return "~65535~No data!~~~"
+        if slot.item.last_state_change < start_time and slot.item.last_state_change < end_time:
+            #no state change in this period. Add current state as value for whole period
+            values = [{"state": slot.item.state_formated, "time": start_time}, {"state": slot.item.state_formated, "time": end_time}]
+        else:
+            values = slot.item.persistance_data_string(start_time, end_time)
+            if values is None or len(values) == 0:
+                self.log.error("No persistance data for cardChart '%s' and item '%s'", self.name, slot.item.name)
+                return "~65535~No data!~~~"
 
         #go over all values:
         state_dict = {}
@@ -824,7 +828,7 @@ class NSPanelCardChart(NSPanelCardWithSlots):
             #create y axis label
             y_axis_label = "no label"
             slot = self.slots["slot_0"]
-            slot.item.update_item()
+            slot.item.update_item(slot.options)
             y_axis_label = None
             if slot.text is not None:
                 y_axis_label = slot.text
