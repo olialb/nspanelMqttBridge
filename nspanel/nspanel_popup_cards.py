@@ -213,7 +213,7 @@ class NSPanelCardPopupThermo(NSPanelCardPopup):
         #Error in documentation of lovelace ui! There is one additonal parameter after each heading with the slot id!
 
         payload = "entityUpdateDetail~CardThermo~" + skin.key(self.MY_TYPE, "icon") + '~'+\
-                                                     str(name_to_16bit_color(skin.key(self.MY_TYPE, "icon_color")))
+                                                     str(name_to_16bit_color(skin.key(self.MY_TYPE, "iconColor")))
 
         #there are 3 entries for input_sel items in the popup card
         for i in range(4):
@@ -247,3 +247,4 @@ class NSPanelCardPopupThermo(NSPanelCardPopup):
 
 #add this card class type to the factory
 NSPanelCard.card_types[NSPanelCardPopupThermo.MY_TYPE] = NSPanelCardPopupThermo
+

@@ -355,7 +355,7 @@ class OHItemDB:
                                 self.log.debug("Listener thread Item event for item in card definition: %s", topic_data[2])
                                 for callback in item.update_callbacks:
                                     #inform listners about something has changed
-                                    callback()
+                                    callback(item)
                 with self.listner:
                     if self.listner_active is False:
                         #stop listening

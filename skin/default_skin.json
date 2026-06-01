@@ -30,12 +30,21 @@
     },
     "cardAlarm": {
         "icon": "icon=security",
-        "icon_color": "red",
+        "iconColor": "red",
         "flashing": "disable"
     },
     "cardQR": {
         "icon1": "icon=link-variant",
         "icon_color_1": "yellow"
+    },
+    "cardGrid": {
+        "iconSize": 4
+    },
+    "cardGrid2": {
+        "iconSize": 4
+    },
+    "statusCard": {
+        "iconSize": 1
     },
     "cardQRWifi": {
         "icon1": "\uF6C5",
@@ -45,44 +54,50 @@
     },
     "popupThermo": {
         "icon": "\uEF53",
-        "icon_color": "green"
+        "iconColor": "green"
     },
     "text": {
         "icon": "icon=gesture-tap-button",
-        "iconColor" : "white" },
+        "iconColor" : "white"
+    },
     "input_sel": {
         "icon": "icon=gesture-tap-button",
-        "iconColor" : "white" },
+        "iconColor" : "white"
+    },
     "button": {
         "icon": "icon=gesture-tap-button",
-        "iconColor" : "white" },
+        "iconColor" : "white"
+    },
     "number": {
         "icon": "icon=gesture-tap-button",
-        "iconColor" : "white" },
+        "iconColor" : "white"
+    },
     "navigate": {
         "icon": "icon=menu-open",
-        "iconColor" : "white" },
+        "iconColor" : "white"
+    },
     "switch": {
-        "icon_color": "white",
+        "iconColor": "white",
         "icon": "icon=checkbox-blank-circle-outline",
         "color_on": "red",
         "color_off": "grey"
     },
     "light": {
-        "icon_color": "white",
+        "iconColor": "white",
         "icon": "icon=lightbulb-outline",
         "color_on": "yellow",
         "color_off": "grey"
     },
     "shutter": {
-        "icon_color": "green",
+        "iconColor": "green",
         "icon": "icon=window-shutter",
         "shutter_stop": "\ue666",
         "shutter_up": "\uf25b",
         "shutter_down": "\uf259",
         "tilt_stop": "\ue666",
         "tilt_up": "\ue9b6",
-        "tilt_down": "\ue9c4"
+        "tilt_down": "\ue9c4",
+        "iconSize" : 1
     },
     "openweathermap": {
         "200":"weather-lightning-rainy",
@@ -264,5 +279,30 @@
         "8y" : 4204800,
         "9y" : 4730400,
         "10y" : 5256000
-    }
+    },
+    "popupNotify" : {
+        "fontSize" : 1,
+        "icon" : "icon=alert",
+        "iconColor" : "yellow",
+        "headingColor" : "white",
+        "textColor" : "white",
+        "b1Color": "red",
+        "b2Color": "green",
+        "timeout": 15
+    },
+    "iconSize" : {
+        "small": 1,
+        "medium-no-icons": 2,
+        "medium": 3,
+        "large": 4
+    },
+    "iconSizeRange" : [1,2,3,4],
+    "fontSize" : {
+        "small": 1,
+        "medium-no-icons": 2,
+        "medium": 3,
+        "large": 4,
+        "huge": 5
+    },
+    "fontSizeRange" : [1,2,3,4,5]
 }

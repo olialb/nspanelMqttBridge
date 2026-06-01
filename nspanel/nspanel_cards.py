@@ -111,11 +111,26 @@ class NSPanelCardGrid(NSPanelCardWithSlots):
 #add this card class type to the factory
 NSPanelCard.card_types[NSPanelCardGrid.MY_TYPE] = NSPanelCardGrid
 
+class NSPanelCardGrid2(NSPanelCardWithSlots):
+    """
+    Represent an card of type CardEntities in lovelace ui for NSPanels
+    """
+    MY_TYPE = NSPanelCard.CARD_GRID2
+
+#add this card class type to the factory
+NSPanelCard.card_types[NSPanelCardGrid2.MY_TYPE] = NSPanelCardGrid2
+
 class NSPanelStatusCard(NSPanelCardWithSlots):
     """
     Represent an card of type "statusCard"
     """
     MY_TYPE = NSPanelCard.CARD_STATUS
+
+    def __init__(self, name, group=NSPanelCard.CARDS_HOME):
+        """
+        Constructor of a NSPanel status card with slots
+        """
+        super().__init__( name, NSPanelCard.STATUS_CARD_GROUP )
 
     def create_status_payload(self, status_left, status_right):
         """
@@ -143,13 +158,17 @@ class NSPanelStatusCard(NSPanelCardWithSlots):
                 payload = payload + "~" + icon + '~' + color
         else:
             payload = payload + "~~"
-        return payload
 
-    def item_update_callback(self):
+        #The behavior of icon size in status update is strange. The size is only smaller when the size payload is not send
+        if self.icon_size == 1:
+            return payload
+        return payload + "~" + str(self.icon_size) + "~" + str(self.icon_size)
+
+    def item_update_callback(self, item):
         """
         this callback is called from OHItensDB if the state of an item in this card is updated
         """
-        self.log.debug("Call from item listner of state card '%s'. Item state in card has changed", self.name)
+        self.log.debug("Call from item listner of state card '%s'. Item '%s' state in card has changed", self.name, item.name)
         for panel in self.connected_panels.values():
             panel.update_status()
 
@@ -338,7 +357,7 @@ class NSPanelCardAlarm(NSPanelCardWithSlots):
 
         #Build the top icon:
         icon = skin.key(self.MY_TYPE, "icon")
-        icon_color = str(name_to_16bit_color(skin.key(self.MY_TYPE, "icon_color")))
+        icon_color = str(name_to_16bit_color(skin.key(self.MY_TYPE, "iconColor")))
         flash = skin.key(self.MY_TYPE, "flashing")
 
         if "slot_2" in self.slots and self.slots["slot_2"] is not None and self.slots["slot_2"].slot_class == "ohItem":
@@ -839,9 +858,9 @@ class NSPanelCardChart(NSPanelCardWithSlots):
             self.log.debug("Get persistence data for chart '%s' and item '%s' from %s to %s", self.name, slot.item.name, start_time, end_time)
 
             if slot.item.type in self.SUPPORTED_NUMBER_TYPES or slot.item.group_type in self.SUPPORTED_NUMBER_TYPES:
-                 return self.create_number_chart_payload(y_axis_label, slot, start_time, end_time)
+                return self.create_number_chart_payload(y_axis_label, slot, start_time, end_time)
             if slot.item.type in self.SUPPORTED_STRING_TYPES or slot.item.group_type in self.SUPPORTED_STRING_TYPES:
-                 return self.create_string_chart_payload(y_axis_label, slot, start_time, end_time)
+                return self.create_string_chart_payload(y_axis_label, slot, start_time, end_time)
             self.log.error("Unsupported item type '%s', group type '%s' for cardChart '%s'", slot.item.type, slot.item.group_type, self.name)
             payload = "~65535~OH item type error!~~~"
         else:
@@ -866,3 +885,154 @@ class NSPanelCardChart(NSPanelCardWithSlots):
 
 #add this card class type to the factory
 NSPanelCard.card_types[NSPanelCardChart.MY_TYPE] = NSPanelCardChart
+
+class NSPanelpopupNotify(NSPanelCardWithSlots):
+    """
+    Represent an card of type popupNotify in lovelace ui for NSPanels
+    """
+    MY_TYPE = NSPanelCard.CARD_POPUP_NOTIFY
+
+    def __init__(self, name, group=NSPanelCard.NOTIFY_CARD_GROUP):
+        """
+        Constructor of a NSPanel card with slots
+        """
+        super().__init__( name, NSPanelCard.NOTIFY_CARD_GROUP )
+        self.font_size = skin.key(self.MY_TYPE, "fontSize")
+        self.heading_color = str(name_to_16bit_color(skin.key(self.MY_TYPE, "headingColor")))
+        self.text_color = str(name_to_16bit_color(skin.key(self.MY_TYPE, "textColor")))
+        self.b1_color = str(name_to_16bit_color(skin.key(self.MY_TYPE, "b1Color")))
+        self.b2_color = str(name_to_16bit_color(skin.key(self.MY_TYPE, "b2Color")))
+        self.b1_text = translate.key(self.MY_TYPE, "b1Text")
+        self.b2_text = translate.key(self.MY_TYPE, "b2Text")
+        self.timeout = skin.key(self.MY_TYPE, "timeout")
+
+    def load_card_yaml(self, card_yaml):
+        """
+        Loads the panel definition from yaml dictionary
+        """
+        ret = super().load_card_yaml( card_yaml )
+
+        if "fontSize" in card_yaml and card_yaml["fontSize"] is not None:
+            if skin.key("fontSize", str(card_yaml["fontSize"]).lower()) is not None and card_yaml["fontSize"] in NSPanelCard.FONT_SIZES:
+                self.font_size = skin.key("fontSize", str(card_yaml["fontSize"]).lower())
+            else:
+                if card_yaml["fontSize"] in skin.key("fontSizeRange"):
+                    self.font_size = card_yaml["fontSize"]
+                else:
+                    self.log.error("No valid value for attribute fontSize '%s'. Use default instead '%d'.", card_yaml["fontSize"],self.font_size)
+
+        if "HeadingColor" in card_yaml and card_yaml["HeadingColor"] is not None:
+            self.heading_color =  str(name_to_16bit_color(card_yaml["HeadingColor"]))
+        if "TextColor" in card_yaml and card_yaml["TextColor"] is not None:
+            self.text_color =  str(name_to_16bit_color(card_yaml["TextColor"]))
+        if "B1Color" in card_yaml and card_yaml["B1Color"] is not None:
+            self.b1_color =  str(name_to_16bit_color(card_yaml["B1Color"]))
+        if "B2Color" in card_yaml and card_yaml["B2Color"] is not None:
+            self.b2_color =  str(name_to_16bit_color(card_yaml["B2Color"]))
+        if "B1Text" in card_yaml and card_yaml["B1Text"] is not None:
+            self.b1_text =  card_yaml["B1Text"]
+        if "B2Text" in card_yaml and card_yaml["B2Text"] is not None:
+            self.b2_text =  card_yaml["B2Text"]
+
+        #connect all existing panels to the card to receive events if this card is active
+        for panel in NSPanelCard.all_panels.values():
+            self.connect(panel)
+        return ret
+
+    def is_active(self):
+        """
+        check if this card is active. A popupNotify card is active if the switch in slot 0 is on
+        """
+        if "slot_0" in self.slots and self.slots["slot_0"] is not None and self.slots["slot_0"].slot_class == "ohItem":
+            #slot 0 must contain a switch item
+            slot = self.slots["slot_0"]
+            slot.item.update_item()
+            if slot.item.state == "ON":
+                return True
+        return False
+
+
+    def get_notification_text(self):
+        """
+        get the notification text for this card. The text is taken from the state of the item in slot 1 if it exists. Otherwise a default text is returned.
+        """
+        text = "Notification text slot missing."
+        if "slot_1" in self.slots and self.slots["slot_1"] is not None and self.slots["slot_1"].slot_class == "ohItem":
+            #slot 1 exist take the current state as warning text
+            slot = self.slots["slot_1"]
+            slot.item.update_item()
+            text = slot.item.state_formated
+        return text
+
+    def create_update_payload(self):
+        """
+        Create popup Notify card payload
+        """
+        #Format:
+        #entityUpdateDetail~*internalName*~*tHeading*~65535~*b1*~65535~*b2*~65535~Dies ist\r\nein sehr\r\nlanger text~65535~10~4~A~65535"
+
+        payload = f"entityUpdateDetail~{self.MY_TYPE}~{self.title}~{self.heading_color}"
+        payload += f"~{self.b1_text}~{self.b1_color}~{self.b2_text}~{self.b2_color}"
+
+        icon_color = str(name_to_16bit_color(skin.key(self.MY_TYPE, "iconColor")))
+        icon= skin.key(self.MY_TYPE, "icon")
+        if "slot_0" in self.slots and self.slots["slot_0"] is not None and self.slots["slot_0"].slot_class == "ohItem":
+            #slot 0 must contain a switch item
+            slot = self.slots["slot_0"]
+            if "icon" in slot.json_data:
+                icon = slot.icon
+            if "iconColor" in slot.json_data:
+                icon_color = slot.icon_color
+        text = self.get_notification_text()
+
+        payload += f"~{text}~{self.text_color}~{self.timeout}~{self.font_size}~{icon}~{icon_color}"
+
+        return payload
+
+    def item_update_callback(self, item):
+        """
+        this callback is called from OHItensDB if the state of an item in this card is updated
+        """
+        self.log.debug("Call from item listner of state card '%s'. Item '%s' state in card has changed", self.name, item.name)
+        if self.is_active():
+            self.log.debug("Popup notify card '%s' is active. Send notification to panels.", self.name)
+            text = self.get_notification_text()
+            for panel in NSPanelCard.all_panels.values():
+                panel.send_notification(self.title, text)
+        else:
+            self.log.debug("Popup notify card '%s' is not active. No notification sent to panel.", self.name)
+
+    def event_popup(self, params, active_notification):
+        """
+        this method is called when a panel with this card is leaving. We disconnect the item listener to avoid unnecessary calls if the card is not active
+        """
+        self.log.debug("Leave popup notify card '%s'.", self.name)
+        #check if any notification card is active.
+        if params[0] not in ["notifyAction", "bexit"]:
+            self.log.warning("Unknown event '%s' for popup notify card.", params[0])
+            return
+        if len(params) > 1 and params[1] in ["yes", "no"]:
+            if "slot_2" in self.slots and self.slots["slot_2"] is not None and self.slots["slot_2"].slot_class == "ohItem":
+                #slot 2 must contain a string item
+                slot = self.slots["slot_2"]
+                if params[1] == "yes":
+                    slot.item.set_item_state(self.b2_text)
+                    self.log.debug("Set item '%s' to '%s' from popup notify card '%s'.", slot.item.name, self.b2_text, self.name)
+                else:
+                    slot.item.set_item_state(self.b1_text)
+                    self.log.debug("Set item '%s' to '%s' from popup notify card '%s'.", slot.item.name, self.b1_text, self.name)
+            else:
+                if "slot_0" in self.slots and self.slots["slot_0"] is not None and self.slots["slot_0"].slot_class == "ohItem" and params[1] == "yes":
+                    #slot 0 must contain a string item
+                    self.slots["slot_0"].item.set_item_state("OFF")
+
+        notify_count = 0
+        for card in NSPanelCard.cards_by_group[NSPanelCard.NOTIFY_CARD_GROUP].values():
+            if card.is_active():
+                notify_count += 1
+                if notify_count > active_notification:
+                    #navigate to the notification card
+                    return card
+
+#add this card class type to the factory
+NSPanelCard.card_types[NSPanelpopupNotify.MY_TYPE] = NSPanelpopupNotify

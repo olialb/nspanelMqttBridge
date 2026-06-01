@@ -272,6 +272,7 @@ Reserved *group* names:
 | ---       | ---
 | *home*    | group *home* is the default group after startup. It will be used as default *home* group  for all panels
 | *\_status_cards\_* | group *\_status_cards\_* contains all cards of type [statusCard](#status-slots-of-screensavers)
+| *\_notify_cards\_* | group *\_notify_cards\_* contains all cards of type [popupNotify](#card-popup-notify)
 | {*panelName*} | In case you give a group the name of a one of your panels, this group will be the home group for that panel.
 
 Reserved *card* names:
@@ -291,8 +292,9 @@ The *type* attribute is the link to the page types in [nspanel-lovelace-ui](http
 | Card type | max. number of slots in EU NSPanel | max. number of slots in US NSPanel |Description | Example |
 | ---       | ---             |---          |--- |---|
 | screensaver | 6             | 6             | Screen saver card with weather content. Details in section [Card type *screensaver*](#card-type-screensaver) | ![image](doc/ExampleScreensaverMini.jpg)|
-| cardEntities | 4            | 6              | Card with the slots shown as a list. Details in section [Card type *cardEntities*](#card-types-cardentities-and-cardgrid)| ![image](doc/ExampleEntitiesCardMini.jpg) ![image](doc/ExampleEntitiesCardUSPort.jpg) |
-| cardGrid | 6             | 6             | Card with 6 slots as a 2x3 icon grid. Details in section [Card type *cardGrid*](#card-types-cardEntities-and-cardGrid) | ![image](doc/ExampleGridCardMini.jpg)
+| cardEntities | 4            | 6              | Card with the slots shown as a list. Details in section [Card type *cardEntities*](#card-type-cardentities-cardgrid-and-cardgrid2)| ![image](doc/ExampleEntitiesCardMini.jpg) ![image](doc/ExampleEntitiesCardUSPort.jpg) |
+| cardGrid | 6             | 6             | Card with 6 slots as a 2x3 icon grid. Details in section [Card type *cardGrid*](#card-type-cardentities-cardgrid-and-cardgrid2) | ![image](doc/ExampleGridCardMini.jpg)
+| cardGrid2 | 8             | 8             | Card with 8 slots as a 2x4 icon grid. Details in section [Card type *cardGrid2*](#card-type-cardentities-cardgrid-and-cardgrid2) | ![image](doc/ExampleGridCardMini.jpg)
 | cardQR | 1             | 1             | Card to show QR code for a weblink . Details in section [Card type cardQR](#card-type-cardqr) | ![image](doc/ExampleCardQRMini.jpg)
 | cardQRWifi | 2            | 2              | Card to show QR code Wifi access . Details in section [Card type cardQRWifi](#card-type-cardqrwifi) | ![image](doc/ExampleCardQRWIfiMini.jpg)
 | cardAlarm | 5            | 5              | Card to show a Keypad to activate/deactivate alarm states. Details in section [Card type cardAlarm](#card-type-cardalarm) | ![image](doc/ExampleCardAlarm.jpg)
@@ -630,14 +632,27 @@ Examples:
 
 ## Card types
 
-### Card type *cardEntities* and *cardGrid*
-The two card types *cardEntities* and *cardGrid* are the main card types to show the state of *ohItems* and to change them. Both are configured in the same way. *cardEntities* shows a list of maximal 4 slots:
+### Card type *cardEntities*, *cardGrid* and *cardGrid2*
+The card types *cardEntities*, *cardGrid* and *cardGrid2* are the main card types to show the state of *ohItems*. You can alos change the states of an item over them. All are configured in the same way.
+
+*cardEntities* shows a list of maximal 4 slots:
 
 ![image](doc/ExampleEntitiesCard.jpg)
 
-*cardGrid* shows a grid of 2x3 slots.
+*cardGrid* shows a grid of 2x3 slots and *cardGrid2* a grid of 2x4 slots.
+
+There is one additonal card attribute to control the size of the icons in grid cards:
+| card attribute | default value from skin file | optional / Mandetory | Description |
+|--- |--- |--- |---
+|iconSize | large | O | icon size: *small*, *medium-no-icons*, *medium*, *large* (for the fonts 1,2,3,4 from here [UI fonts](https://github.com/joBr99/nspanel-lovelace-ui/wiki/cardgrid-entity-parameter#angaben-f%C3%BCr-label))
+
+Example cardGrid:
 
 ![image](doc/ExampleGridCard.jpg)
+
+Example cardGrid2 with *medium* size icons:
+
+![image](doc/ExampleGridCard2.jpg)
 
 ### Card type *screensaver*
 A *screensaver* card is active after a timeout which you can configure in the ini file. You can assign the default screensaver to a dedicated panel over the panel name with extention *.screensaver* (*name: panelname.scrennsaver*) Than this card will be used as *screensaver* card for the panel with name *panelname*
@@ -772,14 +787,19 @@ Each screensaver as two additinonal status slots on th upper left and right corn
 
 By default a red and yellow warning icon can be shown. You can switch them on and of by using the wwo MQTT topics [status_left](#status_left-switch) and [status_right](#status_right-switch)
 
-You can also show the status of openHAB items in this two slots. For this you need to define a special card of type *statusCard* in group *_status_cards_*:
+You can also show the status of openHAB items in this two slots. For this you need to define a special card of type *statusCard*. The *statusCard* has one additonal card attribute:
+
+There is one additonal card attribute to control the size of the icons in grid cards:
+| card attribute | default value from skin file | optional / Mandetory | Description |
+|--- |--- |--- |---
+|iconSize | small | O | icon size: *small*, *medium* (for the fonts 1,3 from here [UI fonts](https://github.com/joBr99/nspanel-lovelace-ui/wiki/cardgrid-entity-parameter#angaben-f%C3%BCr-label))
+
 
 ```yaml
 cards:
-  - name: MyStateCard   #free name of the state card. Rename it to "_default_status_" to make this card the default state card
-    group: _status_cards_   #all state statusCards must be in the group _status_cards_
+  - name: MyStateCard   #free name of the status card. Rename it to "_default_status_" to make this card the default state card
     type: statusCard
-    slots: #2 slots must be defined in a stateCard
+    slots: #2 slots must be defined in a statusCard
       - class: ohItem #left upper state slot
         text: =itemState #the state of the item will be shown as text after the icon
         type: light
@@ -791,7 +811,7 @@ cards:
         icon: heat-wave
         item: H_Schlafzimmer_Temperatur
 ```
-You can activate this card over an MQTT command to [status_right](#status_card-string) or you rename the card to *_default_status_* than your statuCard is active by default:
+You can activate this card over an MQTT command to [status_card](#status_card-string) or you rename the card to *_default_status_* than your statusCard is active by default:
 
 ![image](doc/screensaverStatusSlots2.jpg)
 
@@ -1199,6 +1219,30 @@ Imagine you have the following requirements for your setup
 
 Overview of this configuration
 ![image](doc/navigationExample2.png)
+
+## Notifications
+Addtional to the static cards you can also send notifications from openHAB to the panel
+
+### Simple notification
+You can send a notification text to the topic [notification](#notification-string). This text is shown in the *screensaver* and lost when you leave the screensaver
+
+### Notification cards
+For more persistant notifications you can define notification cards of type *popupNotify*. This cards show the content of an openHAB *String* item and can be activated and deactivated over an openHAB *Switch" item.
+
+| card attribute | default value from skin file | optional / Mandetory | Description |
+|--- |--- |--- |---
+| title |	"Notification"  | O | Shown as title in the card
+| fontSize | 2 | O | font size of the notification text. Values from 1-5 are allowd see also here [Label Parameter](https://github.com/joBr99/nspanel-lovelace-ui/wiki/cardgrid-entity-parameter#angaben-f%C3%BCr-label)
+|	past | 0min | O | Minutes in the past from where the defined perios starts. You can also use keywords like: 2h, 2M etc. See [openHAB chart periods](https://www.openhab.org/docs/ui/components/oh-chart.html#period)
+| life | False | O | When you set this attribute to True the cahrt is updated when the item change the state. Note: If the state is changes every few seconds this result in the sitation, that the screensaver is not activated.
+
+
+| Slot number | OH item type |slot types| default value | optional / Mandetory | Description |
+|--- |--- |--- |--- |--- |---
+| 1 |	Switch | switch |-| M | The switch item in openHAB to activate and deactivate this notification.
+| 1 |	String | text   |-| M | String which is shown as notification text. You can add line brakes with "\r\n"
+
+
 
 ## Exposed MQTT topics and usage
 

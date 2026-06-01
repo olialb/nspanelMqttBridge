@@ -53,8 +53,6 @@ class NSPanelCardSlot(): #pylint: disable=too-many-instance-attributes
     SLOT_INPUT_SEL = "input_sel"
     SLOT_OPENWEATHERMAP = "openweathermap"
 
-    #Slot types
-    #slot_classes = ["ohItem", "navigate", "None"]
     #translator
     translator = None
     #all classes which ar instantiable:
@@ -112,7 +110,7 @@ class NSPanelCardSlot(): #pylint: disable=too-many-instance-attributes
         if self.text is None:
             self.text = "-text undefined-"
         payload = '~' + self.type + "~" + self.name + "~"
-        payload = payload + self.icon + "~" + self.icon_color + "~"
+        payload = payload + self.icon+self.card.icon_size_payload() + "~" + self.icon_color + "~"
         payload = payload + self.text + "~"
         return payload
 
@@ -175,7 +173,7 @@ class NsPanelCardSlotNavigation( NSPanelCardSlot ):
         if self.text is None:
             self.text = self.nav_to
         payload = '~button~' + self.name + "~"
-        payload = payload + self.icon + "~" + self.icon_color + "~"
+        payload = payload + self.icon+self.card.icon_size_payload() + "~" + self.icon_color + "~"
         payload = payload + self.text + "~" + skin.key("default", "linkIcon")
         self.log.debug("Navigate payload created: %s", payload)
         return payload
@@ -250,7 +248,7 @@ class NsPanelCardSlotOhItem( NSPanelCardSlot ):
                 text = stateText
 
         payload = '~' + self.type + "~" + self.name + "~"
-        payload = payload + self.icon + "~" + self.icon_color + "~"
+        payload = payload + self.icon+self.card.icon_size_payload() + "~" + self.icon_color + "~"
         payload = payload + text + "~"
         return payload
 

@@ -38,15 +38,18 @@ ICON_KEY = "icon="
 
 LOGGER = FLOGGER.create_log_handler("Skin")
 
-def key(section, entry):
+def key(section, entry=None):
     """
     Returns one entry form the data base
     """
-    if section in SKIN_DB and entry in SKIN_DB[section]:
-        val = SKIN_DB[section][entry]
-        if isinstance(val,str) and val[:len(ICON_KEY)] == ICON_KEY:
-            return icon((val[len(ICON_KEY):]))
-        return val
+    if section in SKIN_DB:
+        if entry is None:
+            return SKIN_DB[section]
+        if entry in SKIN_DB[section]:
+            val = SKIN_DB[section][entry]
+            if isinstance(val,str) and val[:len(ICON_KEY)] == ICON_KEY:
+                return icon((val[len(ICON_KEY):]))
+            return val
     LOGGER.debug( "No entry for section '%s' with entry '%s'.", section, entry)
     return None
 

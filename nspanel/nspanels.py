@@ -81,8 +81,6 @@ class NSPanel(): #pylint: disable=too-many-instance-attributes, too-many-public-
     CMD_TIMEOUT="timeout~"
     CMD_PAGETYPE="pageType~"
 
-    STATUS_CARD_GROUP = "_status_cards_"
-
     LOG = FLOGGER.create_log_handler("NSPanel")
 
     def __init__(self, client, name, topic ):
@@ -107,6 +105,8 @@ class NSPanel(): #pylint: disable=too-many-instance-attributes, too-many-public-
         self._time_cmd_timeout_value = client.cmd_timeout_value
         #cyclic processing scennsaver update
         self.saver_tick_counter = client.saver_update
+        #curently active notification card. 0 for none, 1 for first is active
+        self.active_notification = 0
 
         #logger for this class
         self.log = FLOGGER.create_log_handler(f"NSPanel:{name.upper()}" )
@@ -282,29 +282,36 @@ class NSPanel(): #pylint: disable=too-many-instance-attributes, too-many-public-
         """
         msg = msg.strip().lower()
 
-        if msg not in NSPanelCard.cards_by_group[self.STATUS_CARD_GROUP]:
+        if msg not in NSPanelCard.cards_by_group[NSPanelCard.STATUS_CARD_GROUP]:
             if msg != NSPanelCard.CARD_DEFAULT_STATUS:
                 self.log.warning("Unknown card in command payload '%s' in mqtt message for '%s'", msg, my_config["topic"])
                 return
         else:
-            if NSPanelCard.cards_by_group[self.STATUS_CARD_GROUP][msg].type != NSPanelCard.CARD_STATUS:
+            if NSPanelCard.cards_by_group[NSPanelCard.STATUS_CARD_GROUP][msg].type != NSPanelCard.CARD_STATUS:
                 self.log.warning("Status card '%s' in mqtt message for '%s' should be of type stausCard", msg, my_config["topic"])
                 return
 
 
         #disconnect old status card:
-        if self.get_status_card() in NSPanelCard.cards_by_group[self.STATUS_CARD_GROUP]:
-            NSPanelCard.cards_by_group[self.STATUS_CARD_GROUP][self.get_status_card()].disconnect(self)
+        if self.get_status_card() in NSPanelCard.cards_by_group[NSPanelCard.STATUS_CARD_GROUP]:
+            NSPanelCard.cards_by_group[NSPanelCard.STATUS_CARD_GROUP][self.get_status_card()].disconnect(self)
 
         #set new value in panel
         self.mqtt.set_status_card( self.name, msg )
 
         #connect the status card
-        if self.get_status_card() in NSPanelCard.cards_by_group[self.STATUS_CARD_GROUP]:
-            NSPanelCard.cards_by_group[self.STATUS_CARD_GROUP][self.get_status_card()].connect(self)
+        if self.get_status_card() in NSPanelCard.cards_by_group[NSPanelCard.STATUS_CARD_GROUP]:
+            NSPanelCard.cards_by_group[NSPanelCard.STATUS_CARD_GROUP][self.get_status_card()].connect(self)
 
         self.update_status()
         self.log.info("Status card changed to '%s' for panel '%s'.", msg, self.name)
+
+    def send_notification(self, heading, notify_text):
+        """send a notification to the panel"""
+        payload = "notify~"+heading+"~"+notify_text
+        self.send_panel_cmd(payload)
+        self.log.info("Send notification with heading '%s' and text '%s' to panel '%s'.", heading, notify_text, self.name)
+
 
     def set_notification_mqtt(self, my_config, msg):
         """
@@ -319,9 +326,7 @@ class NSPanel(): #pylint: disable=too-many-instance-attributes, too-many-public-
         heading = notify_text[0]
         notify_text = notify_text[1]
 
-        payload = "notify~"+heading+"~"+notify_text
-        self.send_panel_cmd(payload)
-        self.log.info("Send notification with heading '%s' and text '%s' to panel '%s'.", heading, notify_text, self.name)
+        self.send_notification(heading, notify_text)
 
         #publish the new value
         msg = heading+"|"+notify_text
@@ -352,6 +357,7 @@ class NSPanel(): #pylint: disable=too-many-instance-attributes, too-many-public-
         #event,buttonPress2,slot_1,down
         #event,buttonPress2,slot_1,tiltOpen
         #event,buttonPress2,slot_2,mode-Test,1
+        #event,buttonPress2,popupNotify,notifyAction,yes
         if RESULT_CUSTOM_RECV in js_payload: #pylint: disable=too-many-nested-blocks
             #seams to be a relavalnt message
             self.log.debug("Message received from Panel: %s topic: %s", js_payload[RESULT_CUSTOM_RECV], my_config["topic"])
@@ -388,6 +394,13 @@ class NSPanel(): #pylint: disable=too-many-instance-attributes, too-many-public-
                         if params[4] >= "2":
                             #user want to leave the screensaver screen. Navigate to default page
                             self.log.debug("Leave Screensaver card.")
+                            #check if any notification card is active.
+                            for card in NSPanelCard.cards_by_group[NSPanelCard.NOTIFY_CARD_GROUP].values():
+                                if card.is_active():
+                                    #navigate to the notification card
+                                    self.navigate(card)
+                                    self.active_notification=1
+                                    return
                             #navigate to home card for this panel in current group
                             card = NSPanelCard.get_card(self.current_group, self.name)
                             if card is None:
@@ -402,7 +415,19 @@ class NSPanel(): #pylint: disable=too-many-instance-attributes, too-many-public-
                         self.log.debug("Leave popup card '%s.", params[2])
                         self.navigate( self.current_card )
                         return
-                    #check for all other card events
+                    if len(params) >= 4 and params[2] in ['popupNotify']:
+                        card = self.current_card.event_popup(params[3:], self.active_notification)
+                        if card is not None:
+                            self.navigate( card )
+                            self.active_notification += 1
+                            return
+                        #navigate to home card for this panel in current group
+                        card = NSPanelCard.get_card(self.current_group, self.name)
+                        if card is None:
+                            card = NSPanelCard.get_first_card(self.current_group)
+                        self.navigate(card)
+                        return
+                #check for all other card events
                     if len(params) >= 4:
                         #send the now state over rest api
                         new_card = self.current_card.event_button_press( params[2], params[3:], self )
@@ -534,8 +559,8 @@ class NSPanel(): #pylint: disable=too-many-instance-attributes, too-many-public-
         """
         send status update command to panel
         """
-        if self.get_status_card() in NSPanelCard.cards_by_group[NSPanel.STATUS_CARD_GROUP]:
-            status_card = NSPanelCard.cards_by_group[NSPanel.STATUS_CARD_GROUP][self.get_status_card()]
+        if self.get_status_card() in NSPanelCard.cards_by_group[NSPanelCard.STATUS_CARD_GROUP]:
+            status_card = NSPanelCard.cards_by_group[NSPanelCard.STATUS_CARD_GROUP][self.get_status_card()]
             payload = status_card.create_status_payload(self.get_status_left(), self.get_status_right())
         else:
             #Format: "statusUpdate~iconLeft~iconCOlorLeft~iconRight~iconColorRight")
@@ -620,7 +645,8 @@ class NSPanel(): #pylint: disable=too-many-instance-attributes, too-many-public-
         self.send_panel_cmd( card.create_color_payload() )
         self.send_panel_cmd( card.create_update_payload() )
         self.current_card = card
-        self.current_group = card.group
+        if card.group not in [NSPanelCard.NOTIFY_CARD_GROUP, NSPanelCard.STATUS_CARD_GROUP]:
+            self.current_group = card.group
         if card.type == NSPanelCard.CARD_SCREENSAVER:
             self.update_status()
         self.publish_card()
@@ -699,9 +725,10 @@ class NSPanel(): #pylint: disable=too-many-instance-attributes, too-many-public-
             self.log.fatal("No Screensaver defined for the panel: %s", self.name )
             sys.exit()
         self.navigate(self.get_screensaver_card())
-        #self.send_panel_cmd("pageType~cardChart")
-        #self.send_panel_cmd("entityUpd~Stromverbrauch~button~navigate.prev~~65535~~~button~navigate.next~~65535~~~65535~Power~~10~20~30~40~50~60~70~80~90~196~10~20~30~40~50~60~70~80~90~196~10~20~30~40~50~60~70~80~90~196~10~20~30~40~50~60~70~80~90~196~10~20~30~40~50~60~70~80~90~196~10~20~30~40~196")
-        #self.send_panel_cmd("entityUpd~Chart Demo~button~navigate.prev~<~65535~~~button~navigate.next~>~65535~~~65535~Gas [kWh]~20:40:60:80:100~20~7^2:00~7~6^4:00~6~7^6:00~0~7^8:00~5~1^10:00~1~10^12:00~5~6^14:00~8")
+        #self.send_panel_cmd("pageType~cardPower")
+        #self.send_panel_cmd("entityUpd~PowerTest~x~navUp~A~65535~~~delete~~~~~~text~sensor.power_consumption~B~17299~Power consumption~100W~1~text~sensor.power_consumption~C~17299~Power consumption~100W~1~text~sensor.today_energy~D~17299~Total energy 1~5836.0kWh~0~delete~~~~~~0~text~sensor.today_energy~E~17299~Total energy 1~5836.0kWh~-30~delete~~~~~~0~text~sensor.today_energy~F~65504~Total energy 1~5836.0kWh~90~text~sensor.today_energy~G~17299~Total energy 1~5836.0kWh~10")
+        #self.send_panel_cmd("pageType~popupNotify")
+        #self.send_panel_cmd("entityUpdateDetail~*internalName*~*tHeading*~65535~*b1*~65535~*b2*~65535~Dies ist\r\nein sehr\r\nlanger text~65535~10~4~A~65535")
         #self.send_panel_cmd("entityUpd~Chart Demo~button~navigate.prev~<~65535~~~button~navigate.next~>~65535~~~65535~Gas [kWh]~2:4:6:8:10~10~1^X1|1~10~1^X2~10~1^X3~10~1^X4~10~1^X5~10~1^X6~10~1^X7~10")
 
     @classmethod
@@ -741,6 +768,6 @@ class NSPanel(): #pylint: disable=too-many-instance-attributes, too-many-public-
             cls.LOG.info("No default screensaver '%s' defined in yaml files. Created a default one for group '%s'", SCREENSAVER_NAME, NSPanelCard.CARDS_HOME)
 
         #check if status card group exist
-        if NSPanel.STATUS_CARD_GROUP not in NSPanelCard.cards_by_group:
+        if NSPanelCard.STATUS_CARD_GROUP not in NSPanelCard.cards_by_group:
             #create an empty status card group
-            NSPanelCard.cards_by_group[NSPanel.STATUS_CARD_GROUP] = {}
+            NSPanelCard.cards_by_group[NSPanelCard.STATUS_CARD_GROUP] = {}

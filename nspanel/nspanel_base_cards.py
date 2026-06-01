@@ -43,7 +43,6 @@ class NSPanelCard():
     MY_TYPE = "NSPanelCard"
 
     #CARD TYPE constants
-    CARDS_HOME = "home"
     CARD_ENTITIES="cardEntities"
     CARD_THERMO="cardThermo"
     CARD_MEDIA="cardMedia"
@@ -52,9 +51,17 @@ class NSPanelCard():
     CARD_POWER="cardPower"
     CARD_SCREENSAVER="screensaver"
     CARD_GRID="cardGrid"
+    CARD_GRID2="cardGrid2"
     CARD_CHARD="cardChart"
     CARD_STATUS="statusCard"
+    CARD_POPUP_NOTIFY="popupNotify"
     CARD_DEFAULT_STATUS="_default_status_"
+    FONT_SIZES = ["0","1","2","3","4","5"]
+
+    #special card groups
+    CARDS_HOME = "home"
+    STATUS_CARD_GROUP = "_status_cards_"
+    NOTIFY_CARD_GROUP = "_notify_cards_"
 
     # all derived classes from the base class
     card_types = {}
@@ -66,6 +73,8 @@ class NSPanelCard():
     skin = None
     #global list for panals which are connected to openhab
     all_connected_panels = {}
+    #List of all panels by their name
+    all_panels = {}
     #global card logger
     log = FLOGGER.create_log_handler("NSPanelcard")
 
@@ -92,10 +101,20 @@ class NSPanelCard():
         self.type = None
         self.group = group
         self.title = self.name
+        self.icon_size = skin.key(self.MY_TYPE, "iconSize")
+        self.connected_panels = {}
+
         #popup card handling
         self.popup = None #point to the popup card if a popup opened
         self.log.debug("Constructed!" )
-        self.connected_panels = {}
+
+    def icon_size_payload(self):
+        """
+        create payload for icon size. Must be overridden in sub class if icon size is not supported
+        """
+        if self.icon_size is not None:
+            return '¬'+str(self.icon_size)
+        return ""
 
     def next(self, i=None):
         """
@@ -190,8 +209,19 @@ class NSPanelCard():
 
         self.title = self.name
         if "title" in card_yaml and card_yaml["title"] is not None:
-            #replace title with the title from the yaml other wise use the name as title
+            #replace title with the title from the yaml otherwise use the name as title
             self.title = str(card_yaml["title"])
+
+        #the attribute icon_size is controlled over the skin file. If its in the skin you can also override it.
+        if self.icon_size is not None and "iconSize" in card_yaml and card_yaml["iconSize"] is not None:
+            if skin.key("iconSize", str(card_yaml["iconSize"]).lower()) is not None:
+                self.icon_size = skin.key( "iconSize", str(card_yaml["iconSize"]).lower())
+            else:
+                if card_yaml["iconSize"] in skin.key("iconSizeRange"):
+                    self.icon_size = card_yaml["iconSize"]
+                else:
+                    self.log.error("Invalid icon size '%s' defined in card '%s'. Value will be ignored.", card_yaml["iconSize"], self.name )
+
         return True
 
     def create_color_payload(self):
@@ -435,11 +465,11 @@ class NSPanelCardWithSlots(NSPanelCardWithNav):
         if self.popup is None:
             self.log.error("Popup card type could not be created '%s',", card_type)
 
-    def item_update_callback(self):
+    def item_update_callback(self, item):
         """
         this callback is called from OHItensDB if the state of an item in this card is updated
         """
-        self.log.debug("Call from item listner of card '%s'. Item state in card has changed", self.name)
+        self.log.debug("Call from item listner of card '%s'. Item '%s' state in card has changed", self.name, item.name)
         for panel in self.connected_panels.values():
             panel.update()
 

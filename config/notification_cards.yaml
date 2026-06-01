@@ -1,0 +1,14 @@
+#
+# This file contains an example of a notification card
+#
+cards:
+  - name: BatteryAlarm #free name of the state card.
+    type: popupNotify
+    title: Batterie Warnung
+    slots: #2 slots must be defined in a notify popup
+      - class: ohItem #switch to activate the warning
+        type: switch
+        item: Switch_BatteryWarning
+      - class: ohItem #Warning text
+        type: text
+        item: M_BatteryWarning

@@ -70,6 +70,8 @@ class NspanelMqttBridge(BMC.BaseMqttClient): # pylint: disable=too-many-instance
         # Global config:
         BMC.BaseMqttClient.__init__(self, config_file)
 
+        #give the cards a list of all panels
+        NSPanelCard.all_panels = self.panels
         #load card definition yaml files
         NSPanel.load_cards( self.card_files )
 
@@ -109,7 +111,7 @@ class NspanelMqttBridge(BMC.BaseMqttClient): # pylint: disable=too-many-instance
         NSPanel.load_cards( self.card_files )
         for panel_name, panel in self.panels.items():
             #first check the active status card. Does it still exist?
-            if self.get_status_card(panel_name) not in NSPanelCard.cards_by_group[NSPanel.STATUS_CARD_GROUP]:
+            if self.get_status_card(panel_name) not in NSPanelCard.cards_by_group[NSPanelCard.STATUS_CARD_GROUP]:
                 self.log.debug("Status card for panel '%s'. Card is no longer valid.", panel_name)
                 self.set_status_card(panel_name, NSPanelCard.CARD_DEFAULT_STATUS)
             #first check the active group and card. Do they still exist?

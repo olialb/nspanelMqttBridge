@@ -24,5 +24,9 @@
         "until": "until",
         "time_templ": "%-I:%M%p",
         "date_templ": "%d/%m"
+    },
+    "popupNotify": {
+        "b1Text": "Ignore",
+        "b2Text": "OK"
     }
 }
