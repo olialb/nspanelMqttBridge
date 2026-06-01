@@ -6,9 +6,9 @@ cards:
     type: popupNotify
     title: Batterie Warnung
     slots: #2 slots must be defined in a notify popup
-      - class: ohItem #switch to activate the warning
+      - class: ohItem #switch to activate the notification
         type: switch
         item: Switch_BatteryWarning
-      - class: ohItem #Warning text
+      - class: ohItem #Notification text item
         type: text
         item: M_BatteryWarning

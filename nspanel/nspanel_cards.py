@@ -921,18 +921,18 @@ class NSPanelpopupNotify(NSPanelCardWithSlots):
                 else:
                     self.log.error("No valid value for attribute fontSize '%s'. Use default instead '%d'.", card_yaml["fontSize"],self.font_size)
 
-        if "HeadingColor" in card_yaml and card_yaml["HeadingColor"] is not None:
-            self.heading_color =  str(name_to_16bit_color(card_yaml["HeadingColor"]))
-        if "TextColor" in card_yaml and card_yaml["TextColor"] is not None:
-            self.text_color =  str(name_to_16bit_color(card_yaml["TextColor"]))
-        if "B1Color" in card_yaml and card_yaml["B1Color"] is not None:
-            self.b1_color =  str(name_to_16bit_color(card_yaml["B1Color"]))
-        if "B2Color" in card_yaml and card_yaml["B2Color"] is not None:
-            self.b2_color =  str(name_to_16bit_color(card_yaml["B2Color"]))
-        if "B1Text" in card_yaml and card_yaml["B1Text"] is not None:
-            self.b1_text =  card_yaml["B1Text"]
-        if "B2Text" in card_yaml and card_yaml["B2Text"] is not None:
-            self.b2_text =  card_yaml["B2Text"]
+        if "titleColor" in card_yaml and card_yaml["titleColor"] is not None:
+            self.heading_color =  str(name_to_16bit_color(card_yaml["titleColor"]))
+        if "textColor" in card_yaml and card_yaml[" textColor"] is not None:
+            self.text_color =  str(name_to_16bit_color(card_yaml[" textColor"]))
+        if "b1Color" in card_yaml and card_yaml["b1Color"] is not None:
+            self.b1_color =  str(name_to_16bit_color(card_yaml["b1Color"]))
+        if "b2Color" in card_yaml and card_yaml["b2Color"] is not None:
+            self.b2_color =  str(name_to_16bit_color(card_yaml["b2Color"]))
+        if "b1Text" in card_yaml and card_yaml["b1Text"] is not None:
+            self.b1_text =  card_yaml["b1Text"]
+        if "b2Text" in card_yaml and card_yaml["b2Text"] is not None:
+            self.b2_text =  card_yaml["b2Text"]
 
         #connect all existing panels to the card to receive events if this card is active
         for panel in NSPanelCard.all_panels.values():

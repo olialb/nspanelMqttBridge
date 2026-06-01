@@ -1227,22 +1227,54 @@ Addtional to the static cards you can also send notifications from openHAB to th
 You can send a notification text to the topic [notification](#notification-string). This text is shown in the *screensaver* and lost when you leave the screensaver
 
 ### Notification cards
-For more persistant notifications you can define notification cards of type *popupNotify*. This cards show the content of an openHAB *String* item and can be activated and deactivated over an openHAB *Switch" item.
+For more persistant notifications you can define notification cards of type *popupNotify*. This cards show the content of an openHAB item as notification and can be activated and deactivated over an openHAB *Switch" item.
+
+Card attributes of *popupNotify* card:
 
 | card attribute | default value from skin file | optional / Mandetory | Description |
 |--- |--- |--- |---
 | title |	"Notification"  | O | Shown as title in the card
 | fontSize | 2 | O | font size of the notification text. Values from 1-5 are allowd see also here [Label Parameter](https://github.com/joBr99/nspanel-lovelace-ui/wiki/cardgrid-entity-parameter#angaben-f%C3%BCr-label)
-|	past | 0min | O | Minutes in the past from where the defined perios starts. You can also use keywords like: 2h, 2M etc. See [openHAB chart periods](https://www.openhab.org/docs/ui/components/oh-chart.html#period)
-| life | False | O | When you set this attribute to True the cahrt is updated when the item change the state. Note: If the state is changes every few seconds this result in the sitation, that the screensaver is not activated.
+|	titleColor | white | O | Color of the *popupNotify* card title
+| textColor | white | O | Color of the *popupNotify* card text
+| b1Color | red | O | Color of the *popupNotify* card left button
+| b2Color | green | O |Color of the *popupNotify* card right button
+| b1Text | 'Ignore' |O  | Name of the left button. Default content depend on translation json.
+| b2Text | 'OK' | O | Name of the right button. Default content depend on translation json.
 
+Slots of *popupNotify* card:
 
 | Slot number | OH item type |slot types| default value | optional / Mandetory | Description |
 |--- |--- |--- |--- |--- |---
 | 1 |	Switch | switch |-| M | The switch item in openHAB to activate and deactivate this notification.
-| 1 |	String | text   |-| M | String which is shown as notification text. You can add line brakes with "\r\n"
+| 2 |	Any | text   |-| M | Prefered to use a openHAB String item, which content is shown as notification text. You can add line brakes with "\r\n" in the string. As an alternative you can show any item state as text.
+| 3 | String | text | n.a. | O | This is an optional openHAB *String* item. If its defined, the name of the button (b1Text or b2Text) is send to this item when the popupNotify is left. You can react on this in a special openHAB rule.
 
+Notify card Example:
 
+```yaml
+  - name: PlantAlarm #free name of the state card.
+    type: popupNotify
+    fontSize: 1
+    title: Pflanzen giessen!
+    slots: #2 slots must be defined in a notify popup
+      - class: ohItem #switch to activate the notification
+        type: switch
+        item: Switch_PlantWarning
+        icon: palm-tree
+        iconColor: green
+      - class: ohItem #Notification text
+        type: text
+        item: String_PlantWarning ```
+```
+
+![image](doc/ExampleNotifyPlant.jpg)
+
+#### Behavior of a notification *popupNotify* card:
+- When the switch item in first slot of the card is *ON*, a notification is shown in the screensaver and the card is shown first after leaving the screensaver
+- You can press on the left button (default label "Ignore") to leave the card
+- You can press on the right button (default label "OK) to leave the card and switch the item on slot 1 to *OFF*. That means you acknowledge the notification and switch it *OFF*. The notification card will not be shown again until the notifation text in slot 2 changes.
+- As an alternative you can define a *String* item for slot 2 an react individually on the buttons. The state of the switch item in slot 1 is not touched by the bridge.
 
 ## Exposed MQTT topics and usage
 

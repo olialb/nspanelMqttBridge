@@ -284,7 +284,7 @@
         "fontSize" : 1,
         "icon" : "icon=alert",
         "iconColor" : "yellow",
-        "headingColor" : "white",
+        "titleColor" : "white",
         "textColor" : "white",
         "b1Color": "red",
         "b2Color": "green",
