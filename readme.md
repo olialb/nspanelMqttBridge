@@ -294,7 +294,7 @@ The *type* attribute is the link to the page types in [nspanel-lovelace-ui](http
 | screensaver | 6             | 6             | Screen saver card with weather content. Details in section [Card type *screensaver*](#card-type-screensaver) | ![image](doc/ExampleScreensaverMini.jpg)|
 | cardEntities | 4            | 6              | Card with the slots shown as a list. Details in section [Card type *cardEntities*](#card-type-cardentities-cardgrid-and-cardgrid2)| ![image](doc/ExampleEntitiesCardMini.jpg) ![image](doc/ExampleEntitiesCardUSPort.jpg) |
 | cardGrid | 6             | 6             | Card with 6 slots as a 2x3 icon grid. Details in section [Card type *cardGrid*](#card-type-cardentities-cardgrid-and-cardgrid2) | ![image](doc/ExampleGridCardMini.jpg)
-| cardGrid2 | 8             | 8             | Card with 8 slots as a 2x4 icon grid. Details in section [Card type *cardGrid2*](#card-type-cardentities-cardgrid-and-cardgrid2) | ![image](doc/ExampleGridCardMini.jpg)
+| cardGrid2 | 8             | 8             | Card with 8 slots as a 2x4 icon grid. Details in section [Card type *cardGrid2*](#card-type-cardentities-cardgrid-and-cardgrid2) | ![image](doc/ExampleGridCard2Mini.jpg)
 | cardQR | 1             | 1             | Card to show QR code for a weblink . Details in section [Card type cardQR](#card-type-cardqr) | ![image](doc/ExampleCardQRMini.jpg)
 | cardQRWifi | 2            | 2              | Card to show QR code Wifi access . Details in section [Card type cardQRWifi](#card-type-cardqrwifi) | ![image](doc/ExampleCardQRWIfiMini.jpg)
 | cardAlarm | 5            | 5              | Card to show a Keypad to activate/deactivate alarm states. Details in section [Card type cardAlarm](#card-type-cardalarm) | ![image](doc/ExampleCardAlarm.jpg)
