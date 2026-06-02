@@ -69,6 +69,12 @@ def weather_time_templ():
     """
     return TRANSLATE_DB["weatherTime"]
 
+def date_templ():
+    """
+    return date template
+    """
+    return TRANSLATE_DB["date"]
+
 def key(section, entry):
     """
     Returns one entry form the data base

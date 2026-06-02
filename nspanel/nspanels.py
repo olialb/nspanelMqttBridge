@@ -29,7 +29,7 @@ import sys
 import yaml
 
 # project specific imports:
-from nspanel.nspanel_globals import name_to_16bit_color
+from nspanel.nspanel_globals import name_to_16bit_color, int2ordinal
 from nspanel.nspanel_cards import NSPanelCard, NSPanelCardScreenSaver
 from nspanel.nspanel_card_slots import NsPanelCardSlotOhItem, NSPanelCardSlot
 from skin import skin
@@ -546,10 +546,14 @@ class NSPanel(): #pylint: disable=too-many-instance-attributes, too-many-public-
         now = datetime.now()
         try:
             #try to build date
-            current_date = f"{NSPanel.CMD_DATE}{translate.weekdays(now.weekday())}, {now.day}. {translate.months_short(now.month)}"
+            weekday= translate.weekdays(now.weekday())
+            month = translate.months_short(now.month)
+            day = now.day
+            ordinal =  int2ordinal(day)
+            current_date = "date~" + translate.date_templ().format(weekday=weekday, month=month, day=day, ordinal=ordinal)
         except (KeyError, RuntimeError, ValueError) as error:
-            self.log.error("Error while creating date string: %s", error)
-            current_date = f"Day {now.day}, Weekday {now.weekday()}, Month {now.month}"
+            self.log.warning("Error building date string for screensaver: %s. Fallback to default format.", error)
+            current_date = "date~" + f"Day {now.day}, Weekday {now.weekday()}, Month {now.month}"
 
         if current_date != self.last_date:
             if self.send_panel_cmd( current_date):

@@ -1255,7 +1255,7 @@ Notify card Example:
 ```yaml
   - name: PlantAlarm #free name of the state card.
     type: popupNotify
-    fontSize: 1
+    fontSize: small
     title: Pflanzen giessen!
     slots: #2 slots must be defined in a notify popup
       - class: ohItem #switch to activate the notification
@@ -1265,7 +1265,7 @@ Notify card Example:
         iconColor: green
       - class: ohItem #Notification text
         type: text
-        item: String_PlantWarning ```
+        item: String_PlantWarning
 ```
 
 ![image](doc/ExampleNotifyPlant.jpg)

@@ -747,7 +747,7 @@ class NSPanelCardChart(NSPanelCardWithSlots):
             #calculate delta time in this bar
             bar_average+=val["state"]
             i+=1
-            delta = (val["time"] - bar_start_time).seconds
+            delta = (val["time"] - bar_start_time).total_seconds()
             if val["time"] > bar_start_time and delta > bar_period:
                 while delta > bar_period:
                     chart_bars.append(str(int(((bar_average/i)-min_val)/scale)))
@@ -798,7 +798,7 @@ class NSPanelCardChart(NSPanelCardWithSlots):
         total_time = 0
         for val in values:
             if time is not None:
-                delta = (val["time"] - time).seconds
+                delta = (val["time"] - time).total_seconds()
                 if state in state_dict:
                     state_dict[state] += delta
                 else:
@@ -814,6 +814,9 @@ class NSPanelCardChart(NSPanelCardWithSlots):
             state=val["state"]
 
         y_axis_label = self.name_from_dt(start_time)+"-"+self.name_from_dt(end_time)
+        if total_time == 0:
+            self.log.error("Total time is 0 for string chart '%s'.", self.name)
+            return "~65535~No data!~~~"
         val_payload = ""
         for state, time in state_dict.items():
             val_payload += '~' + str(round(time/total_time*self.MAX_Y)) + '^' + translate.key( "openhabStates", state ) + ':' + str(round(time/total_time*100)) + '%'
@@ -1008,7 +1011,7 @@ class NSPanelpopupNotify(NSPanelCardWithSlots):
         """
         self.log.debug("Leave popup notify card '%s'.", self.name)
         #check if any notification card is active.
-        if params[0] not in ["notifyAction", "bexit"]:
+        if params[0] not in ["notifyAction", "bExit"]:
             self.log.warning("Unknown event '%s' for popup notify card.", params[0])
             return
         if len(params) > 1 and params[1] in ["yes", "no"]:

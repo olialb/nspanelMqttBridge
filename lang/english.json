@@ -1,5 +1,6 @@
 {
     "time": "%-I:%M ?%p",
+    "date": "{weekday}, {month} {ordinal}",
     "weatherTime": "%-I:%M%p",
     "temperature": "°C",
     "weekdays": [ "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday" ],

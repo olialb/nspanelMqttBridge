@@ -33,6 +33,16 @@ LOGGER = FLOGGER.create_log_handler("Helpers")
 #
 # some helper functions
 #
+
+def int2ordinal(n: int):
+    """Convert an integer into its ordinal representation"""
+    if 11 <= (n % 100) <= 13:
+        suffix = 'th'
+    else:
+        suffix = ['th', 'st', 'nd', 'rd', 'th'][min(n % 10, 4)]
+    return str(n) + suffix
+
+
 def map_state_pannel2oh(state_type, state):
     """
     maps the state value of the ns panel to an openhab state value
