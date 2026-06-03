@@ -24,7 +24,8 @@ This file contain the differnt cards shown in the panel.
 
 # project specific imports:
 from nspanel.nspanel_globals import name_to_16bit_color, map_state_pannel2oh, pos_to_hs_color
-from nspanel.nspanel_base_cards import NSPanelCardSlot, NSPanelCard
+from nspanel.nspanel_base_cards import NSPanelCard
+from nspanel.nspanel_card_slots import NSPanelCardSlot
 from skin import skin
 
 class NSPanelCardPopup(NSPanelCard):

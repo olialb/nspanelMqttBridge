@@ -292,6 +292,7 @@ The *type* attribute is the link to the page types in [nspanel-lovelace-ui](http
 | Card type | max. number of slots in EU NSPanel | max. number of slots in US NSPanel |Description | Example |
 | ---       | ---             |---          |--- |---|
 | screensaver | 6             | 6             | Screen saver card with weather content. Details in section [Card type *screensaver*](#card-type-screensaver) | ![image](doc/ExampleScreensaverMini.jpg)|
+| screensaver2 | 14             | 14             | Screen saver card with extended weather content and 5 additional item status. Details in section [Card type *screensaver2*](#card-type-screensaver2) | ![image](doc/ExampleScreensaver2Mini.jpg)|
 | cardEntities | 4            | 6              | Card with the slots shown as a list. Details in section [Card type *cardEntities*](#card-type-cardentities-cardgrid-and-cardgrid2)| ![image](doc/ExampleEntitiesCardMini.jpg) ![image](doc/ExampleEntitiesCardUSPort.jpg) |
 | cardGrid | 6             | 6             | Card with 6 slots as a 2x3 icon grid. Details in section [Card type *cardGrid*](#card-type-cardentities-cardgrid-and-cardgrid2) | ![image](doc/ExampleGridCardMini.jpg)
 | cardGrid2 | 8             | 8             | Card with 8 slots as a 2x4 icon grid. Details in section [Card type *cardGrid2*](#card-type-cardentities-cardgrid-and-cardgrid2) | ![image](doc/ExampleGridCard2Mini.jpg)
@@ -299,6 +300,7 @@ The *type* attribute is the link to the page types in [nspanel-lovelace-ui](http
 | cardQRWifi | 2            | 2              | Card to show QR code Wifi access . Details in section [Card type cardQRWifi](#card-type-cardqrwifi) | ![image](doc/ExampleCardQRWIfiMini.jpg)
 | cardAlarm | 5            | 5              | Card to show a Keypad to activate/deactivate alarm states. Details in section [Card type cardAlarm](#card-type-cardalarm) | ![image](doc/ExampleCardAlarm.jpg)
 | cardThermo | 14             | 14             | Card to control a thermostat. Details in section [Card type cardThermo](#card-type-cardthermo) | ![image](doc/ExampleCardThermoMini.jpg)
+| cardPower | 8             | 8             | Card show the power flow in your house. Details in section [Card type cardPower](#card-type-cardpower) | ![image](doc/ExampleCardPowerMini.jpg)
 | cardChart | 1             | 1             | Card to show a chart based on the persistance data of an item. Details in section [Card type cardChard](#card-type-cardchart) | ![image](doc/ExampleCardCardMini.jpg)
 
 ## Slot types and classes
@@ -313,6 +315,7 @@ The following tables show the attributes which are in common for all slot types.
 | text | openHAB item label | O | Text label shown for the item. If its not defined, the label of the openHAB item is used instead. For card type *CardGrid* it can be useful to show the item state instead of a text or item label. If you want this, set *text* attribute to *=itemState* |
 | icon | default icon from skin.json | O | see how to [reference icons](#reference-icons-in-lovelace-ui)|
 | iconColor | default icon color from skin.json | O | Icon color as web color name like "white", "yellow" or as 24Bit RGB value like #FFFFFF for white
+| speed | 0 | O | controlls the animation speed for the slot (used in [card type cardPower](#card-type-cardPower)). Values between -120 and +120 are supported.
 | options | options list from referenced openHAB item|O| Defines an options list loke in openHAB: TUNER=Radio,PHONO=Plattenspieler,AV2=vu2+ |
 
 #### Reference icons in lovelace UI
@@ -816,6 +819,22 @@ You can activate this card over an MQTT command to [status_card](#status_card-st
 ![image](doc/screensaverStatusSlots2.jpg)
 
 
+### Card type *screensaver2*
+A *screensaver2* is similar to [sceensaver](#card-type-screensaver) but has more weather forcast slots and 6 item slots.
+
+The *screensaver2* card can have up to 6 slots
+
+| Slot number | slot type| default value | optional / Mandetory | Description |
+|--- |--- |--- |--- |---
+| 1 | openwathermap | empty | O | Current weather information
+| 2-4 | openwathermap |empty| O | 3 weather forcasts for near future without time stamp
+| 5-10 | openwathermap |empty| O | 6 weather forcasts with time stamp
+| 11-15 | all status item types |empty| O | 5 slots with different openhab item status
+
+
+![image](doc/ExampleScreensaver2.jpg)
+
+
 ### Card type *cardQR*
 The card type *cardQR* can for example be used to show a QR code with an html link as easy access to a local html server.
 
@@ -1117,6 +1136,79 @@ Example card with cooling, popup and all card attributes:
 As you can see attribute *details: True*. The 3 dots can be clicked and a popup with the 3 input_sel items in slot 4-6 can be controlled over it:
 
 ![image](doc/ExampleCardThermoPopup.jpg)
+
+### Card type *cardPower*
+The card type *cardPower* can be used to show your powerflow at home
+
+The card has no extra card attributes. The slots are defined as following:
+
+![image](doc/cardPowerSlots.jpg)
+
+
+| Slot number | OH item type |slot types| default value | optional / Mandetory | Description |
+|--- |--- |--- |--- |--- |---
+| 1,2 |	Number |number|-| O | Power overview in home rectangle
+| 3-8 |	Number | number |-| O | Different power sources or power consumers. Attribute *speed* can be used to control the animation speed
+
+Example cardPower:
+```yaml
+cards:
+  - name: TestPower #test cardPower
+    title: Test cardPower
+    type: cardPower
+    slots:
+      - class: ohItem
+        type: number
+        icon: home
+        iconColor: green
+        item: Power1
+      - class: ohItem
+        type: number
+        item: Power2
+      - class: ohItem
+        type: number
+        speed: -20
+        text: Solar 1
+        icon: solar-power-variant
+        iconColor: yellow
+        item: Power3
+      - class: ohItem
+        type: number
+        text: Car port 1
+        icon: car-electric
+        iconColor: blue
+        speed: 20
+        item: Power4
+      - class: ohItem
+        type: number
+        text: Car port 2
+        icon: car-electric
+        iconColor: blue
+        speed: 100
+        item: Power5
+      - class: ohItem
+        type: number
+        text: Solar 2
+        icon: solar-power-variant
+        iconColor: yellow
+        speed: 20
+        item: Power6
+      - class: ohItem
+        type: number
+        text: Car port 3
+        icon: car-electric
+        iconColor: blue
+        speed: -50
+        item: Power7
+      - class: ohItem
+        type: number
+        text: Car port 4
+        icon: car-electric
+        iconColor: blue
+        speed: -10
+        item: Power8
+```
+![image](doc/ExampleCardPower.jpg)
 
 ### Card type *cardCart*
 The card type *cardCahrt* can be used to show a bar graph of the openHAB persistance data fo one item.

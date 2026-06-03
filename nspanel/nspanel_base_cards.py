@@ -23,8 +23,6 @@ This file contain the differnt base classe for cards shown in the panel.
 #general imports
 
 # project specific imports:
-from nspanel.nspanel_globals import map_state_pannel2oh
-from nspanel.nspanel_card_slots import NsPanelCardSlotOhItem,  NSPanelCardSlot
 from file_logger import file_logger as FLOGGER
 from lang import translate
 from skin import skin
@@ -50,6 +48,7 @@ class NSPanelCard():
     CARD_QR="cardQR"
     CARD_POWER="cardPower"
     CARD_SCREENSAVER="screensaver"
+    CARD_SCREENSAVER2="screensaver2"
     CARD_GRID="cardGrid"
     CARD_GRID2="cardGrid2"
     CARD_CHARD="cardChart"
@@ -134,7 +133,7 @@ class NSPanelCard():
         else:
             next_i = i+1
         #jump over screensavers
-        if self.cards_by_group[self.group][card_names[next_i]].MY_TYPE == NSPanelCard.CARD_SCREENSAVER:
+        if self.cards_by_group[self.group][card_names[next_i]].MY_TYPE in [NSPanelCard.CARD_SCREENSAVER, NSPanelCard.CARD_SCREENSAVER2]:
             return self.next(next_i)
         return self.cards_by_group[self.group][card_names[next_i]]
 
@@ -158,33 +157,9 @@ class NSPanelCard():
             next_i = len(card_names)-1
 
         #jump over screensavers
-        if self.cards_by_group[self.group][card_names[next_i]].MY_TYPE == NSPanelCard.CARD_SCREENSAVER:
+        if self.cards_by_group[self.group][card_names[next_i]].MY_TYPE in [NSPanelCard.CARD_SCREENSAVER, NSPanelCard.CARD_SCREENSAVER2]:
             return self.previous(next_i)
         return self.cards_by_group[self.group][card_names[next_i]]
-
-    def disconnect(self, nspanel):
-        """
-        disconnect from openhab
-        """
-        self.log.debug("Disconnect nspanel '%s' to card '%s'", nspanel.name, self.name )
-        if nspanel.name in self.connected_panels:
-            del self.connected_panels[nspanel.name]
-        if nspanel.name in NSPanelCard.all_connected_panels:
-            del NSPanelCard.all_connected_panels[nspanel.name]
-        if len(NSPanelCard.all_connected_panels) == 0:
-            #no panel connected anymore. Stop listner
-            NsPanelCardSlotOhItem.OH.disconnect()
-
-    def connect(self, nspanel):
-        """
-        connect to openhab
-        """
-        self.log.debug("Connect nspanel '%s' to card '%s'", nspanel.name, self.name )
-        if len(NSPanelCard.all_connected_panels) == 0:
-            #start listening on openhab items
-            NsPanelCardSlotOhItem.OH.connect()
-        self.connected_panels[nspanel.name] = nspanel
-        NSPanelCard.all_connected_panels[nspanel.name] = nspanel
 
     def attrib( self, info, dictionaries, name):
         """
@@ -321,7 +296,7 @@ class NSPanelCard():
         if group_name in cls.cards_by_group:
             i=0
             cards = list(cls.cards_by_group[group_name].values())
-            while len(cards) > i and cards[i].type == NSPanelCard.CARD_SCREENSAVER:
+            while len(cards) > i and cards[i].type in [NSPanelCard.CARD_SCREENSAVER, NSPanelCard.CARD_SCREENSAVER2]:
                 i=i+1
             if len(cards) > i:
                 return cards[i]
@@ -355,170 +330,17 @@ class NSPanelCardWithNav(NSPanelCard):
         """
         return "pageType~"+self.MY_TYPE
 
-    def event_button_press( self, slot_name, params):
+    def event_button_press( self, params):
         """
         process a button press event for this card
         """
         #example event params:
-        #"OnOff,1"
-        #"button"
-        #"brightnessSlider,34'
-        #colorTempSlider,89
         #navigate.prev,button"
-        #down
-        #tiltOpen
-        #event,buttonPress2,CardAlarm,AB0|mode2,6655
 
         #check for navigate card events
-        if slot_name == "navigate.next" and params[0] == 'button':
+        if params[0] == "navigate.next" and params[1] == 'button':
             return self.next()
-        if slot_name == "navigate.prev" and params[0] == 'button':
+        if params[0] == "navigate.prev" and params[1] == 'button':
             return self.previous()
-        self.log.warning("Event not processed for '%s'", slot_name)
+        self.log.warning("Event not processed for '%s'", str(params))
         return None
-
-
-class NSPanelCardWithSlots(NSPanelCardWithNav):
-    """
-    Base class for cards list of items
-    """
-    MY_TYPE = "NSPanelCardWithSlots"
-    #OH_TYPE2SLOT = { "Switch": "switch", "Dimmer": "light", "Color": "light", "Number": "number", "Rollershutter": "shutter" }
-    #OH_TYPE2ICON = { "Switch": "\uE520", "Dimmer": "\uE334", "Color": "\uE334", "Rollershutter": "\uF11B" }
-
-    def __init__(self, name, group=NSPanelCard.CARDS_HOME ):
-        """
-        Constructor of a NSPanel card with slots
-        """
-        super().__init__( name, group )
-
-        #slot dictionary
-        self.slots = {}
-
-    def load_slots_yaml( self, slots_yaml ):
-        """
-        Load slots for a card
-        """
-        self.log.debug("Load slots yaml: %s", str(slots_yaml))
-
-        #test if slots are iterable
-        try:
-            _ = (e for e in slots_yaml)
-        except TypeError:
-            self.log.error("Slots in card '%s' are not a valid list.", self.name )
-            return False
-
-        for slot_yaml in slots_yaml:
-            slot = NSPanelCardSlot.factory( slot_yaml, len(self.slots.keys()), self)
-            if slot is not None:
-                self.slots[slot.name] = slot
-
-        if len(self.slots.keys()) <= 0:
-            self.log.error("No valid slots defined for card %s", self.name )
-            return False
-        return True
-
-    def load_card_yaml(self, card_yaml):
-        """
-        Loads the panel definition from yaml dictionary
-        """
-        super().load_card_yaml(card_yaml)
-
-        if "slots" in card_yaml and card_yaml["slots"] is not None:
-            return self.load_slots_yaml(card_yaml["slots"])
-
-        self.log.error("No 'slots' attribute defined in card %s", self.name )
-        return False
-
-    def create_slots_payload(self):
-        """
-        create upstate payload for all slots
-        """
-        payload = ""
-        for slot in self.slots.values():
-            payload = payload + slot.create_payload()
-
-        self.log.debug("Slot payload for all slots created: %s", payload)
-        return payload
-
-    def create_update_payload(self):
-        """
-        Create nav card payload
-        """
-        return super().create_update_payload() + self.create_slots_payload()
-
-    def popup_card(self, card_type, slot_name):
-        """
-        setup a popup card for this card type
-        """
-        self.log.debug("Create card '%s' for '%s'",card_type, slot_name)
-        if slot_name in self.slots:
-            self.popup = NSPanelCard.factory(card_type, self.slots[slot_name])
-        else:
-            if slot_name == 'CardThermo':
-                #thermo popup
-                self.popup = NSPanelCard.factory(card_type, self)
-            else:
-                self.log.warning("Popup for unknown slot '%s' received.", slot_name)
-                return
-
-        if self.popup is None:
-            self.log.error("Popup card type could not be created '%s',", card_type)
-
-    def item_update_callback(self, item):
-        """
-        this callback is called from OHItensDB if the state of an item in this card is updated
-        """
-        self.log.debug("Call from item listner of card '%s'. Item '%s' state in card has changed", self.name, item.name)
-        for panel in self.connected_panels.values():
-            panel.update()
-
-    def event_button_press( self, slot_name, params, panel=None ): #pylint: disable=too-many-return-statements, disable=too-many-branches
-        """
-        process a button press event for this card
-        """
-        #example event params:
-        #"OnOff,1"
-        #"button"
-        #"brightnessSlider,34'
-        #colorTempSlider,89
-        #navigate.prev,button"
-        #down
-        #tiltOpen
-        #event,buttonPress2,CardAlarm,AB0|mode2,6655
-
-        #check for item events
-        if slot_name in self.slots:
-            slot = self.slots[slot_name]
-            if self.popup is not None:
-                if self.popup.event_button_press( slot_name, params ):
-                    return self
-                return None
-            self.log.debug("Process for item '%s' the button press event: %s", slot_name, str(params))
-
-            if params[0] == "button":
-                #button for this item was pressed => toggel the value
-                if slot.slot_class == "ohItem":
-                    if slot.item.toggle_item_state(slot.options):
-                        self.log.debug("Toggle event '%s' for slot '%s'", params[0], slot.name)
-                        return self
-                if slot.slot_class == "navigate":
-                    self.log.debug("Toggle event '%s' for slot '%s'", params[0], slot.name)
-                    card=panel.card_by_path(slot.nav_to)
-                    if card is not None:
-                        self.log.debug("Navigate to '%s' over slot '%s'", slot.nav_to, slot.name)
-                    else:
-                        self.log.warning("Could not navigate to '%s' over slot '%s'", slot.nav_to, slot.name)
-                    return card
-            if params[0] == 'OnOff' and len(params) >= 2:
-                if slot.item.set_item_state(map_state_pannel2oh(params[0], params[1])):
-                    self.log.debug("Switch event '%s' for slot '%s'", params[0], slot.name)
-                    return self
-            if params[0] == 'number-set' and len(params) >= 2:
-                if slot.item.set_item_state( params[1]):
-                    self.log.debug("Number set event '%s' for slot '%s'", params[0], slot.name)
-                    return self
-            self.log.warning("Event not processed for '%s'", slot_name)
-
-        return super().event_button_press( slot_name, params )
-

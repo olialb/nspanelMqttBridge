@@ -146,7 +146,7 @@ class OHItem: #pylint: disable=too-many-instance-attributes
                 return 'OFF'
             return 'ON'
         if options is not None:
-            state = str(state) #be shure that state is a string
+            state = str(self.state) #be shure that state is a string
             if state in options:
                 #toggle threw the option list
                 index = options.index(state)

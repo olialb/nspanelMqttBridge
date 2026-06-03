@@ -30,7 +30,8 @@ import yaml
 
 # project specific imports:
 from nspanel.nspanel_globals import name_to_16bit_color, int2ordinal
-from nspanel.nspanel_cards import NSPanelCard, NSPanelCardScreenSaver
+from nspanel.nspanel_base_cards import NSPanelCard
+from nspanel.nspanel_cards import NSPanelCardScreenSaver
 from nspanel.nspanel_card_slots import NsPanelCardSlotOhItem, NSPanelCardSlot
 from skin import skin
 from file_logger import file_logger as FLOGGER
@@ -427,10 +428,10 @@ class NSPanel(): #pylint: disable=too-many-instance-attributes, too-many-public-
                             card = NSPanelCard.get_first_card(self.current_group)
                         self.navigate(card)
                         return
-                #check for all other card events
-                    if len(params) >= 4:
+                    #check for all other card events
+                    if len(params) >= 3:
                         #send the now state over rest api
-                        new_card = self.current_card.event_button_press( params[2], params[3:], self )
+                        new_card = self.current_card.event_button_press( params[2:], self )
                         if new_card is not None:
                             if new_card == self.current_card:
                                 #just update content

@@ -25,7 +25,8 @@ import datetime
 
 # project specific imports:
 from nspanel.nspanel_globals import name_to_16bit_color, map_state_oh2panel
-from nspanel.nspanel_base_cards import NSPanelCard, NSPanelCardWithSlots
+from nspanel.nspanel_base_cards import NSPanelCard
+from nspanel.nspanel_slot_base_card import NSPanelCardWithSlots
 from lang import translate
 from skin import skin
 
@@ -40,7 +41,7 @@ class NSPanelCardScreenSaver(NSPanelCardWithSlots):
     """
     Class for screen saver
     """
-    MY_TYPE = "screensaver"
+    MY_TYPE = NSPanelCard.CARD_SCREENSAVER
     COLORS = ["backgroundColor", "tTimeColor", "timeAMPMColor",
               "tDateColor", "tMainTextColor", "tForecast1Color",
               "tForecast2Color", "tForecast3Color", "tForecast4Color",
@@ -93,6 +94,16 @@ class NSPanelCardScreenSaver(NSPanelCardWithSlots):
 #add this card class type to the factory
 NSPanelCard.card_types[NSPanelCardScreenSaver.MY_TYPE] = NSPanelCardScreenSaver
 
+class NSPanelCardScreensaver2(NSPanelCardScreenSaver):
+    """
+    Class for screen saver with different layout
+    """
+    MY_TYPE = NSPanelCard.CARD_SCREENSAVER2
+
+#add this card class type to the factory
+NSPanelCard.card_types[NSPanelCardScreensaver2.MY_TYPE] = NSPanelCardScreensaver2
+
+
 class NSPanelCardEntities(NSPanelCardWithSlots):
     """
     Represent an card of type CardEntities in lovelace ui for NSPanels
@@ -104,7 +115,7 @@ NSPanelCard.card_types[NSPanelCardEntities.MY_TYPE] = NSPanelCardEntities
 
 class NSPanelCardGrid(NSPanelCardWithSlots):
     """
-    Represent an card of type CardEntities in lovelace ui for NSPanels
+    Represent an card of type CardGrid in lovelace ui for NSPanels
     """
     MY_TYPE = NSPanelCard.CARD_GRID
 
@@ -113,12 +124,33 @@ NSPanelCard.card_types[NSPanelCardGrid.MY_TYPE] = NSPanelCardGrid
 
 class NSPanelCardGrid2(NSPanelCardWithSlots):
     """
-    Represent an card of type CardEntities in lovelace ui for NSPanels
+    Represent an card of type CardGrid2 in lovelace ui for NSPanels
     """
     MY_TYPE = NSPanelCard.CARD_GRID2
 
 #add this card class type to the factory
 NSPanelCard.card_types[NSPanelCardGrid2.MY_TYPE] = NSPanelCardGrid2
+
+class NSPanelCardPower(NSPanelCardWithSlots):
+    """
+    Represent an card of type CardPower in lovelace ui for NSPanels
+    """
+    MY_TYPE = NSPanelCard.CARD_POWER
+
+    def create_slots_payload(self):
+        """
+        create upstate payload for all slots
+        """
+        payload = ""
+        for slot in self.slots.values():
+            payload = payload + slot.create_payload() + "~" + str(slot.speed)
+
+        self.log.debug("Slot payload for all slots created: %s", payload)
+        return payload
+
+
+#add this card class type to the factory
+NSPanelCard.card_types[NSPanelCardPower.MY_TYPE] = NSPanelCardPower
 
 class NSPanelStatusCard(NSPanelCardWithSlots):
     """
@@ -434,7 +466,7 @@ class NSPanelCardAlarm(NSPanelCardWithSlots):
             return
         self.log.warning("Unknown event '%s' for cardAlarm.", params[0])
 
-    def event_button_press( self, slot_name, params, panel=None ):
+    def event_button_press( self, params, panel=None ):
         """
         process a button press event for this card
         """
@@ -449,10 +481,10 @@ class NSPanelCardAlarm(NSPanelCardWithSlots):
         #event,buttonPress2,CardAlarm,AB0|mode2,6655
 
         #check for cardAlarm Events.
-        if slot_name in ["CardAlarm","CardAlarm2"] and self.MY_TYPE == self.CARD_ALARM:
-            return self.event_card_alarm( slot_name, params)
+        if params[0] in ["CardAlarm","CardAlarm2"] and self.MY_TYPE == self.CARD_ALARM:
+            return self.event_card_alarm( params[0], params[1:])
 
-        return super().event_button_press( slot_name, params, panel )
+        return super().event_button_press( params, panel )
 
 #add this card class type to the factory
 NSPanelCard.card_types[NSPanelCardAlarm.MY_TYPE] = NSPanelCardAlarm
@@ -606,7 +638,7 @@ class NSPanelCardThermo(NSPanelCardWithSlots):
             return
         self.log.warning("Unknown event '%s' for cardThermo.", params[0])
 
-    def event_button_press( self, slot_name, params, panel=None ):
+    def event_button_press( self, params, panel=None ):
         """
         process a button press event for this card
         """
@@ -621,10 +653,10 @@ class NSPanelCardThermo(NSPanelCardWithSlots):
         #event,buttonPress2,CardAlarm,AB0|mode2,6655
 
         #check for cardThermo Events.
-        if slot_name in ["CardThermo"] and self.MY_TYPE == self.CARD_THERMO:
-            return self.event_card_thermo( slot_name, params )
+        if params[0] in ["CardThermo"] and self.MY_TYPE == self.CARD_THERMO:
+            return self.event_card_thermo( params[0], params[1:] )
 
-        return super().event_button_press( slot_name, params, panel )
+        return super().event_button_press( params, panel )
 
 #add this card class type to the factory
 NSPanelCard.card_types[NSPanelCardThermo.MY_TYPE] = NSPanelCardThermo

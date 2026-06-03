@@ -162,7 +162,7 @@ def name_to_rgb(name):
             #seams to be a color name
             color = webcolors.name_to_rgb(name)
     except ValueError:
-        LOGGER.error("Webcolor '%s' is not defined. White used instead!", name)
+        LOGGER.debug("Webcolor '%s' is not defined. White used instead!", name)
         color = webcolors.name_to_rgb("white")
     return color
 

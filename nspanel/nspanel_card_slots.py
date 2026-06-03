@@ -26,6 +26,7 @@ from datetime import datetime
 
 # project specific imports:
 from nspanel.nspanel_globals import interpret_options, name_to_16bit_color, map_state_oh2panel
+from nspanel.nspanel_base_cards import NSPanelCard
 from oh.oh_connector import OHItemDB
 from file_logger import file_logger as FLOGGER
 from lang import translate
@@ -88,6 +89,7 @@ class NSPanelCardSlot(): #pylint: disable=too-many-instance-attributes
         self.text = None
         self.icon = skin.key(self.MY_TYPE, "icon")
         self.icon_color = str(name_to_16bit_color(skin.key(self.MY_TYPE, "iconColor")))
+        self.speed = 0 #Animation speed in cardPower
         self.type = self.MY_TYPE
         self.json_data = json_data
 
@@ -102,6 +104,11 @@ class NSPanelCardSlot(): #pylint: disable=too-many-instance-attributes
             self.icon = skin.icon( json_data["icon"] )
         if "iconColor" in json_data and json_data["iconColor"] is not None:
             self.icon_color = str(name_to_16bit_color(json_data["iconColor"]))
+        if "speed" in json_data and json_data["speed"] is not None:
+            if isinstance(json_data["speed"], int):
+                self.speed = json_data["speed"]
+            else:
+                self.log.error("Speed value '%s' in slot %d in card '%s' is not an integer. Default value 0 will be used.", json_data["speed"], slot_index, card.name )
 
     def create_payload(self):
         """
@@ -481,7 +488,11 @@ class NsPanelCardSlotOhItemNumber( NsPanelCardSlotOhItem ):
         #overwrite options in openhab item with locally defined options, if availbale:
         self.item.update_item(self.options)
         payload = super().create_payload(self.item.state_formated)
-        payload = payload + str(self.item.state)+"|" + self.min + "|" + self.max
+        if self.card.MY_TYPE == NSPanelCard.CARD_ENTITIES:
+            #for card power the state is only used for the animation. The slider position is defined by the payload values min and max. So we send the current state as text but not as slider position.
+            payload = payload + str(self.item.state)+"|" + self.min + "|" + self.max
+        else:
+            payload = payload + self.item.state_formated
         self.log.debug("Number payload created: %s", payload)
         return payload
 
