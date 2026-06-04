@@ -691,10 +691,10 @@ The *screensaver* card can have up to 6 slots
 
 | Slot number | slot type| default value | optional / Mandetory | Description |
 |--- |--- |--- |--- |---
-| 1 | openwathermap |-| O | Current weather information
-| 2-4 | openwathermap |-| O | 3 weather forcasts
-| 5 | openwathermap |-| O | 4th weather forcast. Not visible if slot 6 is defined
-| 6 | openwathermap |-| O | Alternative slot for wather forcasts
+| 1 | openwathermap |empty| O | Current weather information
+| 2-4 | openwathermap |empty| O | 3 weather forcasts
+| 5 | openwathermap |empty | O | 4th weather forcast. Not visible if slot 6 is defined
+| 6 | openwathermap |empty | O | Alternative slot for wather forcasts
 
 
 Example definition of a screensaver with *openweathermap* forecast:
@@ -820,7 +820,7 @@ You can activate this card over an MQTT command to [status_card](#status_card-st
 
 
 ### Card type *screensaver2*
-A *screensaver2* is similar to [sceensaver](#card-type-screensaver) but has more weather forcast slots and 6 item slots.
+A *screensaver2* is similar to [sceensaver](#card-type-screensaver) but has more weather forcast slots and 6 attitonal item slots.
 
 The *screensaver2* card can have up to 6 slots
 
@@ -829,7 +829,7 @@ The *screensaver2* card can have up to 6 slots
 | 1 | openwathermap | empty | O | Current weather information
 | 2-4 | openwathermap |empty| O | 3 weather forcasts for near future without time stamp
 | 5-10 | openwathermap |empty| O | 6 weather forcasts with time stamp
-| 11-15 | all status item types |empty| O | 5 slots with different openhab item status
+| 11-15 | all status item types |empty| O | 5 slots with different openhab item status. Note: There is an issue in the current HMI implementation of lovlace UI. The button event is send twice when you click on one of this items. That means the state of the item in openHAB is toggled twice (for example OFF -> ON -> OFF)!
 
 
 ![image](doc/ExampleScreensaver2.jpg)
@@ -1138,7 +1138,7 @@ As you can see attribute *details: True*. The 3 dots can be clicked and a popup 
 ![image](doc/ExampleCardThermoPopup.jpg)
 
 ### Card type *cardPower*
-The card type *cardPower* can be used to show your powerflow at home
+The card type *cardPower* can be used to show your power flow at home
 
 The card has no extra card attributes. The slots are defined as following:
 
