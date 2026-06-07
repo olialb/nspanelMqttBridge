@@ -119,11 +119,11 @@ class NSPanelCardWithSlots(NSPanelCardWithNav):
         self.log.debug("Slot payload for all slots created: %s", payload)
         return payload
 
-    def create_update_payload(self):
+    def create_update_payload(self, compatibility=NSPanelCard.COMPATIBILITY_MODE_DEFAULT):
         """
         Create nav card payload
         """
-        return super().create_update_payload() + self.create_slots_payload()
+        return super().create_update_payload(compatibility) + self.create_slots_payload()
 
     def popup_card(self, card_type, slot_name):
         """
@@ -197,6 +197,12 @@ class NSPanelCardWithSlots(NSPanelCardWithNav):
                 if slot.item.set_item_state( params[2]):
                     self.log.info("Number set event '%s' for slot '%s'", params[2], slot.name)
                     return self
+            #check for cardPlayer events
+            if params[1] in ['volumeSlider', 'media-shuffle', 'media-back', 'media-next', 'media-OnOff', 'media-pause']:
+                if slot.slot_class == "ohItem" and slot.type == "player":
+                    if slot.player_event(params[1:]):
+                        self.log.debug("Player event '%s' for slot '%s processed'", params, slot.name)
+                        return self
             self.log.warning("Event not processed for '%s'", slot_name)
 
         return super().event_button_press( params )

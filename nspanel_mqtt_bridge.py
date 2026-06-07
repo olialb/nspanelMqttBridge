@@ -534,6 +534,7 @@ def nspanel_bridge():
     mqtt_client.connect()
     #init panels
     for panel in mqtt_client.panels.values():
+        panel.restart()
         panel.init_panel()
 
     #start file observer for card configuration files

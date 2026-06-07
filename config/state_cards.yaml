@@ -3,13 +3,15 @@
 # A state card defines the left and right upper slot of the screensaver
 #
 cards:
-  - name: MyStateCard   #free name of the statu card. Rename it to "_default_status_" to make this card the default state card
+  - name: MyStateCard   #free name of the state card. Rename it to "_default_status_" to make this card the default state card
     type: statusCard
-    slots: #2 slots must be defined in a statusCard
+    iconSize: small
+    slots: #2 slots must be defined in a stateCard
       - class: ohItem #left upper state slot
         text: =itemState #the state of the item will be shown as text after the icon
         type: light
         item: Switch_Kugellampe
+        icon: lamp
       - class: ohItem #right upper state slot
         text: =itemState
         type: text

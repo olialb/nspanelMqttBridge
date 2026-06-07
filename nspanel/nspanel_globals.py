@@ -102,9 +102,9 @@ def interpret_options( options ):
     for option in options.split(","):
         v = option.split("=")
         if len(v) > 1:
-            d[v[0]] = v[1]
+            d[v[0].strip().upper()] = v[1].strip()
         else:
-            d[option] = option
+            d[option.strip().upper()] = option.strip()
     return d
 
 def color16to24bits(value):

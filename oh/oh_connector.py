@@ -32,21 +32,6 @@ from file_logger import file_logger as FLOGGER
 # globals
 #
 
-#
-# helper functions
-#
-def oh_options_to_dict( options ):
-    """
-    builds a simpe dictionary from value and labels in oh options list
-    """
-    try:
-        d = {}
-        for entry in options:
-            d[entry["value"]] = entry["label"]
-    except KeyError:
-        return None
-    return d
-
 
 #rest api session class
 class OHConnection():
@@ -125,6 +110,23 @@ class OHItem: #pylint: disable=too-many-instance-attributes
 
         self.log.debug("OHItem '%s' constructed!", name)
 
+    def oh_options_to_dict( self, options ):
+        """
+        builds a simpe dictionary from value and labels in oh options list
+        """
+        try:
+            d = {}
+            for entry in options:
+                if "label" in entry:
+                    d[entry["value"]] = entry["label"]
+                else:
+                    #simple options with value only
+                    d[entry["value"]] = entry["value"]
+        except KeyError:
+            self.log.error("Can not build option dict from OH options: %s", options)
+            return None
+        return d
+
     def get_item_json( self ):
         """
         makes an rest api request for an item state to openhab and returns the json response
@@ -170,7 +172,10 @@ class OHItem: #pylint: disable=too-many-instance-attributes
         if local_options is not None:
             new_state = self.toggle_oh_state(list(local_options.keys()))
         else:
-            new_state = self.toggle_oh_state(list(self.options.keys()))
+            if self.options is not None:
+                new_state = self.toggle_oh_state(list(self.options.keys()))
+            else:
+                pass
         if new_state is not None and new_state != self.state:
             return self.set_item_state( new_state )
         self.log.warning("Item state %s of item %s can not be toggled", self.state, self.name)
@@ -214,7 +219,7 @@ class OHItem: #pylint: disable=too-many-instance-attributes
             else:
                 if "stateDescription" in item_json and "options" in item_json["stateDescription"]:
                     #we have options defined take them in the item attributes
-                    self.options = oh_options_to_dict(item_json["stateDescription"]["options"])
+                    self.options = self.oh_options_to_dict(item_json["stateDescription"]["options"])
                     if self.options is None:
                         self.log.warning("Openhab options not in known format. Can not use them.")
             #Evaluate if state can/must be formated further

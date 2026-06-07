@@ -6,7 +6,7 @@ cards:
     group: home
     type: screensaver
     backgroundColor: #0f0f0f
-    barColor: blue
+    barColor: red
     slots:
       - class: ohItem               #current weather
         type: openweathermap

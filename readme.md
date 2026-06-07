@@ -14,6 +14,8 @@
 ## Purpose of this project
 This project provides a bridge to connect a NSPanel with [nspanel-lovelace-ui](https://github.com/jobr99/nspanel-lovelace-ui) to [openHAB](https://www.openhab.org/). It bridges the [nspanel-lovelace-ui](https://github.com/jobr99/nspanel-lovelace-ui) MQTT commands and messages to the [REST-API](https://www.openhab.org/docs/configuration/restdocs.html) of [openHAB](https://www.openhab.org/)
 
+Note: As an alternative HMI you can also use also the HMI from this [fork ioBroker.nspanel-lovelace-ui](https://github.com/ticaki/ioBroker.nspanel-lovelace-ui/tree/main). The support is still experimental.
+
 ![image](doc/network-architecture.png)
 
 **Highlight features:**
@@ -294,13 +296,15 @@ The *type* attribute is the link to the page types in [nspanel-lovelace-ui](http
 | screensaver | 6             | 6             | Screen saver card with weather content. Details in section [Card type *screensaver*](#card-type-screensaver) | ![image](doc/ExampleScreensaverMini.jpg)|
 | screensaver2 | 14             | 14             | Screen saver card with extended weather content and 5 additional item status. Details in section [Card type *screensaver2*](#card-type-screensaver2) | ![image](doc/ExampleScreensaver2Mini.jpg)|
 | cardEntities | 4            | 6              | Card with the slots shown as a list. Details in section [Card type *cardEntities*](#card-type-cardentities-cardgrid-and-cardgrid2)| ![image](doc/ExampleEntitiesCardMini.jpg) ![image](doc/ExampleEntitiesCardUSPort.jpg) |
-| cardGrid | 6             | 6             | Card with 6 slots as a 2x3 icon grid. Details in section [Card type *cardGrid*](#card-type-cardentities-cardgrid-and-cardgrid2) | ![image](doc/ExampleGridCardMini.jpg)
-| cardGrid2 | 8             | 8             | Card with 8 slots as a 2x4 icon grid. Details in section [Card type *cardGrid2*](#card-type-cardentities-cardgrid-and-cardgrid2) | ![image](doc/ExampleGridCard2Mini.jpg)
+| cardGrid | 6             | 6             | Card with 6 slots as a 2x3 icon grid. Details in section [Card type *cardGrid*](#card-type-cardentities-cardgrid-cardgrid2-and-cardgrid3) | ![image](doc/ExampleGridCardMini.jpg)
+| cardGrid2 | 8             | 8             | Card with 8 slots as a 2x4 icon grid. Details in section [Card type *cardGrid2*](#card-type-cardentities-cardgrid-cardgrid2-and-cardgrid3) | ![image](doc/ExampleGridCard2Mini.jpg)
+| cardGrid3 | 4             | 4             | Card with 4 slots as a 2x2 icon grid. Details in section [Card type *cardGrid3*](#card-type-cardentities-cardgrid-cardgrid2-and-cardgrid3). | ![image](doc/ExampleGridCard3Mini.jpg)
 | cardQR | 1             | 1             | Card to show QR code for a weblink . Details in section [Card type cardQR](#card-type-cardqr) | ![image](doc/ExampleCardQRMini.jpg)
 | cardQRWifi | 2            | 2              | Card to show QR code Wifi access . Details in section [Card type cardQRWifi](#card-type-cardqrwifi) | ![image](doc/ExampleCardQRWIfiMini.jpg)
 | cardAlarm | 5            | 5              | Card to show a Keypad to activate/deactivate alarm states. Details in section [Card type cardAlarm](#card-type-cardalarm) | ![image](doc/ExampleCardAlarm.jpg)
 | cardThermo | 14             | 14             | Card to control a thermostat. Details in section [Card type cardThermo](#card-type-cardthermo) | ![image](doc/ExampleCardThermoMini.jpg)
 | cardPower | 8             | 8             | Card show the power flow in your house. Details in section [Card type cardPower](#card-type-cardpower) | ![image](doc/ExampleCardPowerMini.jpg)
+| cardMedia | 7             | 7             | Card to control a musix/video player at home. Details in section [Card type cardMedia](#card-type-cardMedia) | ![image](doc/ExampleCardMediaMini.jpg)
 | cardChart | 1             | 1             | Card to show a chart based on the persistance data of an item. Details in section [Card type cardChard](#card-type-cardchart) | ![image](doc/ExampleCardCardMini.jpg)
 
 ## Slot types and classes
@@ -313,12 +317,12 @@ The following tables show the attributes which are in common for all slot types.
 | type |-|M| The slot type itself. All type names and additonal specific attributes are listed in the next section |
 | item | - | M | openHAB item name shown in the slot |
 | text | openHAB item label | O | Text label shown for the item. If its not defined, the label of the openHAB item is used instead. For card type *CardGrid* it can be useful to show the item state instead of a text or item label. If you want this, set *text* attribute to *=itemState* |
-| icon | default icon from skin.json | O | see how to [reference icons](#reference-icons-in-lovelace-ui)|
-| iconColor | default icon color from skin.json | O | Icon color as web color name like "white", "yellow" or as 24Bit RGB value like #FFFFFF for white
+| icon | default icon from skin.json | O | see how to [reference icons](#reference-icons)|
+| iconColor | default icon color from skin.json | O | see how to [reference icon colors](#reference-icon-colors)
 | speed | 0 | O | controlls the animation speed for the slot (used in [card type cardPower](#card-type-cardPower)). Values between -120 and +120 are supported.
 | options | options list from referenced openHAB item|O| Defines an options list loke in openHAB: TUNER=Radio,PHONO=Plattenspieler,AV2=vu2+ |
 
-#### Reference icons in lovelace UI
+#### Reference icons
 Icons are encoded as unicode characters. You find all possible icon unicodes on the page [Material Icons](https://docs.nspanel.pky.eu/icon-cheatsheet.html). You can reference the icons in the yaml files over the unicode or the associated name in this page:
 
 Examples:
@@ -328,12 +332,34 @@ icon: "\uE1C8"       #As character
 icon: \ue1c8         #As hex value
 ```
 
-### *ohItem* slot type *switch*
-The *switch* type shows the state of the switch. By clicking on it, you can switch the state ON and OFF in openHAB. The iconColor can be automatically adapted depending on the switch state. default is "grey" for off and "yellow" for on This can be adapted with the attribute *iconStateColor*
+You can also define icons dependant on the openHAB item state:
 
-| Slot attribute | default value | optional / Mandetory | Description |
-|--- |--- |--- |---
-| iconStateColor |*True*|O| If set to *True* color is set depending on the state. The colors for state ON and OFF are taken from skin file (yellow=ON, grey=OFF). Instead of true you can define different color values for ON and OFF. For example: *red\|white* or just *red* for ON. You can set this featere also to False. Than a static color is used.
+Examples:
+```yaml
+icon: ON=lightbulb-on-outline,OFF=lightbulb-outline
+icon: CLOSED=window-closed,OPEN=window-open
+```
+
+#### Reference icon colors
+You can reference the icon colors in the yaml files with a [webcolor name](https://www.w3schools.com/tags/ref_colornames.asp) or with an hex value:
+
+Examples:
+```yaml
+iconColor: white    #By name
+iconColor: #FFFFFF  #As character
+```
+
+You can also define icon colors dependant on the openHAB item state:
+
+Examples:
+```yaml
+iconColor: ON=yellow,OFF=grey
+iconColor: CLOSED=grey,OPEN=blue
+```
+
+
+### *ohItem* slot type *switch*
+The *switch* type shows the state of the switch. By clicking on it, you can switch the state ON and OFF in openHAB.
 
 Example 1:
 ```yaml
@@ -344,7 +370,7 @@ Example 1:
         text: =itemState
         item: Switch_Kugellampe
         icon: lamp
-        iconStateColor: red|white   #state color definition
+        iconColor: ON=red,OFF=grey
 ```
 
 For example in *cardGrid*:
@@ -370,7 +396,6 @@ Example:
       - class: ohItem
         type: light                 #lovelace ui field type
         text: Kugel farbig          #Text shown for the item
-        iconStateColor: yellow|grey #state color definition
         item: Switch_Kugellampe     #Switch item in openHAB
         dimmerItem: Dimmer_Kugellampe        #openHAB item to control the brightness of the light
         colTempItem: Dimmer_Kugellampe_temp  #openHAB item to control the color temperature of the light
@@ -620,6 +645,43 @@ In *cardEntities*:
 In *cardGrid*:
 ![image](doc/ExampleNavGrid.png)
 
+### *ohItem* slot type *player*
+The *player* is a special slot type which can only be used in slot 1 of  [Card type cardMedia](#card-type-cardMedia)
+It has the following slot attributs:
+
+| Slot attribute | default value | optional / Mandetory | Description |
+|--- |--- |--- |---
+| item |- |M| Must be an item of type *Player* or *String*
+| volumeItem |- | M | Must be a *Dimmer* item to control the volume|
+| powerItem |disabled | O |Can be used for a *Switch* item to switch the power of the player
+| powerItemColor |ON=green,OFF=grey| O | color of the power icon
+| shuffleItem |disabled| O | Can be used to control the shuffle status of the player
+| shuffleIcon |ON=shuffle,OFF=shuffle-disabled| O | Defines the icon which is shown for different shuffle item states
+| line1Item |empty| O | String item with text for first text field of the player
+| line2Item |empty| O | String item with text for second text field of the player
+| line1Color |blue| O | color of the first text field
+| line2Color |blue| O | color of the second text field
+
+
+Example in *cardMedia*:
+```yaml
+    ...
+    slots:
+      - class: ohItem
+        type: player
+        item: YamahaControl
+        volumeItem: YamahaVolume
+        powerItem: YamahaPower
+        shuffleItem: YamahaShuffle
+        shuffleIcon: Off=shuffle-disabled,Songs=shuffle,Album=shuffle-variant
+        line1Item: YamahaStation
+        line2Item: YamahaTitle
+        line1Color: red
+        line2Color: green
+```
+![image](doc/ExamplePlayer.png)
+
+
 ### Slot class *None*
 The slot class *None* can be used to skip slots in the card and keep the slot empty. The slot class *None* has no attrubutes.
 
@@ -635,14 +697,14 @@ Examples:
 
 ## Card types
 
-### Card type *cardEntities*, *cardGrid* and *cardGrid2*
+### Card type *cardEntities*, *cardGrid*, *cardGrid2* and *cardGrid3*
 The card types *cardEntities*, *cardGrid* and *cardGrid2* are the main card types to show the state of *ohItems*. You can alos change the states of an item over them. All are configured in the same way.
 
 *cardEntities* shows a list of maximal 4 slots:
 
 ![image](doc/ExampleEntitiesCard.jpg)
 
-*cardGrid* shows a grid of 2x3 slots and *cardGrid2* a grid of 2x4 slots.
+*cardGrid* shows a grid of 2x3 slots, *cardGrid2* a grid of 2x4 slots and *cardGrid3* a grid of 2x2 slots.
 
 There is one additonal card attribute to control the size of the icons in grid cards:
 | card attribute | default value from skin file | optional / Mandetory | Description |
@@ -656,6 +718,14 @@ Example cardGrid:
 Example cardGrid2 with *medium* size icons:
 
 ![image](doc/ExampleGridCard2.jpg)
+
+Example cardGrid3 with *medium* size icons:
+
+![image](doc/ExampleGridCard3.jpg)
+
+
+<font color="red">Note: </font> *cardGrid3* is only supported in alternative HMI from [fork ioBroker.nspanel-lovelace-ui](https://github.com/ticaki/ioBroker.nspanel-lovelace-ui/tree/main)
+
 
 ### Card type *screensaver*
 A *screensaver* card is active after a timeout which you can configure in the ini file. You can assign the default screensaver to a dedicated panel over the panel name with extention *.screensaver* (*name: panelname.scrennsaver*) Than this card will be used as *screensaver* card for the panel with name *panelname*
@@ -1210,6 +1280,70 @@ cards:
 ```
 ![image](doc/ExampleCardPower.jpg)
 
+### Card type *cardMedia*
+The card type *cardMedia* can be used to control a adio or video player at home.
+
+The card has no extra card attributes. The card has the following slots. Note that slot 1 is a special slot for the slot type *player*.
+
+![image](doc/cardMediaSlots.jpg)
+
+
+| Slot number | OH item type |slot types| default value | optional / Mandetory | Description |
+|--- |--- |--- |--- |--- |---
+| 1 |	Player or String |player|-| M | special slot to hold the player item
+| 2 |	input_sel | any item with options |-| M | Can be used to switch the main audio/video source of the player
+| 3-7 | any | any | disabled | O | Can be used to make any other setting on the player
+
+Example *cardMedia*:
+```yaml
+cards:
+  - name: YamahaPlayer
+    title: Yamaha Receiver
+    type: cardMedia
+    slots:
+      - class: ohItem
+        type: player
+        item: YamahaControl
+        volumeItem: YamahaVolume
+        powerItem: YamahaPower
+        shuffleItem: YamahaShuffle
+        shuffleIcon: Off=shuffle-disabled,Songs=shuffle,Album=shuffle-variant
+        line1Item: YamahaStation
+        line2Item: YamahaTitle
+        line1Color: red
+        line2Color: green
+      - class: ohItem
+        type: input_sel
+        icon: menu
+        item: YamahaInput
+      - class: ohItem
+        type: switch
+        icon: OFF=volume-low,ON=volume-variant-off
+        iconColor: ON=red,OFF=white
+        item: YamahaMute
+      - class: ohItem
+        type: input_sel
+        icon: radio
+        iconColor: green
+        item: YamahaPreset
+      - class: ohItem
+        type: input_sel
+        icon: surround-sound
+        iconColor: yellow
+        item: YamahaSurround
+      - class: ohItem
+        type: input_sel
+        icon: sleep
+        iconColor: yellow
+        item: YamahaSleep
+      - class: ohItem
+        type: button
+        icon: Off=repeat-off,One=repeat-once,All=repeat
+        iconColor: blue
+        item: YamahaRepeat
+```
+![image](doc/ExampleCardMedia.jpg)
+
 ### Card type *cardCart*
 The card type *cardCahrt* can be used to show a bar graph of the openHAB persistance data fo one item.
 
@@ -1329,10 +1463,12 @@ Card attributes of *popupNotify* card:
 | fontSize | 2 | O | font size of the notification text. Values from 1-5 are allowd see also here [Label Parameter](https://github.com/joBr99/nspanel-lovelace-ui/wiki/cardgrid-entity-parameter#angaben-f%C3%BCr-label)
 |	titleColor | white | O | Color of the *popupNotify* card title
 | textColor | white | O | Color of the *popupNotify* card text
-| b1Color | red | O | Color of the *popupNotify* card left button
-| b2Color | green | O |Color of the *popupNotify* card right button
-| b1Text | 'Ignore' |O  | Name of the left button. Default content depend on translation json.
-| b2Text | 'OK' | O | Name of the right button. Default content depend on translation json.
+| b1Color | red | O | Color of the *popupNotify* card 1st button
+| b2Color | green | O |Color of the *popupNotify* card 2nd button
+| b3Color | grey | O | Color of the popupNotify  card 3rd button. The 3rd button is only supported if you use HMI from [fork ioBroker.nspanel-lovelace-ui](https://github.com/ticaki/ioBroker.nspanel-lovelace-ui/tree/main)
+| b1Text | 'Ignore' |O  | Name of the 1st button. Default content depend on translation json.
+| b2Text | 'OK' | O | Name of the 2nd button. Default content depend on translation json.
+| b3Text | empty | O | Name of the 3rd button. Default content depend on translation json. The 3rd button is only supported if you use HMI from [fork ioBroker.nspanel-lovelace-ui](https://github.com/ticaki/ioBroker.nspanel-lovelace-ui/tree/main)
 
 Slots of *popupNotify* card:
 

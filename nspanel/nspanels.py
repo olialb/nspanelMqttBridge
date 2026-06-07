@@ -41,6 +41,7 @@ from lang import translate
 # global constants
 #
 SEND_COMMAND_TOPIC = "/cmnd/CustomSend"
+SEND_RESTART_TOPIC = "/cmnd/Restart"
 RESULT_CUSTOM_RECV="CustomRecv"
 RESULT_CUSTOM_SEND="CustomSend"
 PAGES_FILE_EXT = '.yaml'
@@ -108,11 +109,19 @@ class NSPanel(): #pylint: disable=too-many-instance-attributes, too-many-public-
         self.saver_tick_counter = client.saver_update
         #curently active notification card. 0 for none, 1 for first is active
         self.active_notification = 0
+        #compatibility mode for ioBroker.nspanel-lovelace-ui fork
+        self.compatibility_mode = NSPanelCard.COMPATIBILITY_MODE_DEFAULT
 
         #logger for this class
         self.log = FLOGGER.create_log_handler(f"NSPanel:{name.upper()}" )
 
         self.log.debug("NSPanel with name '%s' created.", name)
+
+    def restart(self):
+        """
+        restart the panel by sending a reset command. This will set the panel in the initial state and trigger a startup event
+        """
+        self.send_panel_cmd("1", SEND_RESTART_TOPIC)
 
     def get_status_card( self ):
         """
@@ -333,6 +342,25 @@ class NSPanel(): #pylint: disable=too-many-instance-attributes, too-many-public-
         msg = heading+"|"+notify_text
         self.mqtt.set_notification(self.name, msg )
 
+    def compatibility_check(self, hmi_version, panel_version):
+        """
+        check the compatibility of the panel and hmi version with this bridge version
+        """
+        self.log.debug("Panel version: %s, HMI version: %s", panel_version, hmi_version)
+
+        try:
+            panel_himi_version = float(hmi_version)
+        except ValueError:
+            self.log.error("No valid HMI version '%s'", hmi_version)
+            return
+
+        if panel_himi_version >= 60:
+            self.log.info("HMI version '%s' seams to be from ioBroker.nspanel-lovelace-ui fork. Set compatibility mode to this fork.", hmi_version)
+            self.compatibility_mode = NSPanelCard.COMPATIBILITY_MODE_FORK1
+        else:
+            self.log.info("HMI version '%s' seams to be from original nspanel-lovelace-ui. Set compatibility mode to default.", hmi_version)
+            self.compatibility_mode = NSPanelCard.COMPATIBILITY_MODE_DEFAULT
+
     def panel_callback(self, my_config, msg): #pylint: disable=too-many-return-statements, too-many-branches, too-many-statements
         """
         mqtt messages received from the panel
@@ -359,6 +387,7 @@ class NSPanel(): #pylint: disable=too-many-instance-attributes, too-many-public-
         #event,buttonPress2,slot_1,tiltOpen
         #event,buttonPress2,slot_2,mode-Test,1
         #event,buttonPress2,popupNotify,notifyAction,yes
+        #"event,buttonPress2,slot_0,volumeSlider,28"}
         if RESULT_CUSTOM_RECV in js_payload: #pylint: disable=too-many-nested-blocks
             #seams to be a relavalnt message
             self.log.debug("Message received from Panel: %s topic: %s", js_payload[RESULT_CUSTOM_RECV], my_config["topic"])
@@ -369,6 +398,7 @@ class NSPanel(): #pylint: disable=too-many-instance-attributes, too-many-public-
                 if params[1] == "startup":
                     #panel made reset. Reinit the panel
                     self.log.debug("'startup' event received from panel. Panel made reset. Reinit it now.")
+                    self.compatibility_check(params[2], params[3])
                     self.publish_version( params[2], params[3])
                     self.init_panel()
                     return
@@ -446,6 +476,8 @@ class NSPanel(): #pylint: disable=too-many-instance-attributes, too-many-public-
                     #popup for lights opened
                     if len(params) >= 4 and self.current_card is not None:
                         self.current_card.popup_card(params[2], params[3])
+                        #popupLightNew
+                        #self.popup_select()
                         self.update()
                         self.publish_card()
                         return
@@ -473,7 +505,7 @@ class NSPanel(): #pylint: disable=too-many-instance-attributes, too-many-public-
             if self.send_mqtt_msg(topic, msg):
                 my_config["value"] = msg
 
-    def send_panel_cmd(self, cmd):
+    def send_panel_cmd(self, cmd, cmd_topic=SEND_COMMAND_TOPIC):
         """
         send a command to the nspanel or put it in the queue if timeout is running
         """
@@ -484,7 +516,7 @@ class NSPanel(): #pylint: disable=too-many-instance-attributes, too-many-public-
             #there is currently a command running. Put cmd in the qeueu
             self._cmd_queue.append(cmd)
             return True
-        if self.send_mqtt_msg( self.topic+SEND_COMMAND_TOPIC, cmd ):
+        if self.send_mqtt_msg( self.topic+cmd_topic, cmd ):
             self._cmd_timeout_counter = self._time_cmd_timeout_value
             return True
         #something went wrong
@@ -525,7 +557,7 @@ class NSPanel(): #pylint: disable=too-many-instance-attributes, too-many-public-
         if self.saver_tick_counter <= 0:
             #update screensaver
             if self.current_card.MY_TYPE == NSPanelCard.CARD_SCREENSAVER:
-                self.send_panel_cmd( self.current_card.create_update_payload() )
+                self.send_panel_cmd( self.current_card.create_update_payload(self.compatibility_mode))
             self.saver_tick_counter = self.mqtt.saver_update
 
     def check_time(self):
@@ -611,7 +643,7 @@ class NSPanel(): #pylint: disable=too-many-instance-attributes, too-many-public-
                     #take first card in group:
                     cards = list(NSPanelCard.cards_by_group[group].values())
                     i=0
-                    while i < len(cards) and cards[i].type == cards[i].CARD_SCREENSAVER:
+                    while i < len(cards) and cards[i].type in [NSPanelCard.CARD_SCREENSAVER, NSPanelCard.CARD_SCREENSAVER2]:
                         i=i+1
                     if len(cards) > i:
                         self.log.debug("Navigate to first card '%s' in group '%s'.", cards[0].name, group)
@@ -648,7 +680,7 @@ class NSPanel(): #pylint: disable=too-many-instance-attributes, too-many-public-
 
         #fill card with content
         self.send_panel_cmd( card.create_color_payload() )
-        self.send_panel_cmd( card.create_update_payload() )
+        self.send_panel_cmd( card.create_update_payload(self.compatibility_mode) )
         self.current_card = card
         if card.group not in [NSPanelCard.NOTIFY_CARD_GROUP, NSPanelCard.STATUS_CARD_GROUP]:
             self.current_group = card.group
@@ -656,6 +688,17 @@ class NSPanel(): #pylint: disable=too-many-instance-attributes, too-many-public-
             self.update_status()
         self.publish_card()
 
+#popupLightNew
+#    def popup_select(self):
+#        """
+#        checks if an alternative popup is selected for this slot
+#        """
+#        if self.current_card is not None:
+#            #check if there is no popup card active
+#            if self.current_card.popup is not None:
+#                self.send_panel_cmd(self.current_card.popup.create_select_payload())
+#                return
+#        self.log.error("Something went wrong in popup select method.")
 
     def update(self):
         """
@@ -669,9 +712,9 @@ class NSPanel(): #pylint: disable=too-many-instance-attributes, too-many-public-
                 if self.current_card.MY_TYPE in [NSPanelCard.CARD_CHARD]:
                     #some cards need to be cleaned up before content can be updated.
                     self.send_panel_cmd( self.current_card.create_cmd_payload() )
-                self.send_panel_cmd( self.current_card.create_update_payload() )
+                self.send_panel_cmd( self.current_card.create_update_payload(self.compatibility_mode) )
             else:
-                self.send_panel_cmd( self.current_card.popup.create_update_payload() )
+                self.send_panel_cmd( self.current_card.popup.create_update_payload(self.compatibility_mode) )
 
 
     def send_dimmode(self,addon=""):

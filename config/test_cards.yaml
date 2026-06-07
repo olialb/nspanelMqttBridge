@@ -2,18 +2,32 @@
 # Home cards
 #
 cards:
-  - name: Test
+  - name: TestX
     title: shutter test
-    group:  test ,  test_saver
+    group:  test ,  test_saver, _status_cards_
     type: cardEntities
     slots:
       - class: ohItem #All default
         type: shutter
+        text: Meiner
         item: R_RolladenWintergarten
       - class: ohItem #Default with tilt function
         type: shutter
         item: R_RolladenWintergarten
         tiltItem: R_RolladenWintergarten #optional tilt item
+      - class: ohItem #Default with tilt function, shutter text, and shutter down disabeled
+        type: shutter
+        text: Wintergarten
+        item: R_RolladenWintergarten
+        tiltItem: R_RolladenWintergarten #optional tilt item
+      - class: ohItem #Everything defined
+        type: shutter
+        text: Wintergarten
+        icon: \uefa2a 
+        shutterControls: disable|enable|enable #optional setting for shutte up|stop| down buttons. Default is enable|enable|enable
+        item: R_RolladenWintergarten
+        tiltItem: R_RolladenWintergarten #optional tilt item
+        tiltControls: disable|enable|enable #optional setting for tilt up|stop| down buttons. Default is enable|enable|enable
       - class: ohItem #Default with tilt function, shutter text, and shutter down disabeled
         type: shutter
         text: Wintergarten
@@ -158,7 +172,7 @@ cards:
         iconColor: pink
         navTo: home/.
   - name: Test7 
-    title: Test Grid unusual
+    title: Test Grid
     group:  test ,  test_saver
     type: cardGrid
     slots:
@@ -193,6 +207,7 @@ cards:
         navTo: home/.
       - class: ohItem
         type: number
+        text: =itemState
         item: Aussentemperatur
         icon: \ue503
         iconColor: lightgrey
@@ -240,53 +255,34 @@ cards:
         icon: \ue6b4
         iconColor: lightblue
   - name: Test9
-    title: iconStateColor
+    title: icon/color state
     group:  test ,  test_saver
     type: cardGrid
     slots:
-      - class: ohItem
+      - class: ohItem #simple color, and icon
         type: light
         text: =itemState
         item: Switch_Kugellampe
         icon: \ue6b4
         iconColor: lightblue
-        iconStateColor:
-      - class: ohItem
-        type: switch
+      - class: ohItem #icon changes
+        type: light
         text: =itemState
         item: Switch_Kugellampe
-        iconColor: blue
-        icon: \ue6b4
+        icon: ON=\ue6b4,OFF=\uF7CF
         iconColor: lightblue
-        iconStateColor: True
-      - class: ohItem
-        type: switch
-        text: =itemState
-        item: Switch_Kugellampe
-        icon: \ue6b4
-        iconColor: lightblue
-        iconStateColor:
-      - class: ohItem
+      - class: ohItem #icon and color changes
         type: switch
         text: =itemState
         item: Switch_Kugellampe
         icon: \ue6b4
-        iconColor: lightblue
-        iconStateColor: False
-      - class: ohItem
+        iconColor: OFF=grey,ON=red
+      - class: ohItem #color changes
         type: switch
         text: =itemState
         item: Switch_Kugellampe
         icon: \ue6b4
-        iconColor: lightblue
-        iconStateColor: Red
-      - class: ohItem
-        type: switch
-        text: =itemState
-        item: Switch_Kugellampe
-        icon: \ue6b4
-        iconColor: lightblue
-        iconStateColor: red|orange
+        iconColor: ON=red,OFF=orange
   - name: Test10
     group:  test ,  test_saver
     type: cardGrid
@@ -298,3 +294,172 @@ cards:
         icon: \ue6b4
         iconColor: lightblue
         options: 0.0,10.0,20.0,30.0,40.0,100.0
+  - name: Test11 #chart defaults
+    group:  test ,  test_saver
+    title: Test number chart
+    type: cardChart
+    slots:
+      - class: ohItem
+        type: number
+        item: Stromzaehler_power
+  - name: Test12 #chart color defefine no period
+    group:  test ,  test_saver
+    title: Test state chart
+    type: cardChart
+    life: true
+    #period: d
+    #past: w
+    color: yellow
+    slots:
+      - class: ohItem
+        type: switch
+        item: Switch_Kugellampe
+  - name: Test13 #chart color defefine period 1 day
+    group:  test ,  test_saver
+    title: Test state chart2
+    type: cardChart
+    life: true
+    period: d
+    #past: w
+    color: blue
+    slots:
+      - class: ohItem
+        type: input_sel
+        item: YamahaInput
+  - name: Test13x #chart color defefine period 1 day week ago
+    group:  test ,  test_saver
+    title: Test state chart3 X
+    type: cardChart
+    life: true
+    period: d
+    past: w
+    color: blue
+    slots:
+      - class: ohItem
+        type: input_sel
+        item: YamahaInput
+  - name: Test14 #chart current day and color defined
+    group:  test ,  test_saver
+    title: Test number chart X
+    type: cardChart
+    life: true
+    period: d
+    #past: w
+    slots:
+      - class: ohItem
+        type: number
+        item: Stromzaehler_power
+  - name: Test15 #chart one day and color defined
+    group:  test ,  test_saver
+    title: Test number chart Y
+    type: cardChart
+    life: true
+    period: d
+    past: w
+    color: red
+    slots:
+      - class: ohItem
+        type: number
+        item: Stromzaehler_power
+  - name: Test16 #chart one day two nonth ago and color defined
+    group:  test ,  test_saver
+    title: Test number chart Z
+    type: cardChart
+    life: false
+    period: d
+    past: 2m
+    color: blue
+    slots:
+      - class: ohItem
+        type: number
+        item: Stromzaehler_power
+  - name: Test17 #chart one day two nonth ago and color defined
+    group:  test ,  test_saver
+    title: Test number chart 3
+    type: cardChart
+    life: false
+    period: d
+    past: 2m
+    color: blue
+    slots:
+      - class: ohItem
+        type: number
+        item: Aussentemperatur
+  - name: Test18 #chart color defefine period 2 weeks
+    group:  test ,  test_saver
+    title: Test state chart
+    type: cardChart
+    life: true
+    period: 2w
+    color: pink
+    slots:
+      - class: ohItem
+        type: switch
+        item: Switch_Kugellampe
+  - name: Test19 #chart color defefine period 1 day week ago
+    group:  test ,  test_saver
+    title: Test state chart3
+    type: cardChart
+    life: true
+    period: d
+    past: w
+    color: blue
+    slots:
+      - class: ohItem
+        type: input_sel
+        item: YamahaInput
+  - name: Test20 #test cardPower
+    group:  test ,  test_saver
+    title: Test cardPower
+    type: cardPower
+    slots:
+      - class: ohItem
+        type: number
+        icon: home
+        iconColor: green
+        item: Stromzaehler_power
+      - class: ohItem
+        type: number
+        item: Stromzaehler_power
+      - class: ohItem
+        type: number
+        speed: -20
+        text: Solar 1
+        icon: solar-power-variant
+        iconColor: yellow
+        item: Stromzaehler_power
+      - class: ohItem
+        type: number
+        text: Car port 1
+        icon: car-electric
+        iconColor: blue
+        speed: 20
+        item: Stromzaehler_power
+      - class: ohItem
+        type: number
+        text: Car port 2
+        icon: car-electric
+        iconColor: blue
+        speed: 100
+        item: Stromzaehler_power
+      - class: ohItem
+        type: number
+        text: Solar 2
+        icon: solar-power-variant
+        iconColor: yellow
+        speed: 20
+        item: Stromzaehler_power
+      - class: ohItem
+        type: number
+        text: Car port 3
+        icon: car-electric
+        iconColor: blue
+        speed: -50
+        item: Stromzaehler_power
+      - class: ohItem
+        type: number
+        text: Car port 4
+        icon: car-electric
+        iconColor: blue
+        speed: -10
+        item: Stromzaehler_power

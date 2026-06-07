@@ -23,6 +23,7 @@ Module implements a simple translator based on json files
 """
 
 import json
+import sys
 
 #project imports
 from file_logger import file_logger as FLOGGER
@@ -42,15 +43,16 @@ def key(section, entry=None):
     """
     Returns one entry form the data base
     """
-    if section in SKIN_DB:
-        if entry is None:
-            return SKIN_DB[section]
-        if entry in SKIN_DB[section]:
-            val = SKIN_DB[section][entry]
-            if isinstance(val,str) and val[:len(ICON_KEY)] == ICON_KEY:
-                return icon((val[len(ICON_KEY):]))
-            return val
-    LOGGER.debug( "No entry for section '%s' with entry '%s'.", section, entry)
+    if entry is None:
+        return SKIN_DB[section]
+    if section not in SKIN_DB:
+        section = "default"
+    if entry in SKIN_DB[section]:
+        val = SKIN_DB[section][entry]
+        if isinstance(val,str) and val[:len(ICON_KEY)] == ICON_KEY:
+            return icon((val[len(ICON_KEY):]))
+        return val
+    LOGGER.error( "DB: No entry for section '%s' with entry '%s'.", section, entry)
     return None
 
 def icon( icon_name ):

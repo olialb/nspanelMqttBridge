@@ -15,13 +15,19 @@ cards:
       - class: ohItem
         type: shutter
         text: Rolladen
+        #icon: \uefa2a #blinds-horizontal
         item: R_RolladenWintergarten
         #tiltItem: Dimmer_Flurdecke
       - class: navigate
-        icon: \uebaa
         iconColor: pink
         text: Test cards
         navTo: test/.
+      - class: ohItem
+        type: light
+        text: Gruppe
+        #icon: \uefa2a #blinds-horizontal
+        item: Switch_Wintergarten
+        #tiltItem: Dimmer_Flurdecke
   - name: Esszimmer
     title: Esszimmer
     type: cardGrid
@@ -207,14 +213,20 @@ cards:
         item: S_LichterketteMueller
         dimmerItem: Dimmer_LichterMueller
         colTempItem: Dimmer_LichterMueller_temp
-      - class: None
-      - class:
       - class: ohItem
         type: light
         text: Kette Baum
         icon: "\uF2B9"
         item: S_LichterketteInnr
         dimmerItem: Dimmer_LichterInnr
+      - class: ohItem
+        type: light
+        text: Kugellampen
+        icon: "\uF2D6"
+        item: Switch_GartenKugellampen
+        dimmerItem: Dimmer_GartenKugellampen
+        colTempItem: Dimmer_GartenKugellampen_Temp
+        colorItem: Color_GartenKugellampen
   - name: guestWifi
     title: Gäste Wifi
     type: cardQRWifi
@@ -334,3 +346,46 @@ cards:
         item: H_Schlafzimmer_windowOpen
         iconColor: "yellow"
         icon: "\uF1DB"
+  - name: MyPowerChart
+    title: Power consumption
+    type: cardChart
+    life: true
+    period: 3d
+    past: w
+    slots:
+      - class: ohItem
+        type: number
+        item: Stromzaehler_power
+  - name: MySwitchChart
+    title: Lampe
+    type: cardChart
+    life: true
+    period: 4d
+    #past: w
+    slots:
+      - class: ohItem
+        type: input_sel
+        item: YamahaInput
+  - name: YamahaPlayer
+    title: Yamaha Receiver
+    type: cardMedia
+    slots:
+      - class: ohItem
+        type: player
+        item: YamahaControl
+        volumeItem: YamahaVolume
+        powerItem: YamahaPower
+        shuffleItem: YamahaPower
+        line1Item: YamahaStation
+        line2Item: YamahaTitle
+        line1Color: red
+        line2Color: green
+      - class: ohItem
+        type: input_sel
+        icon: menu
+        item: YamahaInput
+      - class: ohItem
+        type: switch
+        item: YamahaMute
+      
+    

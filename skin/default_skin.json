@@ -2,6 +2,7 @@
     "default": {
         "icon": "icon=gesture-tap-button",
         "iconColor" : "white",
+        "iconSize" : 0,
         "linkIcon" : ">",
         "stateIconLeft": "icon=alert",
         "stateIconLeftColor": "red",
@@ -29,13 +30,17 @@
         "icon_right": "icon=arrow-right-bold-circle-outline"
     },
     "cardAlarm": {
+        "iconSize": 0,
         "icon": "icon=security",
         "iconColor": "red",
         "flashing": "disable"
     },
     "cardQR": {
+        "iconSize": 0,
         "icon1": "icon=link-variant",
-        "icon_color_1": "yellow"
+        "icon_color_1": "yellow",
+        "icon2": false,
+        "icon_color_2": false
     },
     "cardGrid": {
         "iconSize": 4
@@ -43,18 +48,36 @@
     "cardGrid2": {
         "iconSize": 4
     },
-    "statusCard": {
-        "iconSize": 1
+    "cardGrid3": {
+        "iconSize": 4
     },
     "cardQRWifi": {
+        "iconSize": 0,
         "icon1": "\uF6C5",
         "icon_color_1": "yellow",
         "icon2" : "\uE305",
         "icon_color_2": "yellow"
     },
+    "cardChart" : {
+        "iconSize": 0,
+        "color" : "violet"
+    },
     "popupThermo": {
+        "iconSize": 1,
         "icon": "\uEF53",
         "iconColor": "green"
+    },
+    "popupNotify" : {
+        "iconSize": 0,
+        "fontSize" : 1,
+        "icon" : "icon=alert",
+        "iconColor" : "yellow",
+        "headingColor" : "white",
+        "textColor" : "white",
+        "b1Color": "red",
+        "b2Color": "green",
+        "b3Color": "white",
+        "timeout": 15
     },
     "text": {
         "icon": "icon=gesture-tap-button",
@@ -77,14 +100,14 @@
         "iconColor" : "white"
     },
     "switch": {
-        "iconColor": "white",
+        "iconColor": "ON=green, OFF=grey ",
         "icon": "icon=checkbox-blank-circle-outline",
         "color_on": "red",
         "color_off": "grey"
     },
     "light": {
-        "iconColor": "white",
-        "icon": "icon=lightbulb-outline",
+        "iconColor": "ON=yellow, OFF=grey",
+        "icon": "ON=lightbulb-on-outline,OFF=lightbulb-outline",
         "color_on": "yellow",
         "color_off": "grey"
     },
@@ -99,7 +122,17 @@
         "tilt_down": "\ue9c4",
         "iconSize" : 1
     },
+    "player": {
+        "iconColor": "white",
+        "icon": "PLAY=pause,PAUSE=play",
+        "shuffleIcon": "ON=shuffle,OFF=shuffle-disabled",
+        "powerIconColor": "ON=green,OFF=grey",
+        "line1Color": "blue",
+        "line2Color": "blue"
+    },
     "openweathermap": {
+        "icon":"icon=emoticon-devil-outline",
+        "iconColor": "white",
         "200":"weather-lightning-rainy",
         "201":"weather-lightning-rainy",
         "202":"weather-lightning-rainy",
@@ -217,9 +250,6 @@
         "weather-night": "grey",
         "weather-night-partly-cloudy": "grey"
     },
-    "cardChart" : {
-        "color" : "violet"
-    },
     "periods" : {
         "h" : 60,
         "1h" : 60,
@@ -279,16 +309,6 @@
         "8y" : 4204800,
         "9y" : 4730400,
         "10y" : 5256000
-    },
-    "popupNotify" : {
-        "fontSize" : 1,
-        "icon" : "icon=alert",
-        "iconColor" : "yellow",
-        "titleColor" : "white",
-        "textColor" : "white",
-        "b1Color": "red",
-        "b2Color": "green",
-        "timeout": 15
     },
     "iconSize" : {
         "small": 1,

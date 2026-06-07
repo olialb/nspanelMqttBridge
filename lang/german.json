@@ -28,6 +28,7 @@
     },
     "popupNotify": {
         "b1Text": "Ignorieren",
-        "b2Text": "OK"
+        "b2Text": "OK",
+        "b3Text": ""
     }
 }

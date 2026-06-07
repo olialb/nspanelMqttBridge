@@ -53,6 +53,7 @@ class NSPanelCardSlot(): #pylint: disable=too-many-instance-attributes
     SLOT_SWITCH = "switch"
     SLOT_INPUT_SEL = "input_sel"
     SLOT_OPENWEATHERMAP = "openweathermap"
+    SLOT_PLAYER = "player"
 
     #translator
     translator = None
@@ -87,10 +88,11 @@ class NSPanelCardSlot(): #pylint: disable=too-many-instance-attributes
         #addtional attributes
         self.slot_class = None
         self.text = None
-        self.icon = skin.key(self.MY_TYPE, "icon")
-        self.icon_color = str(name_to_16bit_color(skin.key(self.MY_TYPE, "iconColor")))
+        self.icon = interpret_options(skin.key(self.MY_TYPE, "icon"))
+        self.icon_color = interpret_options(skin.key(self.MY_TYPE, "iconColor"))
         self.speed = 0 #Animation speed in cardPower
         self.type = self.MY_TYPE
+        self.popup_type = None #alternative popup
         self.json_data = json_data
 
         """
@@ -101,14 +103,29 @@ class NSPanelCardSlot(): #pylint: disable=too-many-instance-attributes
             self.text = str(json_data["text"])
 
         if "icon" in json_data and json_data["icon"] is not None:
-            self.icon = skin.icon( json_data["icon"] )
+            self.icon = interpret_options(str(json_data["icon"]))
         if "iconColor" in json_data and json_data["iconColor"] is not None:
-            self.icon_color = str(name_to_16bit_color(json_data["iconColor"]))
+            self.icon_color = interpret_options(str(json_data["iconColor"]))
         if "speed" in json_data and json_data["speed"] is not None:
             if isinstance(json_data["speed"], int):
                 self.speed = json_data["speed"]
             else:
                 self.log.error("Speed value '%s' in slot %d in card '%s' is not an integer. Default value 0 will be used.", json_data["speed"], slot_index, card.name )
+        if "popupType" in json_data and json_data["popupType"] is not None:
+                self.popup_type = str(json_data["popupType"]).upper()
+
+    def get_icon(self):
+        """
+        returns the best matching icon for this slot
+        """
+        return skin.icon(list(self.icon.values())[0])
+
+    def get_icon_color(self):
+        """
+        returns the best matching icon color for this slot
+        """
+        return str(name_to_16bit_color(list(self.icon_color.values())[0]))
+
 
     def create_payload(self):
         """
@@ -117,7 +134,7 @@ class NSPanelCardSlot(): #pylint: disable=too-many-instance-attributes
         if self.text is None:
             self.text = "-text undefined-"
         payload = '~' + self.type + "~" + self.name + "~"
-        payload = payload + self.icon+self.card.icon_size_payload() + "~" + self.icon_color + "~"
+        payload = payload + self.get_icon()+self.card.icon_size_payload() + "~" + self.get_icon_color() + "~"
         payload = payload + self.text + "~"
         return payload
 
@@ -180,7 +197,7 @@ class NsPanelCardSlotNavigation( NSPanelCardSlot ):
         if self.text is None:
             self.text = self.nav_to
         payload = '~button~' + self.name + "~"
-        payload = payload + self.icon+self.card.icon_size_payload() + "~" + self.icon_color + "~"
+        payload = payload + self.get_icon()+self.card.icon_size_payload() + "~" + self.get_icon_color() + "~"
         payload = payload + self.text + "~" + skin.key("default", "linkIcon")
         self.log.debug("Navigate payload created: %s", payload)
         return payload
@@ -238,15 +255,35 @@ class NsPanelCardSlotOhItem( NSPanelCardSlot ):
             self.options = interpret_options(str(json_data["options"]))
         else:
             self.options = None
-        self.icon_state_color = None
 
         self.log.debug("NsPanelCardSlotOhItem '%s' constructed!", self.name )
+
+    def get_icon(self):
+        """
+        returns the best matching icon for this slot
+        """
+        if str(self.item.state).upper() in self.icon:
+            return skin.icon( self.icon[str(self.item.state).upper()] )
+        else:
+            #use first entry in dict as icon
+            return skin.icon(list(self.icon.values())[0])
+
+    def get_icon_color(self):
+        """
+        returns the best matching icon color for this slot
+        """
+        if str(self.item.state).upper() in self.icon_color:
+            return str(name_to_16bit_color(self.icon_color[str(self.item.state).upper()]))
+        else:
+            #use first entry in dict as color
+            return str(name_to_16bit_color(list(self.icon_color.values())[0]))
 
     def create_payload(self, stateText="empty"):
         """
         create upstate payload for ohitem slot
         """
         #take label from openhab item as text if no text available
+        self.item.update_item()
         text = self.text
         if text is None:
             text = self.item.label
@@ -255,15 +292,9 @@ class NsPanelCardSlotOhItem( NSPanelCardSlot ):
                 text = stateText
 
         payload = '~' + self.type + "~" + self.name + "~"
-        payload = payload + self.icon+self.card.icon_size_payload() + "~" + self.icon_color + "~"
+        payload = payload + self.get_icon()+self.card.icon_size_payload() + "~" + self.get_icon_color() + "~"
         payload = payload + text + "~"
         return payload
-
-    def get_icon_color(self):
-        """
-        returns the best matching icon color
-        """
-        return self.icon_color
 
     def create_status_payload(self, icon, color):
         """
@@ -281,7 +312,7 @@ class NsPanelCardSlotOhItem( NSPanelCardSlot ):
         else:
             if text == "=itemState":
                 text = translate.key( "openhabStates", self.item.state_formated )
-        slot_text = self.icon+text
+        slot_text = self.get_icon()+text
         slot_color = self.get_icon_color()
 
         return "~" + slot_text + '~' + slot_color
@@ -371,45 +402,161 @@ class NsPanelCardSlotOhItemWeather( NsPanelCardSlotOhItem ):
 NSPanelCardSlot.all_slot_classes["ohItem"][NsPanelCardSlotOhItemWeather.MY_TYPE] = NsPanelCardSlotOhItemWeather
 
 
+class NsPanelCardSlotOhItemPlayer( NsPanelCardSlotOhItem ):
+    """
+    Slot class for media player
+    """
+    MY_TYPE=NSPanelCardSlot.SLOT_PLAYER
+
+    def __init__(self, json_data, slot_index, card):
+        """
+        Constructor of a Slot with openweathermap items
+        """
+        super().__init__(json_data, slot_index, card)
+        self.item = self.OH.item_factory(json_data["item"], card.item_update_callback )
+        if "volumeItem" in json_data and json_data["volumeItem"] is not None:
+            self.volume_item = self.OH.item_factory(str(json_data["volumeItem"]), card.item_update_callback )
+        else:
+            self.volume_item = None
+        if "line1Item" in json_data and json_data["line1Item"] is not None:
+            self.line1_item = self.OH.item_factory(str(json_data["line1Item"]), card.item_update_callback )
+        else:
+            self.line1_item = None
+        if "line2Item" in json_data and json_data["line2Item"] is not None:
+            self.line2_item = self.OH.item_factory(str(json_data["line2Item"]), card.item_update_callback )
+        else:
+            self.line2_item = None
+        if "line1Color" in json_data and json_data["line1Color"] is not None:
+            self.line1_color = str(name_to_16bit_color(json_data["line1Color"]))
+        else:
+            self.line1_color = str(name_to_16bit_color(skin.key(self.MY_TYPE, "line1Color")))
+        if "line2Color" in json_data and json_data["line2Color"] is not None:
+            self.line2_color = str(name_to_16bit_color(json_data["line2Color"]))
+        else:
+            self.line2_color = str(name_to_16bit_color(skin.key(self.MY_TYPE, "line2Color")))
+        if "powerItem" in json_data and json_data["powerItem"] is not None:
+            self.power_item = self.OH.item_factory(str(json_data["powerItem"]), card.item_update_callback )
+        else:
+            self.power_item = None
+        if "powerIconColor" in json_data and json_data["powerIconColor"] is not None:
+            self.power_icon_color = interpret_options(str(json_data["powerIconColor"]))
+        else:
+            self.power_icon_color =interpret_options(skin.key(self.MY_TYPE, "powerIconColor"))
+        if "shuffleItem" in json_data and json_data["shuffleItem"] is not None:
+            self.shuffle_item = self.OH.item_factory(str(json_data["shuffleItem"]), card.item_update_callback )
+        else:
+            self.shuffle_item = None
+        if "shuffleIcon" in json_data and json_data["shuffleIcon"] is not None:
+            self.shuffle_icon = interpret_options(str(json_data["shuffleIcon"]))
+        else:
+            self.shuffle_item = interpret_options(skin.key(self.MY_TYPE, "shuffleIcon"))
+
+
+        self.log.debug("NsPanelCardSlotOhItemPlayer '%s' constructed!", self.name )
+
+    def get_shuffle_icon(self):
+        """
+        returns the best matching icon for the shuffle item
+        """
+        if str(self.shuffle_item.state).upper() in self.shuffle_icon:
+            return skin.icon( self.shuffle_icon[str(self.shuffle_item.state).upper()] )
+        #use first entry in dict as icon
+        return skin.icon(list(self.shuffle_icon.values())[0])
+
+    def get_power_icon_color(self):
+        """
+        returns the best matching icon color for power item
+        """
+        if str(self.power_item.state).upper() in self.power_icon_color:
+            return str(name_to_16bit_color(self.power_icon_color[str(self.power_item.state).upper()]))
+        else:
+            #use first entry in dict as color
+            return str(name_to_16bit_color(list(self.power_icon_color.values())[0]))
+
+    def create_payload(self, stateText="empty"):
+        """
+        create upstate payload for text slot
+        """
+        #example :~slotName~line1~line1Color~line2~line2Color~volume~iconPlayStop~colorOnOffIcon~colorShuffleIcon
+
+        payload = "~"+self.name
+
+        self.item.update_item()
+        if self.line1_item is not None:
+            self.line1_item.update_item()
+            line1 = str(self.line1_item.state)
+        else:
+            line1 = translate.key("player", "line1")
+        payload += "~" +line1 + '~' + str(self.line1_color)
+        if self.line2_item is not None:
+            self.line2_item.update_item()
+            line2 = str(self.line2_item.state)
+        else:
+            line2 = translate.key("player", "line2")
+        payload += "~" +line2 + '~' + str(self.line2_color)
+        if self.volume_item is not None:
+            self.volume_item.update_item()
+            volume = str(self.volume_item.state)
+        else:
+            volume = "50"
+        payload += "~" + volume + "~" + self.get_icon()
+        if self.power_item is not None:
+            self.power_item.update_item()
+            color_on_off_icon = self.get_power_icon_color()
+        else:
+            color_on_off_icon = "disable"
+        if self.shuffle_item is not None:
+            self.shuffle_item.update_item()
+            color_shuffle_icon = self.get_shuffle_icon()
+        else:
+            color_shuffle_icon = "disable"
+        payload += "~" + color_on_off_icon + "~" + color_shuffle_icon
+
+        return payload
+
+    def player_event(self, params):
+        """
+        process a player related event for this slot
+        """
+        if params[0] == "volumeSlider" and len(params) >= 2 and self.volume_item is not None:
+            self.volume_item.set_item_state( params[1])
+            self.log.info("Player volume set event '%s' for slot '%s'", params[1], self.name)
+            return True
+        if params[0] == "media-OnOff" and self.power_item is not None:
+            self.power_item.toggle_item_state()
+            self.log.info("Player power toggle event for slot '%s'", self.name)
+            return True
+        if params[0] == "media-shuffle" and self.shuffle_item is not None:
+            self.shuffle_item.toggle_item_state()
+            self.log.info("Player shuffle toggle event for slot '%s'", self.name)
+            return True
+        if params[0] == "media-next" and self.item is not None:
+            self.item.set_item_state('NEXT')
+            self.log.info("Player next event for slot '%s'", self.name)
+            return True
+        if params[0] == "media-back" and self.item is not None:
+            self.item.set_item_state('PREVIOUS')
+            self.log.info("Player back event for slot '%s'", self.name)
+            return True
+        if params[0] == "media-pause" and self.item is not None:
+            self.item.update_item()
+            if self.item.state == "PLAY":
+                self.item.set_item_state('PAUSE')
+                self.log.info("Player pause event for slot '%s'", self.name)
+            else:
+                self.item.set_item_state('PLAY')
+                self.log.info("Player play event for slot '%s'", self.name)
+            return True
+
+#add ohItem class to factory dictionary
+NSPanelCardSlot.all_slot_classes["ohItem"][NsPanelCardSlotOhItemPlayer.MY_TYPE] = NsPanelCardSlotOhItemPlayer
+
+
 class NsPanelCardSlotOhItemSwitch( NsPanelCardSlotOhItem ):
     """
     base class for slots with openhab items of type switch
     """
     MY_TYPE=NSPanelCardSlot.SLOT_SWITCH
-
-    def __init__(self, json_data, slot_index, card):
-        """
-        Constructor of a Slot in a NSPanelCard
-        """
-        super().__init__(json_data, slot_index, card)
-
-        self.icon_state_color = [self.icon_color, self.icon_color]
-        if "iconStateColor" not in json_data or json_data["iconStateColor"] is None or json_data["iconStateColor"] is True:
-            self.icon_state_color[0] = str(name_to_16bit_color(skin.key(self.MY_TYPE, 'color_on')))
-            self.icon_state_color[1] = str(name_to_16bit_color(skin.key(self.MY_TYPE, 'color_off')))
-        else:
-            if json_data["iconStateColor"] is not False:
-                color_names = json_data["iconStateColor"].split('|')
-                self.icon_state_color[0] = str(name_to_16bit_color(color_names[0].strip()))
-                if len(color_names) >= 2:
-                    self.icon_state_color[1] = str(name_to_16bit_color(color_names[1].strip()))
-                else:
-                    self.icon_state_color[1] = str(name_to_16bit_color(skin.key(self.MY_TYPE, 'color_off')))
-
-            self.icon_color = str(name_to_16bit_color(skin.key(self.MY_TYPE, 'default_icon_color')))
-        self.log.debug("Constructed!")
-
-    def get_icon_color(self):
-        """
-        returns the best matching icon color
-        """
-        self.item.update_item()
-        state = map_state_oh2panel("switch", self.item.state)
-        if state == "1":
-            self.icon_color = self.icon_state_color[0]
-        else:
-            self.icon_color = self.icon_state_color[1]
-        return self.icon_color
 
     def create_payload(self, stateText="empty"):
         """
@@ -469,12 +616,12 @@ class NsPanelCardSlotOhItemNumber( NsPanelCardSlotOhItem ):
         super().__init__( json_data, slot_index, card )
 
         #Set attributes from json data:
-        if "min" in json_data and json_data["min"] is None:
+        if "min" in json_data and json_data["min"] is not None:
             self.min = str(json_data["min"])
         else:
             self.min = self.DEFAULT_MIN
             self.log.debug("Attribute min not defined in slot %d of ohItem '%s'. Value '%s' will be used.", self.index, self.card.name, self.DEFAULT_MIN)
-        if "max" in json_data and json_data["max"] is None:
+        if "max" in json_data and json_data["max"] is not None:
             self.max = str(json_data["max"])
         else:
             self.max = self.DEFAULT_MAX
@@ -567,7 +714,7 @@ class NsPanelCardSlotOhItemLight( NsPanelCardSlotOhItemSwitch ):
         text2 = translate.key( self.MY_TYPE, "colTemp")
         text3 = translate.key( self.MY_TYPE, "brightness")
 
-        return "~" + self.name + '~' + self.icon + '~' + self.icon_color + '~'\
+        return "~" + self.name + '~' + self.get_icon() + '~' + self.get_icon_color() + '~'\
                     + state + '~' + dimmer_state + '~' + col_temp_state + '~' + color_state + '~'\
                     + text1 + '~' + text2 + '~' + text3
 
@@ -717,7 +864,7 @@ class NsPanelCardSlotOhItemInputSel( NsPanelCardSlotOhItem ):
             #remove last "?"
             options = options[:-1]
 
-        return "2~" + self.name + '~' + self.icon + '~' + self.icon_color + '~'\
+        return "2~" + self.name + '~' + self.get_icon() + '~' + self.get_icon_color() + '~'\
                     + "option" + '~' + state + '~' + options
 
 #add ohItem class to factory dictionary

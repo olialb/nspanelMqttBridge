@@ -85,7 +85,7 @@ class NSPanelCardScreenSaver(NSPanelCardWithSlots):
         """
         return "pageType~"+self.MY_TYPE
 
-    def create_update_payload(self):
+    def create_update_payload(self, compatibility=NSPanelCard.COMPATIBILITY_MODE_DEFAULT):
         """
         Create screensaver payload
         """
@@ -131,6 +131,15 @@ class NSPanelCardGrid2(NSPanelCardWithSlots):
 #add this card class type to the factory
 NSPanelCard.card_types[NSPanelCardGrid2.MY_TYPE] = NSPanelCardGrid2
 
+class NSPanelCardGrid3(NSPanelCardWithSlots):
+    """
+    Represent an card of type CardGrid3 in lovelace ui for NSPanels
+    """
+    MY_TYPE = NSPanelCard.CARD_GRID3
+
+#add this card class type to the factory
+NSPanelCard.card_types[NSPanelCardGrid3.MY_TYPE] = NSPanelCardGrid3
+
 class NSPanelCardPower(NSPanelCardWithSlots):
     """
     Represent an card of type CardPower in lovelace ui for NSPanels
@@ -148,9 +157,17 @@ class NSPanelCardPower(NSPanelCardWithSlots):
         self.log.debug("Slot payload for all slots created: %s", payload)
         return payload
 
-
 #add this card class type to the factory
 NSPanelCard.card_types[NSPanelCardPower.MY_TYPE] = NSPanelCardPower
+
+class NSPanelCardMedia(NSPanelCardWithSlots):
+    """
+    Represent an card of type CardMedia in lovelace ui for NSPanels
+    """
+    MY_TYPE = NSPanelCard.CARD_MEDIA
+
+#add this card class type to the factory
+NSPanelCard.card_types[NSPanelCardMedia.MY_TYPE] = NSPanelCardMedia
 
 class NSPanelStatusCard(NSPanelCardWithSlots):
     """
@@ -251,15 +268,15 @@ class NSPanelCardQR(NSPanelCardWithSlots):
             else:
                 text = str(slot.item.label)
             if "icon" in slot.json_data:
-                icon = slot.item.icon
+                icon = slot.item.get_icon()
             if "iconColor" in slot.json_data:
-                icon_color = slot.item.icon_color
+                icon_color = slot.item.get_icon_color()
             state = str(slot.item.state)
         payload = payload + "~text~slot0~"+icon+'~'+icon_color+'~'+text+'~'+ state
 
         #slot 1:
         #check if slot is active fro this card:
-        if skin.key(self.MY_TYPE, "icon2") is None:
+        if skin.key(self.MY_TYPE, "icon2") is False:
             #slot not used for this card
             payload = payload + "~text~slot1~~~~"
         else:
@@ -276,9 +293,9 @@ class NSPanelCardQR(NSPanelCardWithSlots):
                 else:
                     text = str(slot.item.label)
                 if "icon" in slot.json_data:
-                    icon = slot.item.icon
+                    icon = slot.item.get_icon()
                 if "iconColor" in slot.json_data:
-                    icon_color = slot.item.icon_color
+                    icon_color = slot.item.get_icon_color()
                 state = str(slot.item.state)
         payload = payload + "~text~slot1~"+icon+'~'+icon_color+'~'+text+'~'+state
         return payload
@@ -403,12 +420,12 @@ class NSPanelCardAlarm(NSPanelCardWithSlots):
                 icon = skin.icon(state_values[1])
             else:
                 if "icon" in slot.json_data:
-                    icon = slot.icon
+                    icon = slot.get_icon()
             if len(state_values) > 2:
                 icon_color = str(name_to_16bit_color(state_values[2]))
             else:
                 if "iconColor" in slot.json_data:
-                    icon_color = slot.icon_color
+                    icon_color = slot.get_icon_color()
 
         #check for keypad disabled
         keypad = "enable"
@@ -426,13 +443,13 @@ class NSPanelCardAlarm(NSPanelCardWithSlots):
             #optional slot 4 defines the additionl button
             slot = self.slots["slot_4"]
             slot.item.update_item()
-            opt_icon = slot.icon
-            opt_icon_color = slot.icon_color
-            if slot.icon_state_color is not None:
-                if slot.item.state == "ON":
-                    opt_icon_color = slot.icon_state_color[0]
-                else:
-                    opt_icon_color = slot.icon_state_color[1]
+            opt_icon = slot.get_icon()
+            opt_icon_color = slot.get_icon_color()
+#            if slot.icon_state_color is not None:
+#                if slot.item.state == "ON":
+#                    opt_icon_color = slot.icon_state_color[0]
+#                else:
+#                    opt_icon_color = slot.icon_state_color[1]
 
         #finally make slot payload ot of it
         payload = "~CardAlarm"
@@ -586,7 +603,7 @@ class NSPanelCardThermo(NSPanelCardWithSlots):
                 #slot 7-15 can contain a switch item
                 slot = self.slots[slot_name]
                 slot.item.update_item()
-                payload = payload + "~" + slot.icon + "~" + slot.icon_color + "~"+ map_state_oh2panel('switch', slot.item.state)  + "~" + slot_name
+                payload = payload + "~" + slot.get_icon() + "~" + slot.get_icon_color() + "~"+ map_state_oh2panel('switch', slot.item.state)  + "~" + slot_name
             else:
                 payload = payload + "~~~~"
 
@@ -660,6 +677,15 @@ class NSPanelCardThermo(NSPanelCardWithSlots):
 
 #add this card class type to the factory
 NSPanelCard.card_types[NSPanelCardThermo.MY_TYPE] = NSPanelCardThermo
+
+#class NSPanelCardThermo2(NSPanelCardThermo):
+#    """
+#    Represent an card of type cardThermo in lovelace ui for NSPanels
+#    """
+#    MY_TYPE = NSPanelCard.CARD_THERMO2
+
+#add this card class type to the factory
+#NSPanelCard.card_types[NSPanelCardThermo2.MY_TYPE] = NSPanelCardThermo2
 
 class NSPanelCardChart(NSPanelCardWithSlots):
     """
@@ -937,8 +963,10 @@ class NSPanelpopupNotify(NSPanelCardWithSlots):
         self.text_color = str(name_to_16bit_color(skin.key(self.MY_TYPE, "textColor")))
         self.b1_color = str(name_to_16bit_color(skin.key(self.MY_TYPE, "b1Color")))
         self.b2_color = str(name_to_16bit_color(skin.key(self.MY_TYPE, "b2Color")))
+        self.b3_color = str(name_to_16bit_color(skin.key(self.MY_TYPE, "b3Color")))
         self.b1_text = translate.key(self.MY_TYPE, "b1Text")
         self.b2_text = translate.key(self.MY_TYPE, "b2Text")
+        self.b3_text = translate.key(self.MY_TYPE, "b3Text")
         self.timeout = skin.key(self.MY_TYPE, "timeout")
 
     def load_card_yaml(self, card_yaml):
@@ -948,7 +976,7 @@ class NSPanelpopupNotify(NSPanelCardWithSlots):
         ret = super().load_card_yaml( card_yaml )
 
         if "fontSize" in card_yaml and card_yaml["fontSize"] is not None:
-            if skin.key("fontSize", str(card_yaml["fontSize"]).lower()) is not None and card_yaml["fontSize"] in NSPanelCard.FONT_SIZES:
+            if isinstance(card_yaml["fontSize"],int) is False and card_yaml["fontSize"] in NSPanelCard.FONT_SIZES:
                 self.font_size = skin.key("fontSize", str(card_yaml["fontSize"]).lower())
             else:
                 if card_yaml["fontSize"] in skin.key("fontSizeRange"):
@@ -999,7 +1027,7 @@ class NSPanelpopupNotify(NSPanelCardWithSlots):
             text = slot.item.state_formated
         return text
 
-    def create_update_payload(self):
+    def create_update_payload(self, compatibility=NSPanelCard.COMPATIBILITY_MODE_DEFAULT):
         """
         Create popup Notify card payload
         """
@@ -1008,6 +1036,9 @@ class NSPanelpopupNotify(NSPanelCardWithSlots):
 
         payload = f"entityUpdateDetail~{self.MY_TYPE}~{self.title}~{self.heading_color}"
         payload += f"~{self.b1_text}~{self.b1_color}~{self.b2_text}~{self.b2_color}"
+        if compatibility == NSPanelCard.COMPATIBILITY_MODE_FORK1:
+            # Handle fork1 specific logic here. It has an additonal button.
+            payload += f"~{self.b3_text}~{self.b3_color}"
 
         icon_color = str(name_to_16bit_color(skin.key(self.MY_TYPE, "iconColor")))
         icon= skin.key(self.MY_TYPE, "icon")
@@ -1015,9 +1046,9 @@ class NSPanelpopupNotify(NSPanelCardWithSlots):
             #slot 0 must contain a switch item
             slot = self.slots["slot_0"]
             if "icon" in slot.json_data:
-                icon = slot.icon
+                icon = slot.get_icon()
             if "iconColor" in slot.json_data:
-                icon_color = slot.icon_color
+                icon_color = slot.get_icon_color()
         text = self.get_notification_text()
 
         payload += f"~{text}~{self.text_color}~{self.timeout}~{self.font_size}~{icon}~{icon_color}"

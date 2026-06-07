@@ -30,6 +30,8 @@ from skin import skin
 #
 # global constants
 #
+C_MODE_DEFAULT = "default"
+C_MODE_FORK1 = "ioBroker.nspanel-lovelace-ui"
 
 #
 # Class definitions
@@ -43,14 +45,17 @@ class NSPanelCard():
     #CARD TYPE constants
     CARD_ENTITIES="cardEntities"
     CARD_THERMO="cardThermo"
+    #CARD_THERMO2="cardThermo2"
     CARD_MEDIA="cardMedia"
     CARD_ALARM="cardAlarm"
     CARD_QR="cardQR"
     CARD_POWER="cardPower"
+    CARD_MEDIA="cardMedia"
     CARD_SCREENSAVER="screensaver"
     CARD_SCREENSAVER2="screensaver2"
     CARD_GRID="cardGrid"
     CARD_GRID2="cardGrid2"
+    CARD_GRID3="cardGrid3"
     CARD_CHARD="cardChart"
     CARD_STATUS="statusCard"
     CARD_POPUP_NOTIFY="popupNotify"
@@ -61,6 +66,10 @@ class NSPanelCard():
     CARDS_HOME = "home"
     STATUS_CARD_GROUP = "_status_cards_"
     NOTIFY_CARD_GROUP = "_notify_cards_"
+
+    #compatibility modes
+    COMPATIBILITY_MODE_DEFAULT = C_MODE_DEFAULT
+    COMPATIBILITY_MODE_FORK1 = C_MODE_FORK1
 
     # all derived classes from the base class
     card_types = {}
@@ -111,7 +120,7 @@ class NSPanelCard():
         """
         create payload for icon size. Must be overridden in sub class if icon size is not supported
         """
-        if self.icon_size is not None:
+        if self.icon_size is not None and self.icon_size > 0:
             return '¬'+str(self.icon_size)
         return ""
 
@@ -205,7 +214,7 @@ class NSPanelCard():
         """
         return None
 
-    def create_update_payload(self):
+    def create_update_payload(self, compatibility=C_MODE_DEFAULT):
         """
         Must be implemented in sub class
         """
@@ -312,7 +321,7 @@ class NSPanelCardWithNav(NSPanelCard):
     """
     MY_TYPE = "cardWithNav"
 
-    def create_update_payload(self):
+    def create_update_payload(self, compatibility=C_MODE_DEFAULT):
         """
         Create nav card payload
         """
