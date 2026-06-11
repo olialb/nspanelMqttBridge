@@ -23,6 +23,7 @@ This file contain the differnt base classe for cards shown in the panel.
 #general imports
 
 # project specific imports:
+from nspanel.nspanel_globals import name_to_16bit_color
 from file_logger import file_logger as FLOGGER
 from lang import translate
 from skin import skin
@@ -295,6 +296,46 @@ class NSPanelCard():
         return None
 
     @classmethod
+    def card_by_path(cls, path, panel):
+        """
+        return the correct card from a specific card path
+        """
+        nav_to = str(path).strip()
+        if nav_to == '.':
+            nav_to = './.'
+        nav_to = nav_to.split("/")
+        if len(nav_to) == 1:
+            #navigate to card in same group
+            card_name = nav_to[0].strip()
+            if card_name in NSPanelCard.cards_by_group[panel.current_group]:
+                cls.log.debug("Navigate to card '%s' in group '%s' with panel name.", card_name, panel.current_group)
+                return NSPanelCard.cards_by_group[panel.current_group][card_name]
+            cls.log.error("Can not navigate to card '%s'. Not defined in group '%s'.", card_name, panel.current_group)
+        if len(nav_to) == 2:
+            if nav_to[0].strip() != '.':
+                group = nav_to[0].strip()
+            else:
+                group = panel.current_group.lower()
+            card_name = nav_to[1].strip().lower()
+            if group in NSPanelCard.cards_by_group:
+                if card_name == '.':
+                    if panel.name.lower() in NSPanelCard.cards_by_group[group]:
+                        #check for a card with same name as panel in the group
+                        cls.log.debug("Navigate to card '%s' in group '%s' with panel name.", panel.name, group)
+                        return NSPanelCard.cards_by_group[group][panel.name.lower()]
+                    #take first card in group:
+                    return NSPanelCard.get_first_card(group)
+                if card_name in NSPanelCard.cards_by_group[group]:
+                    cls.log.debug("Navigate to card '%s' in group '%s'.", card_name, group)
+                    return NSPanelCard.cards_by_group[group][card_name]
+                cls.log.error("Can not navigate to card '%s' in group '%s'. Card does not exist", card_name, group)
+            else:
+                cls.log.error("Unknown group '%s' in navTo '%s'.", group, path )
+        else:
+            cls.log.error("Illegal navigation format '%s'.", path )
+        return None
+
+    @classmethod
     def get_first_card( cls, group_name):
         """
         returns the first card in this group
@@ -321,6 +362,39 @@ class NSPanelCardWithNav(NSPanelCard):
     """
     MY_TYPE = "cardWithNav"
 
+    def __init__(self, name, group=NSPanelCard.CARDS_HOME):
+        """
+        Constructor of a NSPanel card with slots
+        """
+        super().__init__( name, group )
+        #create attributes
+        self.nav_icon_left = skin.key( NSPanelCardWithNav.MY_TYPE, "icon_left")
+        self.nav_icon_right = skin.key( NSPanelCardWithNav.MY_TYPE, "icon_right")
+        self.nav_color_left = str(name_to_16bit_color(skin.key( NSPanelCardWithNav.MY_TYPE, "icon_color_left")))
+        self.nav_color_right = str(name_to_16bit_color(skin.key( NSPanelCardWithNav.MY_TYPE, "icon_color_right")))
+        self.nav_right = None
+        self.nav_left = None
+
+    def load_card_yaml(self, card_yaml):
+        """
+        Loads the panel definition from yaml dictionary
+        """
+        ret = super().load_card_yaml( card_yaml )
+
+        if "navIconLeft" in card_yaml and card_yaml["navIconLeft"] is not None:
+            self.nav_icon_left = skin.icon(str(card_yaml["navIconLeft"]))
+        if "navIconRight" in card_yaml and card_yaml["navIconRight"] is not None:
+            self.nav_icon_right = skin.icon(str(card_yaml["navIconRight"]))
+        if "navIconColorLeft" in card_yaml and card_yaml["navIconColorLeft"] is not None:
+            self.nav_color_left = str(name_to_16bit_color(card_yaml["navIconColorLeft"]))
+        if "navIconColorRight" in card_yaml and card_yaml["navIconColorRight"] is not None:
+            self.nav_color_right = str(name_to_16bit_color(card_yaml["navIconColorRight"]))
+        if "navToLeft" in card_yaml and card_yaml["navToLeft"] is not None:
+            self.nav_left = str(card_yaml["navToLeft"])
+        if "navToRight" in card_yaml and card_yaml["navToRight"] is not None:
+            self.nav_right = str(card_yaml["navToRight"])
+        return ret
+
     def create_update_payload(self, compatibility=C_MODE_DEFAULT):
         """
         Create nav card payload
@@ -328,9 +402,14 @@ class NSPanelCardWithNav(NSPanelCard):
         #check how many cards exist in this card
         if len(NSPanelCard.cards_by_group[self.group]) > 1:
             #OK generate left right navigation buttons
-            left_icon = skin.key( NSPanelCardWithNav.MY_TYPE, "icon_left")
-            right_icon = skin.key( NSPanelCardWithNav.MY_TYPE, "icon_right")
-            return "entityUpd~"+self.title+"~button~navigate.prev~"+left_icon+"~65535~~~button~navigate.next~"+right_icon+"~65535~~"
+            payload = "entityUpd~"+self.title
+            if self.nav_left == "":
+                payload += "~~~~~~"
+            else:
+                payload += "~button~navigate.prev~"+self.nav_icon_left+"~"+self.nav_color_left+""
+            if self.nav_right == "":
+                return payload + "~~~~~~"
+            return payload+"~~~button~navigate.next~"+self.nav_icon_right+"~"+self.nav_color_right+"~~"
         return "entityUpd~"+self.title+"~~~~~~~~~~~~"
 
     def create_cmd_payload(self):
@@ -339,7 +418,7 @@ class NSPanelCardWithNav(NSPanelCard):
         """
         return "pageType~"+self.MY_TYPE
 
-    def event_button_press( self, params):
+    def event_button_press( self, params, panel):
         """
         process a button press event for this card
         """
@@ -348,8 +427,16 @@ class NSPanelCardWithNav(NSPanelCard):
 
         #check for navigate card events
         if params[0] == "navigate.next" and params[1] == 'button':
-            return self.next()
+            if self.nav_right is None:
+                return self.next()
+            if self.nav_right != "":
+                return NSPanelCard.card_by_path( self.nav_right, panel)
+
         if params[0] == "navigate.prev" and params[1] == 'button':
-            return self.previous()
+            if self.nav_left is None:
+                return self.previous()
+            if self.nav_left != "":
+                return NSPanelCard.card_by_path( self.nav_left, panel)
+
         self.log.warning("Event not processed for '%s'", str(params))
         return None

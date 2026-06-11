@@ -375,7 +375,8 @@ cards:
         item: YamahaControl
         volumeItem: YamahaVolume
         powerItem: YamahaPower
-        shuffleItem: YamahaPower
+        shuffleItem: YamahaShuffle
+        shuffleIcon: Off=shuffle-disabled,Songs=shuffle,Album=shuffle-variant
         line1Item: YamahaStation
         line2Item: YamahaTitle
         line1Color: red
@@ -386,6 +387,28 @@ cards:
         item: YamahaInput
       - class: ohItem
         type: switch
+        icon: OFF=volume-low,ON=volume-variant-off
+        iconColor: ON=red,OFF=white
         item: YamahaMute
+      - class: ohItem
+        type: input_sel
+        icon: radio
+        iconColor: green
+        item: YamahaPreset
+      - class: ohItem
+        type: input_sel
+        icon: surround-sound
+        iconColor: yellow
+        item: YamahaSurround
+      - class: ohItem
+        type: input_sel
+        icon: sleep
+        iconColor: yellow
+        item: YamahaSleep
+      - class: ohItem
+        type: button
+        icon: Off=repeat-off,One=repeat-once,All=repeat
+        iconColor: blue
+        item: YamahaRepeat
       
     

@@ -463,3 +463,55 @@ cards:
         iconColor: blue
         speed: -10
         item: Stromzaehler_power
+  - name: TestNavIcon
+    group:  test ,  test_saver
+    type: cardEntities
+    navIconLeft: home
+    navIconColorLeft: red
+    navToLeft: home/.
+    navIconRight: home
+    navIconColorRight: blue
+    navToRight: home/.
+    slots:
+      - class: navigate
+        type: text
+        text: home/Esszimmer
+        navTo: home/Esszimmer
+      - class: navigate
+        type: text
+        text: home/.
+        navTo: home/.
+      - class: navigate
+        type: text
+        text: ./TestNavIcon2
+        navTo: ./TestNavIcon2
+      - class: navigate
+        type: text
+        text: ./.
+        navTo: ./.
+  - name: TestNavIcon2
+    group:  test ,  test_saver
+    type: cardEntities
+    navIconLeft: home
+    navIconColorLeft: red
+    navToLeft: ""
+    navIconRight: home
+    navIconColorRight: blue
+    navToRight: ""
+    slots:
+      - class: navigate
+        type: text
+        text: home/Esszimmer
+        navTo: home/Esszimmer
+      - class: navigate
+        type: text
+        text: home/.
+        navTo: home/.
+      - class: navigate
+        type: text
+        text: ./TestNavIcon
+        navTo: ./TestNavIcon
+      - class: navigate
+        type: text
+        text: .
+        navTo: .

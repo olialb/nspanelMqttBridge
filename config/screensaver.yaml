@@ -33,8 +33,90 @@ cards:
         item: W_IconID_24
         textItem: W_Temperatur_24
         timeItem: W_Messung_24
+  - name: testpanel.screensaver #name of the nspanel where this screensacer should be shown + ".screensaver" suffix
+    group: home
+    type: screensaver2
+    backgroundColor: #0f0f0f
+    barColor: blue
+    slots:
+      - class: ohItem               #current weather
+        type: openweathermap
+        item: W_IconID_0
+        textItem: W_Temperatur_0
+        timeItem: W_Messung_0
+      - class: ohItem               #first weather forecast
+        type: openweathermap
+        item: W_IconID_3
+        textItem: W_Temperatur_3
+        timeItem: W_Messung_3
+      - class: ohItem               #second weather forecast
+        type: openweathermap
+        item: W_IconID_6
+        textItem: W_Temperatur_6
+        timeItem: W_Messung_6
+      - class: ohItem               #third weather forecast
+        type: openweathermap
+        item: W_IconID_9
+        textItem: W_Temperatur_9
+        timeItem: W_Messung_9
+      - class: ohItem               #forth weather forecast
+        type: openweathermap
+        item: W_IconID_12
+        textItem: W_Temperatur_12
+        timeItem: W_Messung_12
+      - class: ohItem               #sixth weather forecast
+        type: openweathermap
+        item: W_IconID_15
+        textItem: W_Temperatur_15
+        timeItem: W_Messung_15
+      - class: ohItem               #senventh weather forecast
+        type: openweathermap
+        item: W_IconID_18
+        textItem: W_Temperatur_18
+        timeItem: W_Messung_18
+      - class: ohItem               #8th weather forecast
+        type: openweathermap
+        item: W_IconID_21
+        textItem: W_Temperatur_21
+        timeItem: W_Messung_21
+      - class: ohItem               #9th weather forecast
+        type: openweathermap
+        item: W_IconID_24
+        textItem: W_Temperatur_24
+        timeItem: W_Messung_24
+      - class: ohItem               #10th weather forecast
+        type: openweathermap
+        item: W_IconID_24
+        textItem: W_Temperatur_24
+        timeItem: W_Messung_24
+      - class: ohItem               #button 1
+        type: switch
+        icon: lamp
+        iconColor: OFF=grey,ON=yellow
+        item: Switch_Kugellampe
+      - class: ohItem               #button 2
+        type: switch
+        icon: cards-heart
+        iconColor: OFF=grey,ON=red
+        item: Switch_Kugellampe
+      - class: ohItem               #button 3
+        type: switch
+        icon: shield-lock
+        iconColor: OFF=grey,ON=green
+        item: Switch_Kugellampe
+      - class: ohItem               #button 4
+        type: switch
+        icon: meditation
+        iconColor: OFF=grey,ON=lightblue
+        item: Switch_Kugellampe
+      - class: ohItem               #button 5
+        type: switch
+        icon: message-alert
+        iconColor: OFF=grey,ON=pink
+        item: Switch_Kugellampe
   - name: .screensaver #Default screensaver name
     type: screensaver
+    group: home, test_saver
     backgroundColor: #0f0f0f
     barColor: yellow
     slots:

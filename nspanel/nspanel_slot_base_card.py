@@ -183,7 +183,7 @@ class NSPanelCardWithSlots(NSPanelCardWithNav):
                         return self
                 if slot.slot_class == "navigate":
                     self.log.debug("Navigate event '%s' for slot '%s'", params[1], slot.name)
-                    card=panel.card_by_path(slot.nav_to)
+                    card=NSPanelCard.card_by_path(slot.nav_to, panel)
                     if card is not None:
                         self.log.info("Navigate to '%s' over slot '%s'", slot.nav_to, slot.name)
                     else:
@@ -205,5 +205,5 @@ class NSPanelCardWithSlots(NSPanelCardWithNav):
                         return self
             self.log.warning("Event not processed for '%s'", slot_name)
 
-        return super().event_button_press( params )
+        return super().event_button_press( params, panel )
 

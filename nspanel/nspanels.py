@@ -241,7 +241,7 @@ class NSPanel(): #pylint: disable=too-many-instance-attributes, too-many-public-
         msg = msg.strip().lower()
 
         #set new value in panel
-        card = self.card_by_path(msg)
+        card = NSPanelCard.card_by_path(msg, self.current_group, self.current_card)
         if card is None:
             self.log.warning("Unknown card path '%s' in command payload for '%s'.", msg, my_config["topic"])
         else:
@@ -617,48 +617,6 @@ class NSPanel(): #pylint: disable=too-many-instance-attributes, too-many-public-
                 payload = payload + "~~"
 
         self.send_panel_cmd(payload)
-
-    def card_by_path(self, path):
-        """
-        return the correct card from a specific card path
-        """
-        nav_to = path.strip().split("/")
-        if len(nav_to) == 1:
-            card_name = nav_to[0].strip()
-            #navigate to card in same group
-            if card_name in NSPanelCard.cards_by_group[self.current_group]:
-                self.log.debug("Navigate to card '%s' in group '%s' with panel name.", card_name, self)
-                return NSPanelCard.cards_by_group[self.current_group][card_name]
-            self.log.error("Can not navigate to card '%s'. Not defined in group '%s'.", card_name, self.current_group)
-            return None
-        if len(nav_to) == 2:
-            group = nav_to[0].strip()
-            card_name = nav_to[1].strip()
-            if group in NSPanelCard.cards_by_group:
-                if card_name == '.':
-                    if self.name.lower() in NSPanelCard.cards_by_group[group]:
-                        #check for a card with same name as panel in the group
-                        self.log.debug("Navigate to card '%s' in group '%s' with panel name.", card_name, group)
-                        return NSPanelCard.cards_by_group[group][self.name.lower()]
-                    #take first card in group:
-                    cards = list(NSPanelCard.cards_by_group[group].values())
-                    i=0
-                    while i < len(cards) and cards[i].type in [NSPanelCard.CARD_SCREENSAVER, NSPanelCard.CARD_SCREENSAVER2]:
-                        i=i+1
-                    if len(cards) > i:
-                        self.log.debug("Navigate to first card '%s' in group '%s'.", cards[0].name, group)
-                        return cards[i]
-                    self.log.debug("Can not navigate to card in group '%s'. Group has no card inside.", group)
-                else:
-                    if card_name in NSPanelCard.cards_by_group[group]:
-                        self.log.debug("Navigate to card '%s' in group '%s'.", card_name, group)
-                        return NSPanelCard.cards_by_group[group][card_name]
-                    self.log.error("Can not navigate to card '%s' in group '%s'. Card does not exist", card_name, group)
-            else:
-                self.log.error("Unknown group '%s' in navTo '%s'.", group, path )
-        else:
-            self.log.error("Illegal navigation format '%s'.", path )
-        return None
 
     def navigate(self,card):
         """

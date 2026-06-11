@@ -27,7 +27,9 @@
     },
     "cardWithNav": {
         "icon_left": "icon=arrow-left-bold-circle-outline",
-        "icon_right": "icon=arrow-right-bold-circle-outline"
+        "icon_right": "icon=arrow-right-bold-circle-outline",
+        "icon_left_color": "white",
+        "icon_right_color": "white"
     },
     "cardAlarm": {
         "iconSize": 0,
