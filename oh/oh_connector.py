@@ -169,13 +169,12 @@ class OHItem: #pylint: disable=too-many-instance-attributes
         toggle the state of the item if possible
         """
         self.log.debug("Toggle state of item %s", self.name)
+        new_state = None
         if local_options is not None:
             new_state = self.toggle_oh_state(list(local_options.keys()))
         else:
             if self.options is not None:
                 new_state = self.toggle_oh_state(list(self.options.keys()))
-            else:
-                pass
         if new_state is not None and new_state != self.state:
             return self.set_item_state( new_state )
         self.log.warning("Item state %s of item %s can not be toggled", self.state, self.name)

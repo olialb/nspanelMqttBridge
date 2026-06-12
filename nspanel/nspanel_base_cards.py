@@ -50,6 +50,7 @@ class NSPanelCard():
     CARD_MEDIA="cardMedia"
     CARD_ALARM="cardAlarm"
     CARD_QR="cardQR"
+    CARD_QR_WIFI="cardQRWifi"
     CARD_POWER="cardPower"
     CARD_MEDIA="cardMedia"
     CARD_SCREENSAVER="screensaver"
@@ -63,6 +64,10 @@ class NSPanelCard():
     CARD_DEFAULT_STATUS="_default_status_"
     FONT_SIZES = ["0","1","2","3","4","5"]
 
+    NAV_CARDS="navCards"
+    OTHER_CARDS="otherCards"
+    SCREENSAVER="scrennsaver"
+
     #special card groups
     CARDS_HOME = "home"
     STATUS_CARD_GROUP = "_status_cards_"
@@ -71,6 +76,25 @@ class NSPanelCard():
     #compatibility modes
     COMPATIBILITY_MODE_DEFAULT = C_MODE_DEFAULT
     COMPATIBILITY_MODE_FORK1 = C_MODE_FORK1
+    #card categories
+    NAV_CARDS="navCards"
+    OTHER_CARDS="otherCards"
+    SCREENSAVER="scrennsaver"
+
+    compatible_cards = {
+        COMPATIBILITY_MODE_DEFAULT: { NAV_CARDS: [CARD_ENTITIES,CARD_THERMO,CARD_MEDIA,CARD_ALARM,
+                                                  CARD_QR,CARD_QR_WIFI,CARD_POWER,CARD_MEDIA,
+                                                  CARD_GRID,CARD_GRID2,CARD_CHARD ],
+                                      SCREENSAVER: [CARD_SCREENSAVER,CARD_SCREENSAVER2],
+                                      OTHER_CARDS: [CARD_POPUP_NOTIFY,CARD_DEFAULT_STATUS]
+        },
+        COMPATIBILITY_MODE_FORK1: { NAV_CARDS: [CARD_ENTITIES,CARD_THERMO,CARD_MEDIA,CARD_ALARM,
+                                                  CARD_QR,CARD_QR_WIFI,CARD_POWER,CARD_MEDIA,
+                                                  CARD_GRID,CARD_GRID2,CARD_GRID3, CARD_CHARD ],
+                                      SCREENSAVER: [CARD_SCREENSAVER,CARD_SCREENSAVER2],
+                                      OTHER_CARDS: [CARD_POPUP_NOTIFY,CARD_DEFAULT_STATUS]
+        }
+    }
 
     # all derived classes from the base class
     card_types = {}
@@ -125,7 +149,7 @@ class NSPanelCard():
             return '¬'+str(self.icon_size)
         return ""
 
-    def next(self, i=None):
+    def next(self, panel, i=None):
         """
         find next main card in list to this one
         """
@@ -142,13 +166,13 @@ class NSPanelCard():
             next_i = 0
         else:
             next_i = i+1
-        #jump over screensavers
-        if self.cards_by_group[self.group][card_names[next_i]].MY_TYPE in [NSPanelCard.CARD_SCREENSAVER, NSPanelCard.CARD_SCREENSAVER2]:
-            return self.next(next_i)
+        #jump over non navigation cards (screensavers...)
+        if self.cards_by_group[self.group][card_names[next_i]].MY_TYPE not in NSPanelCard.compatible_cards[panel.compatibility_mode][self.NAV_CARDS]:
+            return self.next(panel, next_i)
         return self.cards_by_group[self.group][card_names[next_i]]
 
 
-    def previous(self, i=None):
+    def previous(self, panel, i=None):
         """
         find previous main card in list to this one
         """
@@ -166,9 +190,9 @@ class NSPanelCard():
         else:
             next_i = len(card_names)-1
 
-        #jump over screensavers
-        if self.cards_by_group[self.group][card_names[next_i]].MY_TYPE in [NSPanelCard.CARD_SCREENSAVER, NSPanelCard.CARD_SCREENSAVER2]:
-            return self.previous(next_i)
+        #jump over non navigation cards (screensavers...)
+        if self.cards_by_group[self.group][card_names[next_i]].MY_TYPE not in NSPanelCard.compatible_cards[panel.compatibility_mode][self.NAV_CARDS]:
+            return self.previous(panel, next_i)
         return self.cards_by_group[self.group][card_names[next_i]]
 
     def attrib( self, info, dictionaries, name):
@@ -324,7 +348,7 @@ class NSPanelCard():
                         cls.log.debug("Navigate to card '%s' in group '%s' with panel name.", panel.name, group)
                         return NSPanelCard.cards_by_group[group][panel.name.lower()]
                     #take first card in group:
-                    return NSPanelCard.get_first_card(group)
+                    return NSPanelCard.get_first_card(panel, group)
                 if card_name in NSPanelCard.cards_by_group[group]:
                     cls.log.debug("Navigate to card '%s' in group '%s'.", card_name, group)
                     return NSPanelCard.cards_by_group[group][card_name]
@@ -336,7 +360,7 @@ class NSPanelCard():
         return None
 
     @classmethod
-    def get_first_card( cls, group_name):
+    def get_first_card( cls, panel, group_name):
         """
         returns the first card in this group
         """
@@ -346,7 +370,7 @@ class NSPanelCard():
         if group_name in cls.cards_by_group:
             i=0
             cards = list(cls.cards_by_group[group_name].values())
-            while len(cards) > i and cards[i].type in [NSPanelCard.CARD_SCREENSAVER, NSPanelCard.CARD_SCREENSAVER2]:
+            while len(cards) > i and cards[i].type not in NSPanelCard.compatible_cards[panel.compatibility_mode][cls.NAV_CARDS]:
                 i=i+1
             if len(cards) > i:
                 return cards[i]
@@ -428,13 +452,13 @@ class NSPanelCardWithNav(NSPanelCard):
         #check for navigate card events
         if params[0] == "navigate.next" and params[1] == 'button':
             if self.nav_right is None:
-                return self.next()
+                return self.next(panel)
             if self.nav_right != "":
                 return NSPanelCard.card_by_path( self.nav_right, panel)
 
         if params[0] == "navigate.prev" and params[1] == 'button':
             if self.nav_left is None:
-                return self.previous()
+                return self.previous(panel)
             if self.nav_left != "":
                 return NSPanelCard.card_by_path( self.nav_left, panel)
 

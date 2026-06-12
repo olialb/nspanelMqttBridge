@@ -112,7 +112,7 @@ class NSPanelCardSlot(): #pylint: disable=too-many-instance-attributes
             else:
                 self.log.error("Speed value '%s' in slot %d in card '%s' is not an integer. Default value 0 will be used.", json_data["speed"], slot_index, card.name )
         if "popupType" in json_data and json_data["popupType"] is not None:
-                self.popup_type = str(json_data["popupType"]).upper()
+            self.popup_type = str(json_data["popupType"]).upper()
 
     def get_icon(self):
         """

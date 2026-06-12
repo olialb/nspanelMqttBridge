@@ -315,7 +315,7 @@ class NSPanelCardQRWifi(NSPanelCardQR):
     """
     Card to show the wifi QR code
     """
-    MY_TYPE = "cardQRWifi"
+    MY_TYPE = NSPanelCard.CARD_QR_WIFI
 
     def __init__(self, name,  group=NSPanelCard.CARDS_HOME):
         """

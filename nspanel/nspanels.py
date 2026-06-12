@@ -241,7 +241,7 @@ class NSPanel(): #pylint: disable=too-many-instance-attributes, too-many-public-
         msg = msg.strip().lower()
 
         #set new value in panel
-        card = NSPanelCard.card_by_path(msg, self.current_group, self.current_card)
+        card = NSPanelCard.card_by_path(msg, self)
         if card is None:
             self.log.warning("Unknown card path '%s' in command payload for '%s'.", msg, my_config["topic"])
         else:
@@ -435,7 +435,7 @@ class NSPanel(): #pylint: disable=too-many-instance-attributes, too-many-public-
                             #navigate to home card for this panel in current group
                             card = NSPanelCard.get_card(self.current_group, self.name)
                             if card is None:
-                                card = NSPanelCard.get_first_card(self.current_group)
+                                card = NSPanelCard.get_first_card(self, self.current_group)
                             self.navigate(card)
                             return
                         #do nothing
@@ -455,7 +455,7 @@ class NSPanel(): #pylint: disable=too-many-instance-attributes, too-many-public-
                         #navigate to home card for this panel in current group
                         card = NSPanelCard.get_card(self.current_group, self.name)
                         if card is None:
-                            card = NSPanelCard.get_first_card(self.current_group)
+                            card = NSPanelCard.get_first_card(self, self.current_group)
                         self.navigate(card)
                         return
                     #check for all other card events
@@ -556,7 +556,7 @@ class NSPanel(): #pylint: disable=too-many-instance-attributes, too-many-public-
         self.saver_tick_counter = self.saver_tick_counter - self.mqtt.publish_delay
         if self.saver_tick_counter <= 0:
             #update screensaver
-            if self.current_card.MY_TYPE == NSPanelCard.CARD_SCREENSAVER:
+            if isinstance(self.current_card, NSPanelCardScreenSaver):
                 self.send_panel_cmd( self.current_card.create_update_payload(self.compatibility_mode))
             self.saver_tick_counter = self.mqtt.saver_update
 
@@ -625,14 +625,14 @@ class NSPanel(): #pylint: disable=too-many-instance-attributes, too-many-public-
         self.log.debug("Navigate to card '%s'.", card.name )
 
         #disconnect current card from openhab
-        if self.current_card is not None and self.current_card.MY_TYPE != NSPanelCard.CARD_SCREENSAVER:
+        if self.current_card is not None and not isinstance(self.current_card,NSPanelCardScreenSaver):
             if self.current_card.popup is not None:
                 self.current_card.popup.disconnect(self)
                 self.current_card.popup = None
             self.current_card.disconnect(self)
 
         self.send_panel_cmd( card.create_cmd_payload() )
-        if card.MY_TYPE != NSPanelCard.CARD_SCREENSAVER:
+        if not isinstance(card,NSPanelCardScreenSaver):
             #only for other cards as screnn saver is somthing to do
             card.connect(self)
 
@@ -642,7 +642,7 @@ class NSPanel(): #pylint: disable=too-many-instance-attributes, too-many-public-
         self.current_card = card
         if card.group not in [NSPanelCard.NOTIFY_CARD_GROUP, NSPanelCard.STATUS_CARD_GROUP]:
             self.current_group = card.group
-        if card.type == NSPanelCard.CARD_SCREENSAVER:
+        if isinstance(card,NSPanelCardScreenSaver):
             self.update_status()
         self.publish_card()
 
