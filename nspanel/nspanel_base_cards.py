@@ -237,19 +237,19 @@ class NSPanelCard():
         """
         Must be implemented in sub class
         """
-        return None
+        self.log.error("create_color_payload(self) not implemented")
 
     def create_update_payload(self, compatibility=C_MODE_DEFAULT):
         """
         Must be implemented in sub class
         """
-        return None
+        self.log.error("create_update_payload(self, %s) not implemented", compatibility)
 
     def create_cmd_payload(self):
         """
         Must be implemented in sub class
         """
-        return None
+        self.log.error("create_cmd_payload(self) not implemented")
 
     @classmethod
     def factory_yaml_file( cls, filename, card_yaml ): #pylint: disable=too-many-branches

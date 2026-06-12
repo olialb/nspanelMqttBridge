@@ -732,10 +732,8 @@ class NSPanel(): #pylint: disable=too-many-instance-attributes, too-many-public-
             sys.exit()
         self.navigate(self.get_screensaver_card())
         #self.send_panel_cmd("pageType~cardPower")
-        #self.send_panel_cmd("entityUpd~PowerTest~x~navUp~A~65535~~~delete~~~~~~text~sensor.power_consumption~B~17299~Power consumption~100W~1~text~sensor.power_consumption~C~17299~Power consumption~100W~1~text~sensor.today_energy~D~17299~Total energy 1~5836.0kWh~0~delete~~~~~~0~text~sensor.today_energy~E~17299~Total energy 1~5836.0kWh~-30~delete~~~~~~0~text~sensor.today_energy~F~65504~Total energy 1~5836.0kWh~90~text~sensor.today_energy~G~17299~Total energy 1~5836.0kWh~10")
         #self.send_panel_cmd("pageType~popupNotify")
         #self.send_panel_cmd("entityUpdateDetail~*internalName*~*tHeading*~65535~*b1*~65535~*b2*~65535~Dies ist\r\nein sehr\r\nlanger text~65535~10~4~A~65535")
-        #self.send_panel_cmd("entityUpd~Chart Demo~button~navigate.prev~<~65535~~~button~navigate.next~>~65535~~~65535~Gas [kWh]~2:4:6:8:10~10~1^X1|1~10~1^X2~10~1^X3~10~1^X4~10~1^X5~10~1^X6~10~1^X7~10")
 
     @classmethod
     def load_cards( cls, path ):
