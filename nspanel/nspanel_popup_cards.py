@@ -41,8 +41,8 @@ class NSPanelCardPopup(NSPanelCard):
         super().__init__( name )
         #set corresponding slot object
         self.slot_obj = slot_obj
-        #popupLightNew
-        #self.popup_select_payload = {}
+        #Alternative popups
+        self.popup_select_payload = {}
 
     def create_update_payload(self, compatibility=NSPanelCard.COMPATIBILITY_MODE_DEFAULT):
         """
@@ -62,14 +62,18 @@ class NSPanelCardPopup(NSPanelCard):
         """
         self.log.debug("Connect nspanel '%s' to card '%s'", nspanel.name, self.name )
 
-#popupLightNew
-#    def create_select_payload(self):
-#        """
-#        create the payload to select a different popup as the standard one
-#        """
-#        if self.slot_obj.popup_type is not None and self.slot_obj.popup_type in self.popup_select_payload:
-#            return self.popup_select_payload[self.slot_obj.popup_type]
-#        return None
+    #popupLight2
+    def create_select_payload(self, compatibility=NSPanelCard.COMPATIBILITY_MODE_DEFAULT):
+        """
+        create the payload to select a different popup as the standard one
+        """
+        if self.slot_obj.popup_type is not None and self.slot_obj.popup_type in self.popup_select_payload:
+            if compatibility == self.popup_select_payload[self.slot_obj.popup_type]["hmi"]:
+                payload = self.popup_select_payload[self.slot_obj.popup_type]["payload"]
+                payload += '~'+self.slot_obj.text+'~'+self.slot_obj.name
+                payload += '~'+self.slot_obj.get_icon()+'~'+self.slot_obj.get_icon_color()
+                return payload
+        return None
 
 class NSPanelCardPopupLight(NSPanelCardPopup):
     """
@@ -77,14 +81,15 @@ class NSPanelCardPopupLight(NSPanelCardPopup):
     """
     MY_TYPE = "popupLight"
 
-#popupLightNew
-#    def __init__(self, name, slot_obj=None ):
-#        """
-#        Constructor of a NSPanel card with slots
-#        """
-#        super().__init__( name, slot_obj )
-#        #set additional popup types, if available
-#        self.popup_select_payload = { "NEW": "pageType~popupLight2~Kugellampe~slot_1" }
+    def __init__(self, name, slot_obj=None ):
+        """
+        Constructor of a NSPanel card with slots
+        """
+        super().__init__( name, slot_obj )
+        #set additional popup types, if available
+        self.popup_select_payload = { "2": { "hmi": NSPanelCard.COMPATIBILITY_MODE_FORK1,
+                                             "payload": "pageType~popupLight2" }
+        }
 
     def event_button_press( self, slot_name, params ): #pylint: disable=too-many-branches
         """
@@ -186,6 +191,16 @@ class NSPanelCardPopupShutter(NSPanelCardPopup):
     """
     MY_TYPE = "popupShutter"
     TILT_BUTTONS = {'tiltopen': 'UP', 'tiltclose': 'DOWN', 'tiltstop': 'STOP'}
+
+    def __init__(self, name, slot_obj=None ):
+        """
+        Constructor of a NSPanel card with slots
+        """
+        super().__init__( name, slot_obj )
+        #set additional popup types, if available
+        self.popup_select_payload = { "2": { "hmi": NSPanelCard.COMPATIBILITY_MODE_FORK1,
+                                             "payload": "pageType~popupShutter2" }
+        }
 
     def event_button_press( self, slot_name, params ):
         """

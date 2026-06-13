@@ -92,7 +92,7 @@ class NSPanelCardSlot(): #pylint: disable=too-many-instance-attributes
         self.icon_color = interpret_options(skin.key(self.MY_TYPE, "iconColor"))
         self.speed = 0 #Animation speed in cardPower
         self.type = self.MY_TYPE
-        self.popup_type = None #alternative popup
+        self.popup_type = str(skin.key("default", "popupTypes")) #alternative popup
         self.json_data = json_data
 
         """
@@ -727,6 +727,17 @@ class NsPanelCardSlotOhItemShutter( NsPanelCardSlotOhItem ):
     """
     MY_TYPE=NSPanelCardSlot.SLOT_SHUTTER
 
+    def shutter_pos(self, pos):
+        """
+        check if the shutter pos must be inverted
+        """
+        if self.invert is True:
+            try:
+                return str(100-int(pos))
+            except ValueError:
+                self.log.error("Can on invert shutter positon: %s", pos)
+        return pos
+
     def __init__(self, json_data, slot_index, card):
         """
         Constructor of a Slot in a NSPanelCard
@@ -743,6 +754,10 @@ class NsPanelCardSlotOhItemShutter( NsPanelCardSlotOhItem ):
             self.tilt_controls = str(json_data["tiltControls"])
         else:
             self.tilt_controls = "enable|enable|enable"
+        if "invert" in json_data and json_data["invert"]:
+            self.invert = json_data["invert"]
+        else:
+            self.invert = False
         self.log.debug("Constructed!")
 
     def create_payload(self, stateText="empty"):
@@ -813,11 +828,11 @@ class NsPanelCardSlotOhItemShutter( NsPanelCardSlotOhItem ):
             icon_t_up = ""
             icon_t_down = ""
             icon_t_stop = ""
-        return '~' + self.name + '~' + self.item.state_int + '~' + self.card.title + "~" + text_position +\
+        return '~' + self.name + '~' + self.shutter_pos(self.item.state_int) + '~' + self.card.title + "~" + text_position +\
                '~' + icon1 + '~' + icon_up + '~' + icon_stop + '~' + icon_down +\
                '~' + icon_up_status + '~' + icon_stop_status + '~' + icon_down_status +\
                '~' + text_tilt + '~' + icon_t_up + '~' + icon_t_stop + '~' + icon_t_down +\
-               '~' + icon_t_up_status + '~' + icon_t_stop_status + '~' + icon_t_down_status + '~' + tilt_status
+               '~' + icon_t_up_status + '~' + icon_t_stop_status + '~' + icon_t_down_status + '~' + self.shutter_pos(tilt_status)
 
 #add ohItem class to factory dictionary
 NSPanelCardSlot.all_slot_classes["ohItem"][NsPanelCardSlotOhItemShutter.MY_TYPE] = NsPanelCardSlotOhItemShutter

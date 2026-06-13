@@ -96,12 +96,21 @@ NSPanelCard.card_types[NSPanelCardScreenSaver.MY_TYPE] = NSPanelCardScreenSaver
 
 class NSPanelCardScreensaver2(NSPanelCardScreenSaver):
     """
-    Class for screen saver with different layout
+    Class for screen saver 2 with different layout
     """
     MY_TYPE = NSPanelCard.CARD_SCREENSAVER2
 
 #add this card class type to the factory
 NSPanelCard.card_types[NSPanelCardScreensaver2.MY_TYPE] = NSPanelCardScreensaver2
+
+class NSPanelCardScreensaver3(NSPanelCardScreenSaver):
+    """
+    Class for screen saver 3 with different layout
+    """
+    MY_TYPE = NSPanelCard.CARD_SCREENSAVER3
+
+#add this card class type to the factory
+NSPanelCard.card_types[NSPanelCardScreensaver3.MY_TYPE] = NSPanelCardScreensaver3
 
 
 class NSPanelCardEntities(NSPanelCardWithSlots):

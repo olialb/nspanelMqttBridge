@@ -473,14 +473,16 @@ class NSPanel(): #pylint: disable=too-many-instance-attributes, too-many-public-
 
                 #all pop up detail events
                 if params[1] == 'pageOpenDetail':
-                    #popup for lights opened
+                    #create matching popupcard for this slot
                     if len(params) >= 4 and self.current_card is not None:
-                        self.current_card.popup_card(params[2], params[3])
-                        #popupLightNew
-                        #self.popup_select()
-                        self.update()
-                        self.publish_card()
-                        return
+                        if self.current_card.popup is None or self.current_card.popup.slot_obj.name != params[3]:
+                            #create matching popup card
+                            self.current_card.popup_card(params[2], params[3])
+                            #check for alternative popups
+                            self.popup_select()
+                            self.update()
+                            self.publish_card()
+                            return
 
                 if params[1] == "sleepReached":
                     #switch back to screensaver
@@ -646,17 +648,16 @@ class NSPanel(): #pylint: disable=too-many-instance-attributes, too-many-public-
             self.update_status()
         self.publish_card()
 
-#popupLightNew
-#    def popup_select(self):
-#        """
-#        checks if an alternative popup is selected for this slot
-#        """
-#        if self.current_card is not None:
-#            #check if there is no popup card active
-#            if self.current_card.popup is not None:
-#                self.send_panel_cmd(self.current_card.popup.create_select_payload())
-#                return
-#        self.log.error("Something went wrong in popup select method.")
+    def popup_select(self):
+        """
+        checks if an alternative popup is selected for this slot
+        """
+        if self.current_card is not None:
+            #check if there is no popup card active
+            if self.current_card.popup is not None:
+                self.send_panel_cmd(self.current_card.popup.create_select_payload(self.compatibility_mode))
+                return
+        self.log.error("Something went wrong in popup select method.")
 
     def update(self):
         """

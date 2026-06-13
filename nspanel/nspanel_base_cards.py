@@ -55,6 +55,7 @@ class NSPanelCard():
     CARD_MEDIA="cardMedia"
     CARD_SCREENSAVER="screensaver"
     CARD_SCREENSAVER2="screensaver2"
+    CARD_SCREENSAVER3="screensaver3"
     CARD_GRID="cardGrid"
     CARD_GRID2="cardGrid2"
     CARD_GRID3="cardGrid3"
@@ -91,7 +92,7 @@ class NSPanelCard():
         COMPATIBILITY_MODE_FORK1: { NAV_CARDS: [CARD_ENTITIES,CARD_THERMO,CARD_MEDIA,CARD_ALARM,
                                                   CARD_QR,CARD_QR_WIFI,CARD_POWER,CARD_MEDIA,
                                                   CARD_GRID,CARD_GRID2,CARD_GRID3, CARD_CHARD ],
-                                      SCREENSAVER: [CARD_SCREENSAVER,CARD_SCREENSAVER2],
+                                      SCREENSAVER: [CARD_SCREENSAVER,CARD_SCREENSAVER2,CARD_SCREENSAVER3],
                                       OTHER_CARDS: [CARD_POPUP_NOTIFY,CARD_DEFAULT_STATUS]
         }
     }
