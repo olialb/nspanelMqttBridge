@@ -829,7 +829,7 @@ class NSPanelCardChart(NSPanelCardWithSlots):
         for chart_bar in chart_bars:
             val_payload += '~' + chart_bar
 
-        payload =  "~"+self.color+"~"+y_axis_label+"~"+val_payload
+        payload =  "~"+self.color+"~"+y_axis_label+"~:"+val_payload
         return payload
 
     def create_string_chart_payload(self, y_axis_label,slot, start_time, end_time ):
@@ -879,7 +879,7 @@ class NSPanelCardChart(NSPanelCardWithSlots):
         for state, time in state_dict.items():
             val_payload += '~' + str(round(time/total_time*self.MAX_Y)) + '^' + translate.key( "openhabStates", state ) + ':' + str(round(time/total_time*100)) + '%'
 
-        payload =  "~"+self.color+"~"+y_axis_label+"~"+val_payload
+        payload =  "~"+self.color+"~"+y_axis_label+"~:"+val_payload
         return payload
 
     def create_slots_payload(self):
