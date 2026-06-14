@@ -317,6 +317,35 @@ class NsPanelCardSlotOhItem( NSPanelCardSlot ):
 
         return "~" + slot_text + '~' + slot_color
 
+    def create_input_sel_payload(self, item, item_options=None):
+        """
+        create the payload for the popup Input select card for a specific item
+        """
+        item.update_item(item_options)
+        state = item.state_formated
+
+        #Format
+        #Example: entityUpdateDetail2~*entity_id*~~*icon_color*~*input_sel*~*state*~*options*
+        #entityUpdateDetail2  Command key
+        #entityName:          reference to the entity in the slot which created the popup
+        #icon:                which is shown in upper left corner
+        #iconColor:           color of this item
+        #input_sel            just a text which is added to the event
+        #state                current state. Will be highlited in the list
+        #options              ? separated list
+
+        options = ""
+        i=0
+        for label in item.options.values():
+            i +=1
+            options = options + label + '?'
+
+        if len(item.options) > 0:
+            #remove last "?"
+            options = options[:-1]
+
+        return "2~" + self.name + '~' + self.get_icon() + '~' + self.get_icon_color() + '~'\
+                    + "option" + '~' + state + '~' + options
 
 #add ohItem class to factory dictionary
 NSPanelCardSlot.all_slot_classes["ohItem"] = {}
@@ -666,6 +695,7 @@ class NsPanelCardSlotOhItemLight( NsPanelCardSlotOhItemSwitch ):
         self.dimmer_item = None
         self.col_temp_item = None
         self.color_item = None
+        self.effect_item = None
 
         if "dimmerItem" in json_data and json_data["dimmerItem"] is not None:
             self.dimmer_item = self.OH.item_factory(str(json_data["dimmerItem"]), card.item_update_callback)
@@ -675,12 +705,20 @@ class NsPanelCardSlotOhItemLight( NsPanelCardSlotOhItemSwitch ):
             self.color_item = self.OH.item_factory(str(json_data["colorItem"]), card.item_update_callback)
         if "colTempItem" in json_data and json_data["colTempItem"] is not None:
             self.col_temp_item = self.OH.item_factory(str(json_data["colTempItem"]), card.item_update_callback)
+        if "effectItem" in json_data and json_data["effectItem"] is not None:
+            self.effect_item = self.OH.item_factory(str(json_data["effectItem"]), card.item_update_callback)
 
-    def create_popup_payload(self):
+    def create_popup_payload(self, compatibility=NSPanelCard.COMPATIBILITY_MODE_DEFAULT):
         """
         create the payload for the poplight card
         """
+        self.log.debug("Create popupLight payload for '%s'. Compatibility=%s", self.card.popup.MY_TYPE, compatibility)
 
+        if self.card.popup.MY_TYPE == NSPanelCard.CARD_POPUP_INPUT_SEL:
+            #popup for selecting a light effect is open
+            return self.create_input_sel_payload(self.effect_item)
+
+        #create normal popup light payload
         self.item.update_item()
         state = map_state_oh2panel("switch", self.item.state )
         dimmer_state = 'disable'
@@ -695,6 +733,9 @@ class NsPanelCardSlotOhItemLight( NsPanelCardSlotOhItemSwitch ):
         if self.col_temp_item is not None:
             self.col_temp_item.update_item()
             col_temp_state = self.col_temp_item.state_int
+        effect="disable"
+        if self.effect_item is not None:
+            effect = "enable"
 
         #Format
         #entityUpdateDetail~entityName~*icon*~*iconColor*~*switchState*~*sliderBrightnessPos*~
@@ -716,7 +757,7 @@ class NsPanelCardSlotOhItemLight( NsPanelCardSlotOhItemSwitch ):
 
         return "~" + self.name + '~' + self.get_icon() + '~' + self.get_icon_color() + '~'\
                     + state + '~' + dimmer_state + '~' + col_temp_state + '~' + color_state + '~'\
-                    + text1 + '~' + text2 + '~' + text3
+                    + text1 + '~' + text2 + '~' + text3 + "~" + effect
 
 #add ohItem class to factory dictionary
 NSPanelCardSlot.all_slot_classes["ohItem"][NsPanelCardSlotOhItemLight.MY_TYPE] = NsPanelCardSlotOhItemLight
@@ -774,9 +815,9 @@ class NsPanelCardSlotOhItemShutter( NsPanelCardSlotOhItem ):
         self.log.debug("Shutter payload created: %s", payload)
         return payload
 
-    def create_popup_payload(self): #pylint: disable=too-many-locals
+    def create_popup_payload2(self): #pylint: disable=too-many-locals
         """
-        create the payload for a rollershutter popup
+        create alternative payload for a rollershutter popup 2
         """
         #entityUpdateDetail
         #~entityName
@@ -789,7 +830,82 @@ class NsPanelCardSlotOhItemShutter( NsPanelCardSlotOhItem ):
         # ~iconDown
         # ~iconUpStatus         :enable/disable
         # ~iconStopStatus       :enable/disable
-        # ~iconDownStatus       :enable/disable
+        # ~iconDownStatus       :enable/disables
+        # ~button1Icon	icon
+        # button1Color	color
+        # button1Status	enable/disable
+        # button2Icon	icon
+        # button2Color	color
+        # button2Status	enable/disable
+        # button3Icon	icon
+        # button3Color	color
+        # button3Status	enable/disable
+        # shutterType	ignored!!
+        # zeroIsClosed	1/0
+
+        self.item.update_item()
+        text_position = translate.key( self.MY_TYPE, "position")
+        icon1 = skin.key( self.MY_TYPE, "icon" )
+        icon_up = skin.key( self.MY_TYPE, "shutter_up" )
+        icon_down = skin.key( self.MY_TYPE, "shutter_down" )
+        icon_stop = skin.key( self.MY_TYPE, "shutter_stop" )
+        status = self.shutter_controls.split('|')
+        icon_up_status = status[0].strip()
+        icon_down_status = status[1].strip()
+        icon_stop_status = status[2].strip()
+        icon_t_open_status = "disable"
+        icon_t_mid_status = "disable"
+        icon_t_closed_status = "disable"
+        icon_t_open = ""
+        icon_t_mid = ""
+        icon_t_closed = ""
+        icon_color_t_open = ""
+        icon_color_t_mid = ""
+        icon_color_t_closed = ""
+        if self.invert is True:
+            invert = "1"
+        else:
+            invert = "0"
+        if self.tilt_item is not None:
+            status = self.tilt_controls.split('|')
+            icon_t_open_status = status[0].strip()
+            icon_t_mid_status = status[1].strip()
+            icon_t_closed_status = status[2].strip()
+            icon_t_open = skin.key( self.MY_TYPE, "tilt_open" )
+            icon_t_mid = skin.key( self.MY_TYPE, "tilt_mid" )
+            icon_t_closed = skin.key( self.MY_TYPE, "tilt_closed" )
+            icon_color_t_open = str(name_to_16bit_color(skin.key(self.MY_TYPE,"tilt_open_color")))
+            icon_color_t_mid = str(name_to_16bit_color(skin.key(self.MY_TYPE,"tilt_mid_color")))
+            icon_color_t_closed = str(name_to_16bit_color(skin.key(self.MY_TYPE,"tilt_closed_color")))
+        return '~' + self.name + '~' + self.shutter_pos(self.item.state_int) + '~' + self.card.title + "~" + text_position +\
+               '~' + icon1 + '~' + icon_up + '~' + icon_stop + '~' + icon_down +\
+               '~' + icon_up_status + '~' + icon_stop_status + '~' + icon_down_status +\
+               '~' + icon_t_open + '~' + icon_color_t_open + '~' + icon_t_open_status +\
+               '~' + icon_t_mid + '~' + icon_color_t_mid + '~' + icon_t_mid_status +\
+               '~' + icon_t_closed + '~' + icon_color_t_closed + '~' + icon_t_closed_status +\
+               '~~' + invert
+
+    def create_popup_payload(self, compatibility=NSPanelCard.COMPATIBILITY_MODE_DEFAULT): #pylint: disable=too-many-locals
+        """
+        create the payload for a rollershutter popup
+        """
+        if self.popup_type in self.card.popup.popup_select_payload and self.card.popup.popup_select_payload[self.popup_type]["hmi"] == compatibility:
+            #alternative popup is active. Create different payload:
+            return self.create_popup_payload2()
+        #create standard payload:
+
+        #entityUpdateDetail
+        #~entityName
+        # ~*sliderPos*          :0-100
+        # ~2ndrow               :2nd row text
+        # ~textPosition         :text shutter slider
+        # ~icon1
+        # ~iconUp
+        # ~iconStop
+        # ~iconDown
+        # ~iconUpStatus         :enable/disable
+        # ~iconStopStatus       :enable/disable
+        # ~iconDownStatus       :enable/disables
         # ~textTilt             :text tilt slider
         # ~iconTiltLeft
         # ~iconTiltStop
@@ -854,33 +970,14 @@ class NsPanelCardSlotOhItemInputSel( NsPanelCardSlotOhItem ):
         self.log.debug("InpuSel payload created: %s", payload)
         return payload
 
-    def create_popup_payload(self):
+    def create_popup_payload(self, compatibility=NSPanelCard.COMPATIBILITY_MODE_DEFAULT):
         """
         create the payload for the popup Input select card
         """
-        self.item.update_item(self.options)
-        state = self.item.state_formated
+        payload = self.create_input_sel_payload(self.item, self.options)
+        self.log.debug("Create popupInputSel payload with entries. compatibility=%s", compatibility)
 
-        #Format
-        #Example: entityUpdateDetail2~*entity_id*~~*icon_color*~*input_sel*~*state*~*options*
-        #entityUpdateDetail2  Command key
-        #entityName:          reference to the entity in the slot which created the popup
-        #icon:                which is shown in upper left corner
-        #iconColor:           color of this item
-        #input_sel            just a text which is added to the event
-        #state                current state. Will be highlited in the list
-        #options              ? separated list
-
-        options = ""
-        for label in self.item.options.values():
-            options = options + label + '?'
-
-        if len(self.item.options) > 0:
-            #remove last "?"
-            options = options[:-1]
-
-        return "2~" + self.name + '~' + self.get_icon() + '~' + self.get_icon_color() + '~'\
-                    + "option" + '~' + state + '~' + options
+        return payload
 
 #add ohItem class to factory dictionary
 NSPanelCardSlot.all_slot_classes["ohItem"][NsPanelCardSlotOhItemInputSel.MY_TYPE] = NsPanelCardSlotOhItemInputSel

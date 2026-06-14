@@ -48,7 +48,7 @@ class NSPanelCardPopup(NSPanelCard):
         """
         Create nav card payload
         """
-        return "entityUpdateDetail" + self.slot_obj.create_popup_payload()
+        return "entityUpdateDetail" + self.slot_obj.create_popup_payload(compatibility)
 
     def disconnect(self, nspanel):
         """
@@ -62,7 +62,6 @@ class NSPanelCardPopup(NSPanelCard):
         """
         self.log.debug("Connect nspanel '%s' to card '%s'", nspanel.name, self.name )
 
-    #popupLight2
     def create_select_payload(self, compatibility=NSPanelCard.COMPATIBILITY_MODE_DEFAULT):
         """
         create the payload to select a different popup as the standard one
@@ -70,7 +69,11 @@ class NSPanelCardPopup(NSPanelCard):
         if self.slot_obj.popup_type is not None and self.slot_obj.popup_type in self.popup_select_payload:
             if compatibility == self.popup_select_payload[self.slot_obj.popup_type]["hmi"]:
                 payload = self.popup_select_payload[self.slot_obj.popup_type]["payload"]
-                payload += '~'+self.slot_obj.text+'~'+self.slot_obj.name
+                if self.slot_obj.text is None:
+                    title = str(self.slot_obj.item.label)
+                else:
+                    title = self.slot_obj.text
+                payload += '~'+title+'~'+self.slot_obj.name
                 payload += '~'+self.slot_obj.get_icon()+'~'+self.slot_obj.get_icon_color()
                 return payload
         return None
@@ -79,7 +82,7 @@ class NSPanelCardPopupLight(NSPanelCardPopup):
     """
     class for popup light cards
     """
-    MY_TYPE = "popupLight"
+    MY_TYPE = NSPanelCard.CARD_POPUP_LIGHT
 
     def __init__(self, name, slot_obj=None ):
         """
@@ -156,7 +159,7 @@ class NSPanelCardPopupInputSelect(NSPanelCardPopup):
     """
     class for popup input_sel cards
     """
-    MY_TYPE = "popupInSel"
+    MY_TYPE = NSPanelCard.CARD_POPUP_INPUT_SEL
 
     def event_button_press( self, slot_name, params ):
         """
@@ -170,15 +173,21 @@ class NSPanelCardPopupInputSelect(NSPanelCardPopup):
             self.log.warning("Slot name '%s' not matching to popup.", slot_name )
             return None
         if len(params) >= 2 and params[0].lower() == "mode-option":
-            new_state = self.slot_obj.item.state_formated
+            #select the correct item for the mode-option
+            if self.slot_obj.MY_TYPE == NSPanelCardSlot.SLOT_LIGHT:
+                #seams to be an light slot and an effect popup
+                item = self.slot_obj.effect_item
+            else:
+                item = self.slot_obj.item
+            new_state = item.state_formated
             try:
                 #try to find new value in options
-                new_state = list(self.slot_obj.item.options.keys())[int(params[1])]
+                new_state = list(item.options.keys())[int(params[1])]
             except ValueError:
                 self.log.warning("Selected value can not be found in options!")
-            if new_state != self.slot_obj.item.state_formated:
-                self.slot_obj.item.set_item_state(new_state)
-            self.log.info("Input select event '%s' for item '%s'", new_state, self.slot_obj.item.name)
+            if new_state != item.state_formated:
+                item.set_item_state(new_state)
+            self.log.info("Input select event '%s' for item '%s'", new_state, item.name)
             return None
         return None
 
@@ -189,7 +198,7 @@ class NSPanelCardPopupShutter(NSPanelCardPopup):
     """
     class for popup input_sel cards
     """
-    MY_TYPE = "popupShutter"
+    MY_TYPE = NSPanelCard.CARD_POPUP_SHUTTER
     TILT_BUTTONS = {'tiltopen': 'UP', 'tiltclose': 'DOWN', 'tiltstop': 'STOP'}
 
     def __init__(self, name, slot_obj=None ):
@@ -206,9 +215,6 @@ class NSPanelCardPopupShutter(NSPanelCardPopup):
         """
         process a button press event for this card
         """
-        #params:
-        #mode-option,2
-
         self.log.debug("Process for item '%s' the button press event: %s", slot_name, str(params))
         if slot_name != self.slot_obj.name:
             self.log.warning("Slot name '%s' not matching to popup.", slot_name )
@@ -217,17 +223,21 @@ class NSPanelCardPopupShutter(NSPanelCardPopup):
             self.slot_obj.item.set_item_state(params[0].upper())
             self.log.info("Rollershutter event '%s' for item '%s'", params[0].upper(), self.slot_obj.item.name)
             return None
+        if len(params) >= 1 and params[0].lower() in ['button1press', 'button2press', 'button3press']:
+            self.slot_obj.item.set_item_state(str(skin.key(self.slot_obj.MY_TYPE, params[0].lower())))
+            self.log.info("Rollershutter button event '%s' for item '%s'. Set to: %s", params[0].upper(), self.slot_obj.item.name,str(skin.key(self.slot_obj.MY_TYPE, params[0].lower())))
+            return None
         if len(params) >= 2 and params[0].lower() in ['positionslider']:
-            self.slot_obj.item.set_item_state(params[1])
-            self.log.info("Rollershutter slider event '%s' for item '%s'", params[1].upper(), self.slot_obj.item.name)
+            self.slot_obj.item.set_item_state(params[1].strip())
+            self.log.info("Rollershutter slider event '%s' for item '%s'", params[1].strip().upper(), self.slot_obj.item.name)
             return None
         if len(params) >= 1 and params[0].lower() in ['tiltopen', 'tiltclose', 'tiltstop']:
             self.slot_obj.item.set_item_state(self.TILT_BUTTONS[params[0].lower()])
             self.log.info("Rollershutter event '%s' for item '%s'", params[0].upper(), self.slot_obj.item.name)
             return None
         if len(params) >= 2 and params[0].lower() in ['tiltslider']:
-            self.slot_obj.tilt_item.set_item_state(params[1])
-            self.log.info("Rollershutter tilt slider event '%s' for item '%s'", params[1].upper(), self.slot_obj.item.name)
+            self.slot_obj.tilt_item.set_item_state(params[1].strip())
+            self.log.info("Rollershutter tilt slider event '%s' for item '%s'", params[1].strip().upper(), self.slot_obj.item.name)
             return None
         return None
 
@@ -238,7 +248,7 @@ class NSPanelCardPopupThermo(NSPanelCardPopup):
     """
     class for popup thermo card
     """
-    MY_TYPE = "popupThermo"
+    MY_TYPE = NSPanelCard.CARD_POPUP_THERMO
 
     def create_update_payload(self, compatibility=NSPanelCard.COMPATIBILITY_MODE_DEFAULT):
         """
@@ -280,6 +290,12 @@ class NSPanelCardPopupThermo(NSPanelCardPopup):
                     payload = payload + "~" + heading + "~"+slot_name+"~" + str(slot.item.state_formated) + "~" + options
         payload = payload + (3-count) * "~~~~"
         return payload
+
+    def create_select_payload(self, compatibility=NSPanelCard.COMPATIBILITY_MODE_DEFAULT):
+        """
+        overright this function for card themo. No selction possible
+        """
+        return None
 
 #add this card class type to the factory
 NSPanelCard.card_types[NSPanelCardPopupThermo.MY_TYPE] = NSPanelCardPopupThermo

@@ -475,7 +475,7 @@ class NSPanel(): #pylint: disable=too-many-instance-attributes, too-many-public-
                 if params[1] == 'pageOpenDetail':
                     #create matching popupcard for this slot
                     if len(params) >= 4 and self.current_card is not None:
-                        if self.current_card.popup is None or self.current_card.popup.slot_obj.name != params[3]:
+                        if self.current_card.popup is None or self.current_card.popup.slot_obj.name != params[3].strip() or self.current_card.popup.MY_TYPE != params[2].strip():
                             #create matching popup card
                             self.current_card.popup_card(params[2], params[3])
                             #check for alternative popups

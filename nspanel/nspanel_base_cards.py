@@ -62,6 +62,11 @@ class NSPanelCard():
     CARD_CHARD="cardChart"
     CARD_STATUS="statusCard"
     CARD_POPUP_NOTIFY="popupNotify"
+    CARD_POPUP_LIGHT = "popupLight"
+    CARD_POPUP_INPUT_SEL = "popupInSel"
+    CARD_POPUP_SHUTTER = "popupShutter"
+    CARD_POPUP_THERMO = "popupThermo"
+
     CARD_DEFAULT_STATUS="_default_status_"
     FONT_SIZES = ["0","1","2","3","4","5"]
 
