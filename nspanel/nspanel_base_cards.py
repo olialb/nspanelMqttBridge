@@ -46,7 +46,7 @@ class NSPanelCard():
     #CARD TYPE constants
     CARD_ENTITIES="cardEntities"
     CARD_THERMO="cardThermo"
-    #CARD_THERMO2="cardThermo2"
+    CARD_THERMO2="cardThermo2"
     CARD_MEDIA="cardMedia"
     CARD_ALARM="cardAlarm"
     CARD_QR="cardQR"
@@ -66,6 +66,7 @@ class NSPanelCard():
     CARD_POPUP_INPUT_SEL = "popupInSel"
     CARD_POPUP_SHUTTER = "popupShutter"
     CARD_POPUP_THERMO = "popupThermo"
+    CARD_POPUP_3_INPUT_SEL = "popup3InSel"
 
     CARD_DEFAULT_STATUS="_default_status_"
     FONT_SIZES = ["0","1","2","3","4","5"]
@@ -96,7 +97,8 @@ class NSPanelCard():
         },
         COMPATIBILITY_MODE_FORK1: { NAV_CARDS: [CARD_ENTITIES,CARD_THERMO,CARD_MEDIA,CARD_ALARM,
                                                   CARD_QR,CARD_QR_WIFI,CARD_POWER,CARD_MEDIA,
-                                                  CARD_GRID,CARD_GRID2,CARD_GRID3, CARD_CHARD ],
+                                                  CARD_GRID,CARD_GRID2,CARD_GRID3, CARD_CHARD,
+                                                   CARD_THERMO2 ],
                                       SCREENSAVER: [CARD_SCREENSAVER,CARD_SCREENSAVER2,CARD_SCREENSAVER3],
                                       OTHER_CARDS: [CARD_POPUP_NOTIFY,CARD_DEFAULT_STATUS]
         }

@@ -62,21 +62,37 @@ class NSPanelCardPopup(NSPanelCard):
         """
         self.log.debug("Connect nspanel '%s' to card '%s'", nspanel.name, self.name )
 
+    def popup_payload(self, payload):
+        """
+        create popup payload
+        """
+        if self.slot_obj.text is None:
+            title = str(self.slot_obj.item.label)
+        else:
+            title = self.slot_obj.text
+        payload += '~'+title+'~'+self.slot_obj.name
+        payload += '~'+self.slot_obj.get_icon()+'~'+self.slot_obj.get_icon_color()
+        return payload
+
     def create_select_payload(self, compatibility=NSPanelCard.COMPATIBILITY_MODE_DEFAULT):
         """
         create the payload to select a different popup as the standard one
         """
         if self.slot_obj.popup_type is not None and self.slot_obj.popup_type in self.popup_select_payload:
             if compatibility == self.popup_select_payload[self.slot_obj.popup_type]["hmi"]:
-                payload = self.popup_select_payload[self.slot_obj.popup_type]["payload"]
-                if self.slot_obj.text is None:
-                    title = str(self.slot_obj.item.label)
-                else:
-                    title = self.slot_obj.text
-                payload += '~'+title+'~'+self.slot_obj.name
-                payload += '~'+self.slot_obj.get_icon()+'~'+self.slot_obj.get_icon_color()
+                payload = self.popup_payload(self.popup_select_payload[self.slot_obj.popup_type]["payload"])
                 return payload
         return None
+
+    def create_popup_cmd_payload(self, compatibility=NSPanelCard.COMPATIBILITY_MODE_DEFAULT):
+        """
+        create the payload to open a popup
+        """
+        payload = self.create_select_payload( compatibility )
+        if payload is None:
+            #create standard popup payload
+                payload = self.popup_payload("pageType~"+self.MY_TYPE)
+        return payload
 
 class NSPanelCardPopupLight(NSPanelCardPopup):
     """
@@ -252,12 +268,17 @@ class NSPanelCardPopupThermo(NSPanelCardPopup):
 
     def create_update_payload(self, compatibility=NSPanelCard.COMPATIBILITY_MODE_DEFAULT):
         """
-        Create nav card payload
+        Create popupThermo card payload
         """
         #Fromat:
         #entityUpdateDetail~{entity_id}~{icon_id}~{icon_color}~{heading}~{slotID}~{mode}~mode1~mode1?mode2?mode3~{heading}~{slotID}~{mode}~mode1~mode1?mode2?mode3~{heading}~{slotID}~{mode}~mode1~mode1?mode2?mode3~
         #Error in documentation of lovelace ui! There is one additonal parameter after each heading with the slot id!
 
+        if isinstance(self.slot_obj, NSPanelCardSlot):
+             #cretae standart slot payload
+             return super().create_update_payload(compatibility)
+
+        #is a popup of cardThemo and payload is based on the card content not on slot content:
         payload = "entityUpdateDetail~CardThermo~" + skin.key(self.MY_TYPE, "icon") + '~'+\
                                                      str(name_to_16bit_color(skin.key(self.MY_TYPE, "iconColor")))
 
@@ -280,8 +301,12 @@ class NSPanelCardPopupThermo(NSPanelCardPopup):
                     else:
                         heading = str(slot.item.label)
                     options=""
-                    for label in slot.item.options.values():
-                        options = options + label + '?'
+                    if slot.options is None:
+                        for label in slot.item.options.values():
+                            options = options + label + '?'
+                    else:
+                        for label in slot.options.values():
+                            options = options + label + '?'
 
                     if len(slot.item.options.values()):
                         #remove last "?"
@@ -297,6 +322,12 @@ class NSPanelCardPopupThermo(NSPanelCardPopup):
         """
         return None
 
+    def event_button_press( self, slot_name, params ):
+        """
+        process a button press event for this card
+        """
+        self.log.debug("Process for item '%s' the button press event: %s", slot_name, str(params))
+        return None
 #add this card class type to the factory
 NSPanelCard.card_types[NSPanelCardPopupThermo.MY_TYPE] = NSPanelCardPopupThermo
 

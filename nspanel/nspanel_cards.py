@@ -668,15 +668,6 @@ class NSPanelCardThermo(NSPanelCardWithSlots):
         """
         process a button press event for this card
         """
-        #example event params:
-        #"OnOff,1"
-        #"button"
-        #"brightnessSlider,34'
-        #colorTempSlider,89
-        #navigate.prev,button"
-        #down
-        #tiltOpen
-        #event,buttonPress2,CardAlarm,AB0|mode2,6655
 
         #check for cardThermo Events.
         if params[0] in ["CardThermo"] and self.MY_TYPE == self.CARD_THERMO:
@@ -687,14 +678,150 @@ class NSPanelCardThermo(NSPanelCardWithSlots):
 #add this card class type to the factory
 NSPanelCard.card_types[NSPanelCardThermo.MY_TYPE] = NSPanelCardThermo
 
-#class NSPanelCardThermo2(NSPanelCardThermo):
-#    """
-#    Represent an card of type cardThermo in lovelace ui for NSPanels
-#    """
-#    MY_TYPE = NSPanelCard.CARD_THERMO2
+class NSPanelCardThermo2(NSPanelCardThermo):
+    """
+    Represent an card of type cardThermo in lovelace ui for NSPanels
+    """
+    MY_TYPE = NSPanelCard.CARD_THERMO2
+
+    def create_slots_payload(self):
+        """
+        evaluate the thermo slots and create the payload:
+        """
+        payload = "~CardThermo" #Button ID
+
+        #Unit
+        unit = translate.temperture_unit()
+        unit_humidity = translate.key(self.MY_TYPE, "humidity_unit")
+
+        #Target temperature slot:
+        target1 = "?.?"
+        if "slot_0" in self.slots and self.slots["slot_0"] is not None and self.slots["slot_0"].slot_class == "ohItem":
+            #slot 1 must contain an themperature set item
+            slot = self.slots["slot_0"]
+            slot.item.update_item()
+            try:
+                target1 = str(slot.item.state*10)
+            except ValueError:
+                self.log.error("No valid defined attribute for target temperature '%s'", slot.item.state)
+
+        payload += '~'+target1+'~'+self.min+'~'+self.max+'~'+self.step+'~'+unit+"~{active}"
+
+        #Current Temp slot:
+        temp = "?.?"
+        if "slot_1" in self.slots and self.slots["slot_1"] is not None and self.slots["slot_1"].slot_class == "ohItem":
+            #slot 2 must contain an themperature item
+            slot = self.slots["slot_1"]
+            slot.item.update_item()
+            try:
+                temp = str(slot.item.state*10)
+            except ValueError:
+                self.log.error("No valid defined attribute for current temperature '%s'", slot.item.state)
+
+            if "icon" in slot.json_data:
+                icon = slot.get_icon()
+            else:
+                icon = skin.key( self.MY_TYPE, "icon_temperature")
+            if "iconColor" in slot.json_data:
+                color = slot.get_icon_color()
+            else:
+                color = str(name_to_16bit_color(skin.key( self.MY_TYPE, "icon_temperature_color")))
+            payload += '~~~'+icon+'~'+color+'~~~~~'+temp+'~'+color+'~~~~~'+unit+'~'+color+'~~~~'
+        else:
+            payload += '~~~~~~~~~~~~~~~~~~~~'
+
+        #Humidity slot:
+        humid = "??"
+        if "slot_2" in self.slots and self.slots["slot_2"] is not None and self.slots["slot_2"].slot_class == "ohItem":
+            #slot 2 must contain an themperature item
+            slot = self.slots["slot_2"]
+            slot.item.update_item()
+            try:
+                humid = str(slot.item.state*10)
+            except ValueError:
+                self.log.error("No valid defined attribute for current humidity '%s'", slot.item.state)
+
+            color = slot.get_icon_color()
+            if "icon" in slot.json_data:
+                icon = slot.get_icon()
+            else:
+                icon = skin.key( self.MY_TYPE, "icon_humidity")
+            if "iconColor" in slot.json_data:
+                color = slot.get_icon_color()
+            else:
+                color = str(name_to_16bit_color(skin.key( self.MY_TYPE, "icon_humidity_color")))
+            payload += '~'+icon+'~'+color+'~~~~~'+humid+'~'+color+'~~~~~'+unit_humidity+'~'+color+'~~~~'
+        else:
+            payload += '~~~~~~~~~~~~~~~~~~'
+
+        #Status slot
+        status = "??"
+        if "slot_3" in self.slots and self.slots["slot_3"] is not None and self.slots["slot_3"].slot_class == "ohItem":
+            #slot 3 must contain the current status of the thermostat
+            slot = self.slots["slot_3"]
+            slot.item.update_item()
+            try:
+                status = str(slot.item.state)
+            except ValueError:
+                self.log.error("No valid defined attribute for current status '%s'", slot.item.state)
+
+            color = slot.get_icon_color()
+            payload += '~'+status+'~'+color+'~~{active}'
+        else:
+            payload += '~~~~{active}'
+
+        #slot on/off
+        status = "??"
+        active = '0'
+        if "slot_4" in self.slots and self.slots["slot_4"] is not None and self.slots["slot_4"].slot_class == "ohItem":
+            #slot 3 must contain the current status of the thermostat
+            slot = self.slots["slot_4"]
+            payload += slot.create_payload()
+            if slot.item.state_formated.upper() != "OFF":
+                active = '1'
+        else:
+            payload = payload + "~~~~~~"
+
+       #button slots
+        for i in range(8):
+            slot_name = "slot_"+str(i+5)
+            if slot_name in self.slots and self.slots[slot_name] is not None and self.slots[slot_name].slot_class == "ohItem":
+                #slot 7-15 can contain a switch item
+                slot = self.slots[slot_name]
+                slot.item.update_item()
+                payload += slot.create_payload()
+            else:
+                payload = payload + "~~~~~~"
+
+        return payload.format(active=active)
+
+    def event_button_press( self, params, panel=None ):
+        """
+        process a button press event for this card
+        """
+        #check for cardThermo Events.
+        if params[0] in ["CardThermo"] and self.MY_TYPE == self.CARD_THERMO2:
+            if params[1] == "tempUpd" and len(params) > 2:
+                try:
+                    temp = float(params[2])/10
+                except ValueError:
+                    self.log.error("Can not convert '%s' to temperature", params[2])
+                    return None
+                if "slot_0" in self.slots and self.slots["slot_0"] is not None and self.slots["slot_0"].slot_class == "ohItem":
+                    #slot 0 must contain an temperature set item
+                    slot = self.slots["slot_0"]
+                    slot.item.set_item_state(str(temp))
+                    self.log.debug("Temperature changed  to '%.2f' °C", temp)
+                else:
+                    self.log.warning("No Target temperature item defined in slot 1 to set '%.2f' °C", temp)
+                return None
+
+        self.log.warning("Unknown event '%s' for cardThermo2.", params[0])
+
+        return super().event_button_press( params, panel )
 
 #add this card class type to the factory
-#NSPanelCard.card_types[NSPanelCardThermo2.MY_TYPE] = NSPanelCardThermo2
+NSPanelCard.card_types[NSPanelCardThermo2.MY_TYPE] = NSPanelCardThermo2
 
 class NSPanelCardChart(NSPanelCardWithSlots):
     """

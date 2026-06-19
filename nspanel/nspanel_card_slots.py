@@ -88,8 +88,16 @@ class NSPanelCardSlot(): #pylint: disable=too-many-instance-attributes
         #addtional attributes
         self.slot_class = None
         self.text = None
-        self.icon = interpret_options(skin.key(self.MY_TYPE, "icon"))
-        self.icon_color = interpret_options(skin.key(self.MY_TYPE, "iconColor"))
+        if skin.exists(self.card.MY_TYPE, "icon_"+self.name) is True:
+            #for this card is a spefic icon for this slot defined
+            self.icon = interpret_options(skin.key(self.card.MY_TYPE, "icon_"+self.name))
+        else:
+            self.icon = interpret_options(skin.key(self.MY_TYPE, "icon"))
+        if skin.exists(self.card.MY_TYPE, "icon_color_"+self.name) is True:
+            #for this card is a spefic icon color for this slot defined
+            self.icon_color = interpret_options(skin.key(self.card.MY_TYPE, "icon_color_"+self.name))
+        else:
+            self.icon_color = interpret_options(skin.key(self.MY_TYPE, "iconColor"))
         self.speed = 0 #Animation speed in cardPower
         self.type = self.MY_TYPE
         self.popup_type = str(skin.key("default", "popupTypes")) #alternative popup
@@ -129,7 +137,7 @@ class NSPanelCardSlot(): #pylint: disable=too-many-instance-attributes
 
     def create_payload(self):
         """
-        create upstate payload for this slot
+        create update payload for this slot
         """
         if self.text is None:
             self.text = "-text undefined-"
@@ -137,6 +145,13 @@ class NSPanelCardSlot(): #pylint: disable=too-many-instance-attributes
         payload = payload + self.get_icon()+self.card.icon_size_payload() + "~" + self.get_icon_color() + "~"
         payload = payload + self.text + "~"
         return payload
+
+    def create_popup_payload(self, compatibility=NSPanelCard.COMPATIBILITY_MODE_DEFAULT):
+        """
+        create the payload for the poplight card
+        """
+        self.log.debug("Create popupLight called and not implemented for slot '%s'. Compatibility=%s", self.name, compatibility)
+        return None
 
     @classmethod
     def factory( cls, json_data, slot_index, card ): #pylint: disable=too-many-return-statements
@@ -251,6 +266,7 @@ class NsPanelCardSlotOhItem( NSPanelCardSlot ):
         """
         super().__init__(json_data, slot_index, card)
         self.item = self.OH.item_factory(json_data["item"], card.item_update_callback )
+        self.popup_on_buttonpress = None
         if "options" in json_data and json_data["options"] is not None:
             self.options = interpret_options(str(json_data["options"]))
         else:
@@ -347,7 +363,7 @@ class NsPanelCardSlotOhItem( NSPanelCardSlot ):
         return "2~" + self.name + '~' + self.get_icon() + '~' + self.get_icon_color() + '~'\
                     + "option" + '~' + state + '~' + options
 
-#add ohItem class to factory dictionary
+#create ohItem class to factory dictionary
 NSPanelCardSlot.all_slot_classes["ohItem"] = {}
 
 class NsPanelCardSlotOhItemText( NsPanelCardSlotOhItem ):
@@ -431,7 +447,7 @@ class NsPanelCardSlotOhItemWeather( NsPanelCardSlotOhItem ):
 NSPanelCardSlot.all_slot_classes["ohItem"][NsPanelCardSlotOhItemWeather.MY_TYPE] = NsPanelCardSlotOhItemWeather
 
 
-class NsPanelCardSlotOhItemPlayer( NsPanelCardSlotOhItem ):
+class NsPanelCardSlotOhItemPlayer( NsPanelCardSlotOhItem ): #pylint: disable=too-many-instance-attributes
     """
     Slot class for media player
     """
@@ -442,7 +458,7 @@ class NsPanelCardSlotOhItemPlayer( NsPanelCardSlotOhItem ):
         Constructor of a Slot with openweathermap items
         """
         super().__init__(json_data, slot_index, card)
-        self.item = self.OH.item_factory(json_data["item"], card.item_update_callback )
+        #self.item = self.OH.item_factory(json_data["item"], card.item_update_callback )
         if "volumeItem" in json_data and json_data["volumeItem"] is not None:
             self.volume_item = self.OH.item_factory(str(json_data["volumeItem"]), card.item_update_callback )
         else:
@@ -480,7 +496,6 @@ class NsPanelCardSlotOhItemPlayer( NsPanelCardSlotOhItem ):
         else:
             self.shuffle_item = interpret_options(skin.key(self.MY_TYPE, "shuffleIcon"))
 
-
         self.log.debug("NsPanelCardSlotOhItemPlayer '%s' constructed!", self.name )
 
     def get_shuffle_icon(self):
@@ -508,42 +523,47 @@ class NsPanelCardSlotOhItemPlayer( NsPanelCardSlotOhItem ):
         """
         #example :~slotName~line1~line1Color~line2~line2Color~volume~iconPlayStop~colorOnOffIcon~colorShuffleIcon
 
-        payload = "~"+self.name
+        #create a special payload for slot_0 of cardMedia
+        if self.card.MY_TYPE == NSPanelCard.CARD_MEDIA and self.name == "slot_0":
+            payload = "~"+self.name
 
-        self.item.update_item()
-        if self.line1_item is not None:
-            self.line1_item.update_item()
-            line1 = str(self.line1_item.state)
-        else:
-            line1 = translate.key("player", "line1")
-        payload += "~" +line1 + '~' + str(self.line1_color)
-        if self.line2_item is not None:
-            self.line2_item.update_item()
-            line2 = str(self.line2_item.state)
-        else:
-            line2 = translate.key("player", "line2")
-        payload += "~" +line2 + '~' + str(self.line2_color)
-        if self.volume_item is not None:
-            self.volume_item.update_item()
-            volume = str(self.volume_item.state)
-        else:
-            volume = "50"
-        payload += "~" + volume + "~" + self.get_icon()
-        if self.power_item is not None:
-            self.power_item.update_item()
-            color_on_off_icon = self.get_power_icon_color()
-        else:
-            color_on_off_icon = "disable"
-        if self.shuffle_item is not None:
-            self.shuffle_item.update_item()
-            color_shuffle_icon = self.get_shuffle_icon()
-        else:
-            color_shuffle_icon = "disable"
-        payload += "~" + color_on_off_icon + "~" + color_shuffle_icon
+            self.item.update_item()
+            if self.line1_item is not None:
+                self.line1_item.update_item()
+                line1 = str(self.line1_item.state)
+            else:
+                line1 = translate.key("player", "line1")
+            payload += "~" +line1 + '~' + str(self.line1_color)
+            if self.line2_item is not None:
+                self.line2_item.update_item()
+                line2 = str(self.line2_item.state)
+            else:
+                line2 = translate.key("player", "line2")
+            payload += "~" +line2 + '~' + str(self.line2_color)
+            if self.volume_item is not None:
+                self.volume_item.update_item()
+                volume = str(self.volume_item.state)
+            else:
+                volume = "50"
+            payload += "~" + volume + "~" + self.get_icon()
+            if self.power_item is not None:
+                self.power_item.update_item()
+                color_on_off_icon = self.get_power_icon_color()
+            else:
+                color_on_off_icon = "disable"
+            if self.shuffle_item is not None:
+                self.shuffle_item.update_item()
+                color_shuffle_icon = self.get_shuffle_icon()
+            else:
+                color_shuffle_icon = "disable"
+            payload += "~" + color_on_off_icon + "~" + color_shuffle_icon
 
-        return payload
+            return payload
+        else:
+            #create a standard payload for other slots
+            return super().create_payload(stateText)
 
-    def player_event(self, params):
+    def player_event(self, params): #pylint: disable=too-many-return-statements
         """
         process a player related event for this slot
         """
@@ -576,6 +596,7 @@ class NsPanelCardSlotOhItemPlayer( NsPanelCardSlotOhItem ):
                 self.item.set_item_state('PLAY')
                 self.log.info("Player play event for slot '%s'", self.name)
             return True
+        return False
 
 #add ohItem class to factory dictionary
 NSPanelCardSlot.all_slot_classes["ohItem"][NsPanelCardSlotOhItemPlayer.MY_TYPE] = NsPanelCardSlotOhItemPlayer
@@ -610,6 +631,18 @@ class NsPanelCardSlotOhItemButton( NsPanelCardSlotOhItem ):
     base class for slots with openhab items of type button
     """
     MY_TYPE=NSPanelCardSlot.SLOT_BUTTON
+
+    def __init__(self, json_data, slot_index, card):
+        """
+        Constructor of a Slot with openweathermap items
+        """
+        super().__init__(json_data, slot_index, card)
+        if "radioButtonState" in json_data and json_data["radioButtonState"] is not None:
+            self.radio_button_state = str(json_data["radioButtonState"])
+        else:
+            self.radio_button_state = None
+
+        self.log.debug("NsPanelCardSlotOhItemButton '%s' constructed!", self.name )
 
     def create_payload(self, stateText="empty"):
         """
@@ -761,6 +794,22 @@ class NsPanelCardSlotOhItemLight( NsPanelCardSlotOhItemSwitch ):
 
 #add ohItem class to factory dictionary
 NSPanelCardSlot.all_slot_classes["ohItem"][NsPanelCardSlotOhItemLight.MY_TYPE] = NsPanelCardSlotOhItemLight
+
+class NsPanelCardSlotOhItemPopupLight( NsPanelCardSlotOhItemLight ):
+    """
+    base class for slots with openhab items of type popup light
+    Same behavior as light but popup opens directly on button press and not only on long press
+    """
+
+    def __init__(self, json_data, slot_index, card):
+        """
+        Constructor of a Slot in a NSPanelCard
+        """
+        super().__init__(json_data, slot_index, card)
+        self.popup_on_buttonpress = NSPanelCard.CARD_POPUP_LIGHT
+
+#add ohItem class to factory dictionary
+NSPanelCardSlot.all_slot_classes["ohItem"][NSPanelCard.CARD_POPUP_LIGHT] = NsPanelCardSlotOhItemPopupLight
 
 class NsPanelCardSlotOhItemShutter( NsPanelCardSlotOhItem ):
     """
@@ -953,6 +1002,22 @@ class NsPanelCardSlotOhItemShutter( NsPanelCardSlotOhItem ):
 #add ohItem class to factory dictionary
 NSPanelCardSlot.all_slot_classes["ohItem"][NsPanelCardSlotOhItemShutter.MY_TYPE] = NsPanelCardSlotOhItemShutter
 
+class NsPanelCardSlotOhItemPopupShutter( NsPanelCardSlotOhItemShutter ):
+    """
+    base class for slots with openhab items of type popup shutter
+    Same behavior as shutter but popup opens directly on button press and not only on long press
+    """
+
+    def __init__(self, json_data, slot_index, card):
+        """
+        Constructor of a Slot in a NSPanelCard
+        """
+        super().__init__(json_data, slot_index, card)
+        self.popup_on_buttonpress = NSPanelCard.CARD_POPUP_SHUTTER
+
+#add ohItem class to factory dictionary
+NSPanelCardSlot.all_slot_classes["ohItem"][NSPanelCard.CARD_POPUP_SHUTTER] = NsPanelCardSlotOhItemPopupShutter
+
 class NsPanelCardSlotOhItemInputSel( NsPanelCardSlotOhItem ):
     """
     base class for slots with openhab items of type input select
@@ -981,3 +1046,70 @@ class NsPanelCardSlotOhItemInputSel( NsPanelCardSlotOhItem ):
 
 #add ohItem class to factory dictionary
 NSPanelCardSlot.all_slot_classes["ohItem"][NsPanelCardSlotOhItemInputSel.MY_TYPE] = NsPanelCardSlotOhItemInputSel
+
+class NsPanelCardSlotOhItemPopupInputSel( NsPanelCardSlotOhItemInputSel ):
+    """
+    base class for slots with openhab items of type popup input select
+    Same behavior as input_sel but popup opens directly on button press and not only on long press
+    """
+
+    def __init__(self, json_data, slot_index, card):
+        """
+        Constructor of a Slot in a NSPanelCard
+        """
+        super().__init__(json_data, slot_index, card)
+        self.popup_on_buttonpress = NSPanelCard.CARD_POPUP_INPUT_SEL
+
+#add ohItem class to factory dictionary
+NSPanelCardSlot.all_slot_classes["ohItem"][NSPanelCard.CARD_POPUP_INPUT_SEL] = NsPanelCardSlotOhItemPopupInputSel
+
+#class NsPanelCardSlotOhItemPopupMultiInputSel( NsPanelCardSlotOhItemButton ):
+#    """
+#    base class for slots with openhab items of type popup light
+#    Same behavior as light but popup opens directly on button press and not only on long press
+#    """
+#
+#    def __init__(self, json_data, slot_index, card):
+#        """
+#        Constructor of a Slot in a NSPanelCard
+#        """
+#        super().__init__(json_data, slot_index, card)
+#        self.popup_on_buttonpress = NSPanelCard.CARD_POPUP_THERMO
+#
+#        self.item2 = None
+#        if "item2" in json_data and json_data["item2"] is not None:
+#            self.item2 = self.OH.item_factory(str(json_data["item2"]), card.item_update_callback)
+#        self.item2 = None
+#        if "item3" in json_data and json_data["item3"] is not None:
+#            self.item3 = self.OH.item_factory(str(json_data["item3"]), card.item_update_callback)
+#
+#    def create_popup_payload(self, compatibility=NSPanelCard.COMPATIBILITY_MODE_DEFAULT):
+#        """
+#        Create popupThermo card payload
+#        """
+#        #Fromat:
+#        #entityUpdateDetail~{entity_id}~{icon_id}~{icon_color}~{heading}~{slotID}~{mode}~mode1~mode1?mode2?mode3~{heading}~{slotID}~{mode}~mode1~mode1?mode2?mode3~{heading}~{slotID}~{mode}~mode1~mode1?mode2?mode3~
+#        #Error in documentation of lovelace ui! There is one additonal parameter after each heading with the slot id!
+#
+#        payload = "~"+self.name+ "~" + self.get_icon() + '~'+ self.get_icon_color()
+#
+#        #there are 3 entries for input_sel items in the popup card
+#        items = [self.item, self.item2, self.item3]
+#        count = 0
+#        for item in items:
+#            if item is not None:
+#                item.update_item()
+#                options=""
+#                for label in item.options.values():
+#                    options = options + label + '?'
+#                if len(item.options.values()):
+#                    #remove last "?"
+#                    options = options[:-1]
+#                payload += "~" + item.label + "~"+item.name+"~" + str(item.state_formated) + "~" + options
+#                count += 1
+#        payload += (3-count) * "~~~~"
+#        self.log.debug("Create popupThermo payload with entries. compatibility=%s", compatibility)
+#        return payload
+
+#add ohItem class to factory dictionary
+#NSPanelCardSlot.all_slot_classes["ohItem"][NSPanelCard.CARD_POPUP_3_INPUT_SEL] = NsPanelCardSlotOhItemPopupMultiInputSel

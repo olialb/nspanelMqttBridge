@@ -178,9 +178,19 @@ class NSPanelCardWithSlots(NSPanelCardWithNav):
             if params[1] == "button":
                 #button for this item was pressed => toggel the value
                 if slot.slot_class == "ohItem":
-                    if slot.item.toggle_item_state(slot.options):
-                        self.log.info("Toggle event '%s' for slot '%s'", params[1], slot.name)
-                        return self
+                    if slot.popup_on_buttonpress is None:
+                        if slot.type == NSPanelCardSlot.SLOT_BUTTON and slot.radio_button_state is not None:
+                            #special handling for Radio Button function
+                            slot.item.set_item_state(slot.radio_button_state)
+                        else:
+                            if slot.item.toggle_item_state(slot.options):
+                                self.log.info("Toggle event '%s' for slot '%s'", params[1], slot.name)
+                                return self
+                    else:
+                        #open a popup directly on button press
+                        self.popup = NSPanelCard.factory(slot.popup_on_buttonpress, slot)
+                        panel.send_panel_cmd(self.popup.create_popup_cmd_payload(panel.compatibility_mode))
+                        panel.send_panel_cmd(self.popup.create_update_payload(panel.compatibility_mode))
                 if slot.slot_class == "navigate":
                     self.log.debug("Navigate event '%s' for slot '%s'", params[1], slot.name)
                     card=NSPanelCard.card_by_path(slot.nav_to, panel)

@@ -55,6 +55,20 @@ def key(section, entry=None):
     LOGGER.error( "DB: No entry for section '%s' with entry '%s'.", section, entry)
     return None
 
+def exists(section, entry=None):
+    """
+    check if entry exists
+    """
+    if entry is None:
+        if section in SKIN_DB:
+            return True
+        return False
+    if section not in SKIN_DB:
+        section = "default"
+    if entry in SKIN_DB[section]:
+        return True
+    return False
+
 def icon( icon_name ):
     """
     Returns the unicode for the given icon name

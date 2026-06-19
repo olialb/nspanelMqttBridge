@@ -82,6 +82,30 @@
         "b3Color": "white",
         "timeout": 15
     },
+    "cardThermo2" : {
+        "iconSize": 0,
+        "fontSize" : 1,
+        "icon_temperature" : "icon=thermometer",
+        "icon_temperature_color" : "yellow",
+        "icon_humidity" : "icon=water",
+        "icon_humidity_color" : "lightblue",
+        "icon_slot_4": "icon=power",
+        "icon_color_slot_4": "OFF=grey,ON=green",
+        "icon_slot_5": "icon=heat-wave",
+        "icon_color_slot_5": "OFF=grey,ON=green",
+        "icon_slot_6": "icon=snowflake",
+        "icon_color_slot_6": "OFF=grey,ON=green",
+        "icon_slot_7": "icon=refresh-auto",
+        "icon_color_slot_7": "OFF=grey,ON=green",
+        "icon_slot_8": "icon=numeric-1-circle",
+        "icon_colorslot_8": "OFF=grey,ON=green",
+        "icon_slot_9": "icon=numeric-2-circle",
+        "icon_color_slot_9": "OFF=grey,ON=green",
+        "icon_slot_10": "icon=numeric-3-circle",
+        "icon_color_slot_10": "OFF=grey,ON=green",
+        "icon_slot_11": "icon=numeric-4-circle",
+        "icon_color_slot_11": "OFF=grey,ON=green"
+    },
     "text": {
         "icon": "icon=gesture-tap-button",
         "iconColor" : "white"

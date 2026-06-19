@@ -388,6 +388,7 @@ class NSPanel(): #pylint: disable=too-many-instance-attributes, too-many-public-
         #event,buttonPress2,slot_2,mode-Test,1
         #event,buttonPress2,popupNotify,notifyAction,yes
         #"event,buttonPress2,slot_0,volumeSlider,28"}
+        #event,buttonPress2,CardThermo,tempUpd,55
         if RESULT_CUSTOM_RECV in js_payload: #pylint: disable=too-many-nested-blocks
             #seams to be a relavalnt message
             self.log.debug("Message received from Panel: %s topic: %s", js_payload[RESULT_CUSTOM_RECV], my_config["topic"])

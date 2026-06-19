@@ -30,5 +30,8 @@
         "b1Text": "Ignore",
         "b2Text": "OK",
         "b3Text": ""
+    },
+    "cardThermo2": {
+        "humidity_unit": "%"
     }
 }
