@@ -2,6 +2,55 @@
 # Home cards
 #
 cards:
+  - name: TestDirectPopup
+    title: Direct popups
+    group:  test ,  test_saver, _status_cards_
+    type: cardGrid
+    slots:
+      - class: ohItem #open poupupLight directly
+        type: popupLight
+        text: popupLight
+        item: Switch_Kugellampe
+        icon: lamp
+        item: Switch_Kugellampe
+        dimmerItem: Dimmer_Kugellampe
+        colTempItem: Dimmer_Kugellampe_Temp
+        colorItem: Color_Kugellampe
+      - class: ohItem #open poupupLight2 directly
+        type: popupLight
+        text: popupLight2
+        item: Switch_Kugellampe
+        icon: lamp
+        item: Switch_Kugellampe
+        dimmerItem: Dimmer_Kugellampe
+        colTempItem: Dimmer_Kugellampe_Temp
+        colorItem: Color_Kugellampe
+        popupType: 2
+      - class: ohItem #open poupupShutter directly
+        type: popupShutter
+        text: popupShutter
+        icon: \uefa2a 
+        iconColor: green
+        item: R_RolladenWintergarten
+        tiltItem: R_RolladenWintergarten #optional tilt item
+      - class: ohItem #open poupupShutter2 directly
+        type: popupShutter
+        text: popupShutter2
+        icon: \uefa2a 
+        iconColor: green
+        item: R_RolladenWintergarten
+        tiltItem: R_RolladenWintergarten #optional tilt item
+        popupType: 2
+      - class: ohItem #open poupupInputSel directly
+        type: popupInSel
+        text: popupInputSel
+        item: YamahaInput        
+#      - class: ohItem #open poupupInputSel directly
+#        type: popup3InSel
+#        text: popup3InSel
+#        item: YamahaInput        
+#        item2: YamahaInput        
+#        item3: YamahaInput        
   - name: TestX
     title: shutter test
     group:  test ,  test_saver, _status_cards_
@@ -41,6 +90,51 @@ cards:
         item: R_RolladenWintergarten
         tiltItem: R_RolladenWintergarten #optional tilt item
         tiltControls: disable|enable|enable #optional setting for tilt up|stop| down buttons. Default is enable|enable|enable
+  - name: TestX2
+    title: shutter popup2
+    group:  test ,  test_saver, _status_cards_
+    type: cardEntities
+    slots:
+      - class: ohItem #All default
+        type: shutter
+        text: Meiner
+        item: R_RolladenWintergarten
+        popupType: 2
+      - class: ohItem #Default with tilt function
+        type: shutter
+        item: R_RolladenWintergarten
+        tiltItem: R_RolladenWintergarten #optional tilt item
+        popupType: 2
+      - class: ohItem #Default with tilt function, shutter text, and shutter down disabeled
+        type: shutter
+        text: Wintergarten
+        item: R_RolladenWintergarten
+        tiltItem: R_RolladenWintergarten #optional tilt item
+        popupType: 2
+      - class: ohItem #Everything defined
+        type: shutter
+        text: Wintergarten
+        icon: \uefa2a 
+        shutterControls: disable|enable|enable #optional setting for shutte up|stop| down buttons. Default is enable|enable|enable
+        item: R_RolladenWintergarten
+        tiltItem: R_RolladenWintergarten #optional tilt item
+        tiltControls: disable|enable|disable #optional setting for tilt up|stop| down buttons. Default is enable|enable|enable
+        popupType: 2
+      - class: ohItem #Default with tilt function, shutter text, and shutter down disabeled
+        type: shutter
+        text: Wintergarten
+        item: R_RolladenWintergarten
+        tiltItem: R_RolladenWintergarten #optional tilt item
+        popupType: 2
+      - class: ohItem #Everything defined
+        type: shutter
+        text: Wintergarten
+        icon: \uefa2a 
+        shutterControls: disable|enable|enable #optional setting for shutte up|stop| down buttons. Default is enable|enable|enable
+        item: R_RolladenWintergarten
+        tiltItem: R_RolladenWintergarten #optional tilt item
+        tiltControls: disable|enable|disable #optional setting for tilt up|stop| down buttons. Default is enable|enable|enable
+        popupType: 2
   - name: Test2
     title: light test
     group:  test ,  test_saver
@@ -68,7 +162,7 @@ cards:
         item: Switch_Kugellampe
         dimmerItem: Dimmer_Kugellampe
         colTempItem: Dimmer_Kugellampe_Temp
-        colorItem: Color_Kugellampe         #not supported yet!!
+        colorItem: Color_Kugellampe
   - name: Test3
     title: Test switch/button
     group:  test ,  test_saver
