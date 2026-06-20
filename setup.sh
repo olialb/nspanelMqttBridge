@@ -53,7 +53,7 @@ pip install watchdog
 #echo ""
 
 echo "################################################"
-echo "Install systemd serice..."
+echo "Install systemd service..."
 echo "service name: nsPanelMqttBridge"
 eval "echo \"user        : $USER\""
 echo "################################################"
