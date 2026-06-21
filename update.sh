@@ -36,7 +36,8 @@ sudo systemctl stop nsPanelMqttBridge
 #backup config in ini file
 cp nspanelMqttBridge.ini nspanelMqttBridge.ini.backup
 #get latest code from release branch
-git pull origin release
+git fetch origin release
+git reset --hard origin/release
 #move configuration back
 mv -f nspanelMqttBridge.ini.backup nspanelMqttBridge.ini
 #start systemd service
