@@ -66,7 +66,8 @@ class NSPanelCard():
     CARD_POPUP_INPUT_SEL = "popupInSel"
     CARD_POPUP_SHUTTER = "popupShutter"
     CARD_POPUP_THERMO = "popupThermo"
-    CARD_POPUP_3_INPUT_SEL = "popup3InSel"
+    #CARD_POPUP_3_INPUT_SEL = "popup3InSel" #Not supported in UIs
+    CARD_POPUP_TIMER = "popupTimer"
 
     CARD_DEFAULT_STATUS="_default_status_"
     FONT_SIZES = ["0","1","2","3","4","5"]
@@ -116,6 +117,9 @@ class NSPanelCard():
     all_connected_panels = {}
     #List of all panels by their name
     all_panels = {}
+    #all time tick callbacks
+    time_tick_callbacks = []
+
     #global card logger
     log = FLOGGER.create_log_handler("NSPanelcard")
 
@@ -124,7 +128,7 @@ class NSPanelCard():
         """
         set translator db
         """
-        translate.set_transloator_db( db )
+        translate.set_translator_db( db )
 
     @classmethod
     def set_skin_db( cls, db):
@@ -132,6 +136,21 @@ class NSPanelCard():
         set skin db
         """
         skin.set_skin_db( db )
+
+    @classmethod
+    def add_time_tick_callback(cls, callback):
+        """
+        adds a new time tick callback
+        """
+        cls.time_tick_callbacks.append(callback)
+
+    @classmethod
+    def time_tick(cls):
+        """
+        Time tick
+        """
+        for callback in cls.time_tick_callbacks:
+            callback()
 
     def __init__(self, name, group=CARDS_HOME ):
         """

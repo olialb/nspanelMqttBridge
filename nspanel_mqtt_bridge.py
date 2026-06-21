@@ -321,10 +321,15 @@ https://github.com/olialb/nspanelMqttBridge#card-configuration""")
         """
         Publish call back called from root class
         """
+        #panel time ticks
         for panel in self.panels.values():
             panel.time_tick()
+        #observer time tick
         if self.file_observer is not None:
             self.file_observer.time_tick()
+        #card time ticks:
+        NSPanelCard.time_tick()
+
 
     def publish_mqtt(self, topic, my_config):
         """

@@ -223,7 +223,7 @@ class OHItem: #pylint: disable=too-many-instance-attributes
                         self.log.warning("Openhab options not in known format. Can not use them.")
             #Evaluate if state can/must be formated further
             try:
-                #check for opehab number value types. Split the dimension from the type
+                #check for openHAB number value types. Split the dimension from the type
                 if item_json["type"].split(":")[0] in ["Number", "Dimmer", "Rollershutter" ]:
                     self.state_int = self.state.split('.')[0]
                     self.state = float(self.state.split(" ")[0]) #use only first part of state in case there is a dimension

@@ -67,7 +67,7 @@ class NSPanelCardSlot(): #pylint: disable=too-many-instance-attributes
         """
         set translator db
         """
-        translate.set_transloator_db( db )
+        translate.set_translator_db( db )
 
     @classmethod
     def set_skin_db( cls, db):
@@ -1113,3 +1113,114 @@ NSPanelCardSlot.all_slot_classes["ohItem"][NSPanelCard.CARD_POPUP_INPUT_SEL] = N
 
 #add ohItem class to factory dictionary
 #NSPanelCardSlot.all_slot_classes["ohItem"][NSPanelCard.CARD_POPUP_3_INPUT_SEL] = NsPanelCardSlotOhItemPopupMultiInputSel
+
+class NsPanelCardSlotOhItemPopupTimer( NsPanelCardSlotOhItemButton ):
+    """
+    Popup with timer content
+    """
+
+    #timer states
+    STOPPED="STOPPED"
+    PAUSED="PAUSED"
+    RUNNING="RUNNING"
+    EXPIRED="EXPIRED"
+    START="START"
+    STOP="STOP"
+    RESET="RESET"
+
+    def __init__(self, json_data, slot_index, card):
+        """
+        Constructor of a Slot in a NSPanelCard
+        """
+        super().__init__(json_data, slot_index, card)
+        self.popup_on_buttonpress = NSPanelCard.CARD_POPUP_TIMER
+        self.editable = skin.key(NSPanelCard.CARD_POPUP_TIMER, "editable")
+        self.state_item = None
+        if "stateItem" in self.json_data:
+            self.state_item = self.OH.item_factory(json_data["stateItem"], self.state_item_update)
+        if "icon" not in self.json_data:
+            self.icon = interpret_options(skin.key( NSPanelCard.CARD_POPUP_TIMER, "icon" ))
+        if "iconColor" not in self.json_data:
+            self.icon_color = interpret_options(skin.key( NSPanelCard.CARD_POPUP_TIMER, "iconColor" ))
+        if "editable" in self.json_data:
+            self.editable = self.json_data["editable"]
+        #timer related attributes
+        self.timer_value = 10*60 #default is 10min
+        self.timer_state = self.STOPPED
+        #register time tick call back
+        NSPanelCard.add_time_tick_callback( self.tick )
+
+    def tick(self):
+        """
+        time tick function for timer countdown
+        """
+        if self.timer_state == self.RUNNING:
+            self.timer_value -= 1
+            if self.timer_value <= 0:
+                self.timer_state = self.EXPIRED
+                self.state_update()
+                self.timer_update()
+            self.card.item_update_callback(self.item)
+            self.log.debug("Timer countdown. Card '%s', Slot '%s', Value '%d'", self.card.name, self.name, self.timer_value)
+
+    def timer_update(self):
+        """
+        update timer value from openHAB
+        """
+        self.item.update_item()
+        try:
+            self.timer_value = int(self.item.state)
+        except ValueError:
+            self.log.error("Can not build time value for slot '%s' from: %s", self.name, str(self.item.state))
+            self.item.set_item_state(str(self.timer_value))
+            self.log.debug("Set item '%s' to '%s'.", self.item.name, str(self.timer_value))
+
+    def state_update(self):
+        """
+        update state of state item
+        """
+        if self.state_item is not None:
+            self.state_item.set_item_state( self.timer_state )
+            self.log.debug("Update state item '%s' with '%s'.", self.state_item.name, self.timer_state)
+
+    def state_item_update(self, item):
+        """
+        Called when the state item is updated from openHAB
+        """
+        item.update_item()
+        self.log.debug("NsPanelCardSlotOhItemPopupTimer received state item update: '%s'", item.state)
+        if item.state == self.STOP:
+            self.timer_state = self.STOPPED
+            self.state_update()
+        if item.state == self.START:
+            self.timer_state = self.RUNNING
+            self.state_update()
+        if item.state == self.RESET:
+            self.timer_update()
+            self.state_update()
+
+    def create_popup_payload(self, compatibility=NSPanelCard.COMPATIBILITY_MODE_DEFAULT):
+        """
+        Create popupThermo card payload
+        """
+        #Fromat:
+        #entityUpdateDetail~{entity_id}~{icon_id}~{icon_color}~{heading}~{slotID}~{mode}~mode1~mode1?mode2?mode3~{heading}~{slotID}~{mode}~mode1~mode1?mode2?mode3~{heading}~{slotID}~{mode}~mode1~mode1?mode2?mode3~
+        #Error in documentation of lovelace ui! There is one additonal parameter after each heading with the slot id!
+
+        headline=""
+        payload = "~"+self.name +"~" + headline + "~" + self.get_icon_color()+"~"+self.name
+
+        r_min = int(self.timer_value/60)
+        r_sec = self.timer_value-r_min*60
+        editable = "0"
+        if self.editable is True and self.timer_state != self.RUNNING:
+            editable = "1"
+        b1 = translate.key(NSPanelCard.CARD_POPUP_TIMER, "b1")
+        b2 = translate.key(NSPanelCard.CARD_POPUP_TIMER, "b2")
+        b3 = translate.key(NSPanelCard.CARD_POPUP_TIMER, "b3")
+
+        #there are 3 entries for input_sel items in the popup card
+        payload += "~"+str(r_min)+"~"+str(r_sec)+"~"+editable+"~b1~b2~b3~"+b1+"~"+b2+"~"+b3
+        return payload
+
+NSPanelCardSlot.all_slot_classes["ohItem"][NSPanelCard.CARD_POPUP_TIMER] = NsPanelCardSlotOhItemPopupTimer

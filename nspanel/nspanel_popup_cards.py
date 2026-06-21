@@ -327,7 +327,64 @@ class NSPanelCardPopupThermo(NSPanelCardPopup):
         process a button press event for this card
         """
         self.log.debug("Process for item '%s' the button press event: %s", slot_name, str(params))
-        return None
+
 #add this card class type to the factory
 NSPanelCard.card_types[NSPanelCardPopupThermo.MY_TYPE] = NSPanelCardPopupThermo
+
+class NSPanelCardPopupTimer(NSPanelCardPopup):
+    """
+    class for popup Timer card
+    """
+    MY_TYPE = NSPanelCard.CARD_POPUP_TIMER
+
+    def __init__(self, name, slot_obj=None ):
+        """
+        Constructor of a NSPanel card with slots
+        """
+        super().__init__( name, slot_obj )
+        if slot_obj.timer_state == slot_obj.STOPPED:
+            slot_obj.timer_update()
+        slot_obj.state_update()
+
+    def create_select_payload(self, compatibility=NSPanelCard.COMPATIBILITY_MODE_DEFAULT):
+        """
+        overright this function for card themo. No selction possible
+        """
+        return None
+
+    def event_button_press( self, slot_name, params ):
+        """
+        process a button press event for this card
+        """
+        self.log.debug("Process for item '%s' the button press event: %s", slot_name, str(params))
+        if len(params) > 0:
+            if params[0] == "timer-b1":
+                self.slot_obj.timer_state = self.slot_obj.RUNNING
+                self.slot_obj.state_update()
+                self.log.debug("Update timer state of card '%s' and slot '%s' with '%s'.", self.slot_obj.card.name, self.slot_obj.name, self.slot_obj.RUNNING)
+            if params[0] == "timer-b2":
+                self.slot_obj.timer_state = self.slot_obj.PAUSED
+                self.slot_obj.card.item_update_callback(self.slot_obj.item)
+                self.slot_obj.state_update()
+                self.log.debug("Update timer state of card '%s' and slot '%s' with '%s'.", self.slot_obj.card.name, self.slot_obj.name, self.slot_obj.PAUSED)
+            if params[0] == "timer-b3":
+                self.slot_obj.timer_update()
+                self.slot_obj.card.item_update_callback(self.slot_obj.item)
+                if self.slot_obj.timer_state != self.slot_obj.RUNNING:
+                    self.slot_obj.timer_state = self.slot_obj.STOPPED
+                    self.slot_obj.state_update()
+                    self.log.debug("Update timer state of card '%s' and slot '%s' with '%s'.", self.slot_obj.card.name, self.slot_obj.name, self.slot_obj.STOPPED)
+            if params[0] == "timer-start" and len(params) > 1:
+                try:
+                    time_str = params[1].split(':')
+                    self.slot_obj.timer_value = int(time_str[1])*60+int(time_str[2])
+                except ValueError:
+                    self.log.error("Can not bulid new timer value for card '%s' and slot '%s' with '%s'.", self.slot_obj.card.name, self.slot_obj.name, params[1])
+                    return
+                self.log.debug("Set new timer value for card '%s' and slot '%s' with '%d'.", self.slot_obj.card.name, self.slot_obj.name, self.slot_obj.timer_value)
+                self.slot_obj.item.set_item_state(str(self.slot_obj.timer_value))
+
+
+#add this card class type to the factory
+NSPanelCard.card_types[NSPanelCardPopupTimer.MY_TYPE] = NSPanelCardPopupTimer
 

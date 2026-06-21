@@ -182,6 +182,7 @@ class NSPanelCardWithSlots(NSPanelCardWithNav):
                         if slot.type == NSPanelCardSlot.SLOT_BUTTON and slot.radio_button_state is not None:
                             #special handling for Radio Button function
                             slot.item.set_item_state(slot.radio_button_state)
+                            return self
                         else:
                             if slot.item.toggle_item_state(slot.options):
                                 self.log.info("Toggle event '%s' for slot '%s'", params[1], slot.name)
@@ -191,6 +192,7 @@ class NSPanelCardWithSlots(NSPanelCardWithNav):
                         self.popup = NSPanelCard.factory(slot.popup_on_buttonpress, slot)
                         panel.send_panel_cmd(self.popup.create_popup_cmd_payload(panel.compatibility_mode))
                         panel.send_panel_cmd(self.popup.create_update_payload(panel.compatibility_mode))
+                        return None
                 if slot.slot_class == "navigate":
                     self.log.debug("Navigate event '%s' for slot '%s'", params[1], slot.name)
                     card=NSPanelCard.card_by_path(slot.nav_to, panel)
@@ -213,7 +215,7 @@ class NSPanelCardWithSlots(NSPanelCardWithNav):
                     if slot.player_event(params[1:]):
                         self.log.debug("Player event '%s' for slot '%s processed'", params, slot.name)
                         return self
-            self.log.warning("Event not processed for '%s'", slot_name)
 
+        self.log.warning("Event not processed for '%s' with params '%s'.", slot_name, params)
         return super().event_button_press( params, panel )
 

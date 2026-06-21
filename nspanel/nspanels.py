@@ -389,6 +389,7 @@ class NSPanel(): #pylint: disable=too-many-instance-attributes, too-many-public-
         #event,buttonPress2,popupNotify,notifyAction,yes
         #"event,buttonPress2,slot_0,volumeSlider,28"}
         #event,buttonPress2,CardThermo,tempUpd,55
+
         if RESULT_CUSTOM_RECV in js_payload: #pylint: disable=too-many-nested-blocks
             #seams to be a relavalnt message
             self.log.debug("Message received from Panel: %s topic: %s", js_payload[RESULT_CUSTOM_RECV], my_config["topic"])
@@ -443,7 +444,7 @@ class NSPanel(): #pylint: disable=too-many-instance-attributes, too-many-public-
                         self.log.debug("Screensaver card event: %s.", params[4])
                         return
                     #check for popup card leave event
-                    if len(params) >= 4 and params[2] in ['popupLight','popupShutter','popupInSel','popupThermo'] and params[3] == 'bExit':
+                    if len(params) >= 4 and params[2] in ['popupLight','popupShutter','popupInSel','popupThermo','popupTimer'] and params[3] == 'bExit':
                         self.log.debug("Leave popup card '%s.", params[2])
                         self.navigate( self.current_card )
                         return
@@ -744,6 +745,7 @@ class NSPanel(): #pylint: disable=too-many-instance-attributes, too-many-public-
         """
         #clean up existing cards
         NSPanelCard.cards_by_group = {}
+        NSPanelCard.time_tick_callbacks =[]
         cls.LOG.debug("Load cards from path '%s'", path )
         for root, dirs, files in os.walk(path):
             for filename in files:

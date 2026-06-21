@@ -33,5 +33,10 @@
     },
     "cardThermo2": {
         "humidity_unit": "%"
+    },
+    "popupTimer" : {
+        "b1": "Start",
+        "b2": "Stop",
+        "b3": "Reset"
     }
 }

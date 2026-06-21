@@ -82,7 +82,7 @@ def key(section, entry):
     if section in TRANSLATE_DB and entry in TRANSLATE_DB[section]:
         return TRANSLATE_DB[section][entry]
     #can not translate
-    LOGGER.debug( "Can not translate %s in section %s", entry, section)
+    LOGGER.debug( "Can not translate '%s' in section '%s'", entry, section)
     return entry
 
 def set_language_file(path):
@@ -99,7 +99,7 @@ def get_translator_db():
     """
     return TRANSLATE_DB
 
-def set_transloator_db( db ):
+def set_translator_db( db ):
     """
     sets the translator database
     """
