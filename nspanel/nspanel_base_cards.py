@@ -45,6 +45,7 @@ class NSPanelCard():
 
     #CARD TYPE constants
     CARD_ENTITIES="cardEntities"
+    CARD_SCHEDULE="cardSchedule"
     CARD_THERMO="cardThermo"
     CARD_THERMO2="cardThermo2"
     CARD_MEDIA="cardMedia"
@@ -72,10 +73,6 @@ class NSPanelCard():
     CARD_DEFAULT_STATUS="_default_status_"
     FONT_SIZES = ["0","1","2","3","4","5"]
 
-    NAV_CARDS="navCards"
-    OTHER_CARDS="otherCards"
-    SCREENSAVER="scrennsaver"
-
     #special card groups
     CARDS_HOME = "home"
     STATUS_CARD_GROUP = "_status_cards_"
@@ -86,7 +83,7 @@ class NSPanelCard():
     COMPATIBILITY_MODE_FORK1 = C_MODE_FORK1
     #card categories
     NAV_CARDS="navCards"
-    OTHER_CARDS="otherCards"
+    POPUP_CARDS="popupCards"
     SCREENSAVER="scrennsaver"
 
     compatible_cards = {
@@ -94,14 +91,18 @@ class NSPanelCard():
                                                   CARD_QR,CARD_QR_WIFI,CARD_POWER,CARD_MEDIA,
                                                   CARD_GRID,CARD_GRID2,CARD_CHARD ],
                                       SCREENSAVER: [CARD_SCREENSAVER,CARD_SCREENSAVER2],
-                                      OTHER_CARDS: [CARD_POPUP_NOTIFY,CARD_DEFAULT_STATUS]
+                                      POPUP_CARDS: [CARD_POPUP_NOTIFY,CARD_POPUP_LIGHT,
+                                                    CARD_POPUP_INPUT_SEL,CARD_POPUP_SHUTTER,CARD_POPUP_THERMO
+                                                    ]
         },
         COMPATIBILITY_MODE_FORK1: { NAV_CARDS: [CARD_ENTITIES,CARD_THERMO,CARD_MEDIA,CARD_ALARM,
                                                   CARD_QR,CARD_QR_WIFI,CARD_POWER,CARD_MEDIA,
                                                   CARD_GRID,CARD_GRID2,CARD_GRID3, CARD_CHARD,
-                                                   CARD_THERMO2 ],
+                                                   CARD_THERMO2,CARD_SCHEDULE ],
                                       SCREENSAVER: [CARD_SCREENSAVER,CARD_SCREENSAVER2,CARD_SCREENSAVER3],
-                                      OTHER_CARDS: [CARD_POPUP_NOTIFY,CARD_DEFAULT_STATUS]
+                                      POPUP_CARDS: [CARD_POPUP_NOTIFY,CARD_POPUP_LIGHT,
+                                                    CARD_POPUP_INPUT_SEL,CARD_POPUP_SHUTTER,CARD_POPUP_THERMO,
+                                                    CARD_POPUP_TIMER ]
         }
     }
 

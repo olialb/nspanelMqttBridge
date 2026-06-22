@@ -1135,6 +1135,7 @@ class NsPanelCardSlotOhItemPopupTimer( NsPanelCardSlotOhItemButton ):
         super().__init__(json_data, slot_index, card)
         self.popup_on_buttonpress = NSPanelCard.CARD_POPUP_TIMER
         self.editable = skin.key(NSPanelCard.CARD_POPUP_TIMER, "editable")
+        self.timer_controls = skin.key(NSPanelCard.CARD_POPUP_TIMER, "controls")
         self.state_item = None
         if "stateItem" in self.json_data:
             self.state_item = self.OH.item_factory(json_data["stateItem"], self.state_item_update)
@@ -1144,6 +1145,9 @@ class NsPanelCardSlotOhItemPopupTimer( NsPanelCardSlotOhItemButton ):
             self.icon_color = interpret_options(skin.key( NSPanelCard.CARD_POPUP_TIMER, "iconColor" ))
         if "editable" in self.json_data:
             self.editable = self.json_data["editable"]
+        if "timerControls" in self.json_data:
+            self.timer_controls = self.json_data["timerControls"]
+
         #timer related attributes
         self.timer_value = 10*60 #default is 10min
         self.timer_state = self.STOPPED
@@ -1203,24 +1207,32 @@ class NsPanelCardSlotOhItemPopupTimer( NsPanelCardSlotOhItemButton ):
         """
         Create popupThermo card payload
         """
-        #Fromat:
-        #entityUpdateDetail~{entity_id}~{icon_id}~{icon_color}~{heading}~{slotID}~{mode}~mode1~mode1?mode2?mode3~{heading}~{slotID}~{mode}~mode1~mode1?mode2?mode3~{heading}~{slotID}~{mode}~mode1~mode1?mode2?mode3~
-        #Error in documentation of lovelace ui! There is one additonal parameter after each heading with the slot id!
-
-        headline=""
-        payload = "~"+self.name +"~" + headline + "~" + self.get_icon_color()+"~"+self.name
+        headline="" #headline is unused here
+        payload = "~"+self.name +"~" + headline + "~" + self.get_icon_color()+"~"+self.name #second entity name is used bay HMI!
 
         r_min = int(self.timer_value/60)
         r_sec = self.timer_value-r_min*60
         editable = "0"
         if self.editable is True and self.timer_state != self.RUNNING:
             editable = "1"
-        b1 = translate.key(NSPanelCard.CARD_POPUP_TIMER, "b1")
-        b2 = translate.key(NSPanelCard.CARD_POPUP_TIMER, "b2")
-        b3 = translate.key(NSPanelCard.CARD_POPUP_TIMER, "b3")
+        b1 = ""
+        b2 = ""
+        b3 = ""
+        if isinstance(self.timer_controls, str):
+            button_controls = self.timer_controls.split('|')
+            if len(button_controls) > 0 and button_controls[0].lower() == "enable":
+                b1 = "b1"
+            if len(button_controls) > 1 and button_controls[1].lower() == "enable":
+                b2 = "b2"
+            if len(button_controls) > 2 and button_controls[2].lower() == "enable":
+                b3 = "b3"
 
-        #there are 3 entries for input_sel items in the popup card
-        payload += "~"+str(r_min)+"~"+str(r_sec)+"~"+editable+"~b1~b2~b3~"+b1+"~"+b2+"~"+b3
+        b1_label = translate.key(NSPanelCard.CARD_POPUP_TIMER, "b1")
+        b2_label = translate.key(NSPanelCard.CARD_POPUP_TIMER, "b2")
+        b3_label = translate.key(NSPanelCard.CARD_POPUP_TIMER, "b3")
+
+        #create remaining payload
+        payload += "~"+str(r_min)+"~"+str(r_sec)+"~"+editable+"~"+b1+"~"+b2+"~"+b3+"~"+b1_label+"~"+b2_label+"~"+b3_label
         return payload
 
 NSPanelCardSlot.all_slot_classes["ohItem"][NSPanelCard.CARD_POPUP_TIMER] = NsPanelCardSlotOhItemPopupTimer

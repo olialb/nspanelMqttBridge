@@ -122,6 +122,16 @@ class NSPanelCardEntities(NSPanelCardWithSlots):
 #add this card class type to the factory
 NSPanelCard.card_types[NSPanelCardEntities.MY_TYPE] = NSPanelCardEntities
 
+class NSPanelCardEntities2(NSPanelCardWithSlots):
+    """
+    Represent an card of type CardSchedule in lovelace ui for NSPanels.
+    Similar to cardEnitities onyl with more 2 more slots.
+    """
+    MY_TYPE = NSPanelCard.CARD_SCHEDULE
+
+#add this card class type to the factory
+#NSPanelCard.card_types["cardEntities2"] = NSPanelCardEntities2
+
 class NSPanelCardGrid(NSPanelCardWithSlots):
     """
     Represent an card of type CardGrid in lovelace ui for NSPanels

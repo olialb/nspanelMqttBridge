@@ -354,7 +354,8 @@ class NSPanel(): #pylint: disable=too-many-instance-attributes, too-many-public-
             self.log.error("No valid HMI version '%s'", hmi_version)
             return
 
-        if panel_himi_version >= 60:
+        if panel_himi_version >= 60 and panel_version.lower() == 'eu':
+            #this forks only improves the EU version of the panel
             self.log.info("HMI version '%s' seams to be from ioBroker.nspanel-lovelace-ui fork. Set compatibility mode to this fork.", hmi_version)
             self.compatibility_mode = NSPanelCard.COMPATIBILITY_MODE_FORK1
         else:
@@ -444,7 +445,7 @@ class NSPanel(): #pylint: disable=too-many-instance-attributes, too-many-public-
                         self.log.debug("Screensaver card event: %s.", params[4])
                         return
                     #check for popup card leave event
-                    if len(params) >= 4 and params[2] in ['popupLight','popupShutter','popupInSel','popupThermo','popupTimer'] and params[3] == 'bExit':
+                    if len(params) >= 4 and params[2] in NSPanelCard.compatible_cards[self.compatibility_mode][NSPanelCard.POPUP_CARDS] and params[3] == 'bExit':
                         self.log.debug("Leave popup card '%s.", params[2])
                         self.navigate( self.current_card )
                         return

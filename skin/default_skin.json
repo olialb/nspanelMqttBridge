@@ -87,7 +87,8 @@
         "fontSize" : 1,
         "icon" : "icon=timer-outline",
         "iconColor" : "blue",
-        "editable": true
+        "editable": true,
+        "controls": "enable|enable|enable"
     },
     "cardThermo2" : {
         "iconSize": 0,

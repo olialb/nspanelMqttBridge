@@ -183,15 +183,18 @@ class NSPanelCardWithSlots(NSPanelCardWithNav):
                             #special handling for Radio Button function
                             slot.item.set_item_state(slot.radio_button_state)
                             return self
-                        else:
-                            if slot.item.toggle_item_state(slot.options):
-                                self.log.info("Toggle event '%s' for slot '%s'", params[1], slot.name)
-                                return self
+                        if slot.item.toggle_item_state(slot.options):
+                            self.log.info("Toggle event '%s' for slot '%s'", params[1], slot.name)
+                            return self
                     else:
                         #open a popup directly on button press
-                        self.popup = NSPanelCard.factory(slot.popup_on_buttonpress, slot)
-                        panel.send_panel_cmd(self.popup.create_popup_cmd_payload(panel.compatibility_mode))
-                        panel.send_panel_cmd(self.popup.create_update_payload(panel.compatibility_mode))
+                        if slot.popup_on_buttonpress in NSPanelCard.compatible_cards[panel.compatibility_mode][NSPanelCard.POPUP_CARDS]:
+                            self.popup = NSPanelCard.factory(slot.popup_on_buttonpress, slot)
+                            panel.send_panel_cmd(self.popup.create_popup_cmd_payload(panel.compatibility_mode))
+                            panel.send_panel_cmd(self.popup.create_update_payload(panel.compatibility_mode))
+                        else:
+                            self.log.warning("Popup not compatible or does not exist: '%s'", slot.popup_on_buttonpress)
+                            self.popup = None
                         return None
                 if slot.slot_class == "navigate":
                     self.log.debug("Navigate event '%s' for slot '%s'", params[1], slot.name)

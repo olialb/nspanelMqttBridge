@@ -39,5 +39,4 @@ For more details, installation and configuration of the bridge have a look in th
 ![image](doc/ExampleLightPopup2wheel.png)
 ![image](doc/ExampleScreensaver3Mini.png)
 ![image](doc/ExampleCardThermo2Mini.png)
-
-
+![image](doc/ExamplePopupTimerSetMini.png)
