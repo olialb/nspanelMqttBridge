@@ -31,8 +31,8 @@ from skin import skin
 #
 # global constants
 #
-C_MODE_DEFAULT = "default"
-C_MODE_FORK1 = "ioBroker.nspanel-lovelace-ui"
+C_MODE_DEFAULT = "hmi1"
+C_MODE_FORK1 = "hmi2"
 
 #
 # Class definitions
@@ -69,6 +69,10 @@ class NSPanelCard():
     CARD_POPUP_THERMO = "popupThermo"
     #CARD_POPUP_3_INPUT_SEL = "popup3InSel" #Not supported in UIs
     CARD_POPUP_TIMER = "popupTimer"
+    #opendata cards
+    CARD_DEPARTURES = "cardDepartures"
+
+
 
     CARD_DEFAULT_STATUS="_default_status_"
     FONT_SIZES = ["0","1","2","3","4","5"]
@@ -81,27 +85,29 @@ class NSPanelCard():
     #compatibility modes
     COMPATIBILITY_MODE_DEFAULT = C_MODE_DEFAULT
     COMPATIBILITY_MODE_FORK1 = C_MODE_FORK1
+    COMPATIBILITY_MODES = [COMPATIBILITY_MODE_DEFAULT, COMPATIBILITY_MODE_FORK1]
+
     #card categories
     NAV_CARDS="navCards"
     POPUP_CARDS="popupCards"
-    SCREENSAVER="scrennsaver"
+    SCREENSAVER="screensaver"
 
     compatible_cards = {
         COMPATIBILITY_MODE_DEFAULT: { NAV_CARDS: [CARD_ENTITIES,CARD_THERMO,CARD_MEDIA,CARD_ALARM,
                                                   CARD_QR,CARD_QR_WIFI,CARD_POWER,CARD_MEDIA,
                                                   CARD_GRID,CARD_GRID2,CARD_CHARD ],
                                       SCREENSAVER: [CARD_SCREENSAVER,CARD_SCREENSAVER2],
-                                      POPUP_CARDS: [CARD_POPUP_NOTIFY,CARD_POPUP_LIGHT,
-                                                    CARD_POPUP_INPUT_SEL,CARD_POPUP_SHUTTER,CARD_POPUP_THERMO
+                                      POPUP_CARDS: [CARD_POPUP_LIGHT, CARD_POPUP_INPUT_SEL,
+                                                    CARD_POPUP_SHUTTER,CARD_POPUP_THERMO
                                                     ]
         },
         COMPATIBILITY_MODE_FORK1: { NAV_CARDS: [CARD_ENTITIES,CARD_THERMO,CARD_MEDIA,CARD_ALARM,
                                                   CARD_QR,CARD_QR_WIFI,CARD_POWER,CARD_MEDIA,
                                                   CARD_GRID,CARD_GRID2,CARD_GRID3, CARD_CHARD,
-                                                   CARD_THERMO2,CARD_SCHEDULE ],
+                                                   CARD_THERMO2,CARD_SCHEDULE, CARD_DEPARTURES ],
                                       SCREENSAVER: [CARD_SCREENSAVER,CARD_SCREENSAVER2,CARD_SCREENSAVER3],
-                                      POPUP_CARDS: [CARD_POPUP_NOTIFY,CARD_POPUP_LIGHT,
-                                                    CARD_POPUP_INPUT_SEL,CARD_POPUP_SHUTTER,CARD_POPUP_THERMO,
+                                      POPUP_CARDS: [CARD_POPUP_LIGHT, CARD_POPUP_INPUT_SEL,
+                                                    CARD_POPUP_SHUTTER,CARD_POPUP_THERMO,
                                                     CARD_POPUP_TIMER ]
         }
     }

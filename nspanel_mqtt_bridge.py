@@ -215,7 +215,14 @@ class NspanelMqttBridge(BMC.BaseMqttClient): # pylint: disable=too-many-instance
         #read list of panels
 
         for name, topic in config.items("panels"):
-            panel = NSPanel(self, name, topic )
+            #check for additional parameters in the topic definition
+            params = topic.split(",")
+            compatibility_mode = NSPanelCard.COMPATIBILITY_MODE_DEFAULT
+            if len(params) >= 1:
+                topic = params[0]
+                if len(params) >= 2 and params[1].lower() in NSPanelCard.COMPATIBILITY_MODES:
+                    compatibility_mode = params[1].lower()
+            panel = NSPanel(self, name, topic, compatibility_mode=compatibility_mode)
             self.panels[name] = panel
             # topic configuration
             #configure tasmota result

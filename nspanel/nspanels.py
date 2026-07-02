@@ -31,8 +31,9 @@ import yaml
 # project specific imports:
 from nspanel.nspanel_globals import name_to_16bit_color, int2ordinal
 from nspanel.nspanel_base_cards import NSPanelCard
-from nspanel.nspanel_cards import NSPanelCardScreenSaver
+from nspanel.nspanel_cards import NSPanelCardScreenSaver, NSPanelpopupNotify
 from nspanel.nspanel_card_slots import NsPanelCardSlotOhItem, NSPanelCardSlot
+from nspanel.nspanel_slot_base_card import NSPanelCardWithSlots
 from skin import skin
 from file_logger import file_logger as FLOGGER
 from lang import translate
@@ -85,7 +86,7 @@ class NSPanel(): #pylint: disable=too-many-instance-attributes, too-many-public-
 
     LOG = FLOGGER.create_log_handler("NSPanel")
 
-    def __init__(self, client, name, topic ):
+    def __init__(self, client, name, topic, compatibility_mode=NSPanelCard.COMPATIBILITY_MODE_DEFAULT):
         #nspanel root topic
         self.topic = topic
         #nspanel name
@@ -110,7 +111,7 @@ class NSPanel(): #pylint: disable=too-many-instance-attributes, too-many-public-
         #curently active notification card. 0 for none, 1 for first is active
         self.active_notification = 0
         #compatibility mode for ioBroker.nspanel-lovelace-ui fork
-        self.compatibility_mode = NSPanelCard.COMPATIBILITY_MODE_DEFAULT
+        self.compatibility_mode = compatibility_mode
 
         #logger for this class
         self.log = FLOGGER.create_log_handler(f"NSPanel:{name.upper()}" )
@@ -162,13 +163,16 @@ class NSPanel(): #pylint: disable=too-many-instance-attributes, too-many-public-
         """
         sends an mqtt message
         """
-        result = self.mqtt.client.publish(topic, msg)
-        # result: [0, 1]
-        status = result[0]
-        if status == 0:
-            self.log.debug("Send '%s' to topic %s", msg, topic )
-            return True
-        self.log.error("Failed to send message to topic %s", topic)
+        if self.mqtt.client is not None:
+            result = self.mqtt.client.publish(topic, msg)
+            # result: [0, 1]
+            status = result[0]
+            if status == 0:
+                self.log.debug("Send '%s' to topic %s", msg, topic )
+                return True
+            self.log.error("Failed to send message to topic %s. Status: %d", topic,status)
+            return False
+        self.log.error("Failed to send message to topic %s. MQTT client not available.", topic)
         return False
 
     def set_brightness_mqtt(self, my_config, msg):
@@ -449,7 +453,7 @@ class NSPanel(): #pylint: disable=too-many-instance-attributes, too-many-public-
                         self.log.debug("Leave popup card '%s.", params[2])
                         self.navigate( self.current_card )
                         return
-                    if len(params) >= 4 and params[2] in ['popupNotify']:
+                    if len(params) >= 4 and params[2] in ['popupNotify'] and isinstance(self.current_card, NSPanelpopupNotify):
                         card = self.current_card.event_popup(params[3:], self.active_notification)
                         if card is not None:
                             self.navigate( card )
@@ -634,11 +638,12 @@ class NSPanel(): #pylint: disable=too-many-instance-attributes, too-many-public-
             if self.current_card.popup is not None:
                 self.current_card.popup.disconnect(self)
                 self.current_card.popup = None
-            self.current_card.disconnect(self)
+            if isinstance(self.current_card,NSPanelCardWithSlots):
+                self.current_card.disconnect(self)
 
         self.send_panel_cmd( card.create_cmd_payload() )
-        if not isinstance(card,NSPanelCardScreenSaver):
-            #only for other cards as screnn saver is somthing to do
+        if not isinstance(card,NSPanelCardScreenSaver) and isinstance(card,NSPanelCardWithSlots):
+            #cards with slots and not screensavers need to be connected to openhab to receive events from the slots
             card.connect(self)
 
         #fill card with content
