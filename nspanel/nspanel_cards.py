@@ -122,16 +122,6 @@ class NSPanelCardEntities(NSPanelCardWithSlots):
 #add this card class type to the factory
 NSPanelCard.card_types[NSPanelCardEntities.MY_TYPE] = NSPanelCardEntities
 
-class NSPanelCardEntities2(NSPanelCardWithSlots):
-    """
-    Represent an card of type CardSchedule in lovelace ui for NSPanels.
-    Similar to cardEnitities onyl with more 2 more slots.
-    """
-    MY_TYPE = NSPanelCard.CARD_SCHEDULE
-
-#add this card class type to the factory
-#NSPanelCard.card_types["cardEntities2"] = NSPanelCardEntities2
-
 class NSPanelCardGrid(NSPanelCardWithSlots):
     """
     Represent an card of type CardGrid in lovelace ui for NSPanels
@@ -1222,21 +1212,26 @@ class NSPanelpopupNotify(NSPanelCardWithSlots):
         #check if any notification card is active.
         if params[0] not in ["notifyAction", "bExit"]:
             self.log.warning("Unknown event '%s' for popup notify card.", params[0])
-            return
-        if len(params) > 1 and params[1] in ["yes", "no"]:
+            return None
+        if len(params) > 1 and params[1] in ["yes", "no", "button1", "button2", "button3"]:
             if "slot_2" in self.slots and self.slots["slot_2"] is not None and self.slots["slot_2"].slot_class == "ohItem":
                 #slot 2 must contain a string item
                 slot = self.slots["slot_2"]
-                if params[1] == "yes":
+                if params[1] == "button3":
+                    slot.item.set_item_state(self.b3_text)
+                    self.log.debug("Set item '%s' to '%s' from popup notify card '%s'.", slot.item.name, self.b3_text, self.name)
+                if params[1] == "yes" or params[1] == "button2":
                     slot.item.set_item_state(self.b2_text)
                     self.log.debug("Set item '%s' to '%s' from popup notify card '%s'.", slot.item.name, self.b2_text, self.name)
-                else:
+                if params[1] == "no" or params[1] == "button1":
                     slot.item.set_item_state(self.b1_text)
                     self.log.debug("Set item '%s' to '%s' from popup notify card '%s'.", slot.item.name, self.b1_text, self.name)
             else:
-                if "slot_0" in self.slots and self.slots["slot_0"] is not None and self.slots["slot_0"].slot_class == "ohItem" and params[1] == "yes":
+                if "slot_0" in self.slots and self.slots["slot_0"] is not None and self.slots["slot_0"].slot_class == "ohItem" and params[1] in ["yes", "button2"]:
                     #slot 0 must contain a string item
                     self.slots["slot_0"].item.set_item_state("OFF")
+        else:
+            self.log.error("No action taken for popup notify card '%s'. Params: '%s'", self.name, str(params))
 
         notify_count = 0
         for card in NSPanelCard.cards_by_group[NSPanelCard.NOTIFY_CARD_GROUP].values():
@@ -1245,6 +1240,17 @@ class NSPanelpopupNotify(NSPanelCardWithSlots):
                 if notify_count > active_notification:
                     #navigate to the notification card
                     return card
+        return None
 
 #add this card class type to the factory
 NSPanelCard.card_types[NSPanelpopupNotify.MY_TYPE] = NSPanelpopupNotify
+
+class NSPanelCardEntities2(NSPanelCardWithSlots):
+    """
+    Represent an card of type CardSchedule in lovelace ui for NSPanels.
+    Similar to cardEnitities onyl with more 2 more slots.
+    """
+    MY_TYPE = NSPanelCard.CARD_SCHEDULE
+
+#add this card class type to the factory
+#NSPanelCard.card_types["cardEntities2"] = NSPanelCardEntities2

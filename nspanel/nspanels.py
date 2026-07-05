@@ -667,6 +667,14 @@ class NSPanel(): #pylint: disable=too-many-instance-attributes, too-many-public-
                 return
         self.log.error("Something went wrong in popup select method.")
 
+    def content_update_info(self, card_name):
+        """
+        Can be called by a card if the content of the card is updated
+        """
+        self.log.debug("Content update info for card '%s' received.", card_name)
+        if self.current_card is not None and self.current_card.name == card_name:
+            self.update()
+
     def update(self):
         """
         update current card content
@@ -750,6 +758,10 @@ class NSPanel(): #pylint: disable=too-many-instance-attributes, too-many-public-
         Load all page definitions in the given path
         """
         #clean up existing cards
+        if NSPanelCard.cards_by_group is not None:
+            for group in NSPanelCard.cards_by_group:
+                for card in NSPanelCard.cards_by_group[group].values():
+                    card.destroy()
         NSPanelCard.cards_by_group = {}
         NSPanelCard.time_tick_callbacks =[]
         cls.LOG.debug("Load cards from path '%s'", path )

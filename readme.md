@@ -13,6 +13,7 @@ Note: As an alternative HMI you can also use also the HMI from this [fork ioBrok
 * Dynamic configuration of [nspanel-lovelace-ui](https://github.com/jobr99/nspanel-lovelace-ui) pages over yaml files.
 * Support of multiple panels in different rooms with individual start pages and screensavers.
 * Control the content of your panel with [openHAB](https://www.openhab.org/) rules (switch between cards, show warnings, lock the panel in your absense, set screen and screensaver brightness,...)
+* Show puplic transport departures for all stations in germany based on [opendata-oepnv.de](https://www.opendata-oepnv.de/ht/de/willkommen) with the special card type: *cardDepartures*
 
 **Bonus features:**
 * Translation of the UI elements in your prefered language with the translate.json file.
@@ -40,3 +41,5 @@ For more details, installation and configuration of the bridge have a look in th
 ![image](doc/ExampleScreensaver3Mini.png)
 ![image](doc/ExampleCardThermo2Mini.png)
 ![image](doc/ExamplePopupTimerSetMini.png)
+![image](doc/ExampleCardDepartures2Mini.png)
+

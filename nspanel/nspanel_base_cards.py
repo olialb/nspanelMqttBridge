@@ -175,6 +175,13 @@ class NSPanelCard():
         self.popup = None #point to the popup card if a popup opened
         self.log.debug("Constructed!" )
 
+    def destroy(self):
+        """
+        Destroy all linked objects
+        """
+        #nothing to do for base class
+        self.log.debug("delete called for card '%s'", self.name)
+
     def icon_size_payload(self):
         """
         create payload for icon size. Must be overridden in sub class if icon size is not supported
