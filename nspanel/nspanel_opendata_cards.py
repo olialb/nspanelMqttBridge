@@ -101,7 +101,7 @@ class NSPanelCardOEPNVDepartures(NSPanelCardOEPNVBase):
                     if dep_time_str < now_str:
                         continue
                     if trip.legs[0].transportation.product_id in [-1, None]:
-                        self.log.warning("Trip with unknown product id found for trip %s", trip.legs[0].transportation.name)
+                        self.log.debug("Trip with unknown product id found for trip %s", trip.legs[0].transportation.name)
                         continue
                     schedule[dep_time] = {}
                     schedule[dep_time]["icon"] = skin.key( "opendataProductIcons", str(trip.legs[0].transportation.product_icon_id) )
@@ -152,21 +152,25 @@ class NSPanelCardOEPNVDepartures(NSPanelCardOEPNVBase):
                     self.station = OpendataOEPNVStation( self.openDataServer, self.place, self.station_name)
                     if self.station.location is not None:
                         self.log.debug("Station for place '%s' and station '%s' found!", self.place, self.station_name)
-                        #now find the trips to each destination in the station
-                        destination_list = []
-                        for stop_event in self.station.stop_events:
-                            if stop_event.transportation.destination_name not in destination_list:
-                                destination_list.append(stop_event.transportation.destination_name)
-                                self.trip_requests.append( OpendataOEPNVTrips( self.openDataServer, stop_event.location_id, stop_event.transportation.destination_id) )
-                        #update card contend if card is active
-                        data_created = True
+                        if len(self.station.stop_events) > 0:
+                            #now find the trips to each destination in the station
+                            destination_list = []
+                            for stop_event in self.station.stop_events:
+                                if stop_event.transportation.destination_name not in destination_list:
+                                    destination_list.append(stop_event.transportation.destination_name)
+                                    self.trip_requests.append( OpendataOEPNVTrips( self.openDataServer, stop_event.location_id, stop_event.transportation.destination_id) )
+                            #update card contend if card is active
+                            data_created = True
+                        else:
+                            self.schedule_payload = "~text~slotName~\uF16F~65535~No data for this station~..."
                     else:
                         self.log.error("Station for place '%s' and station '%s' not found!", self.place, self.station_name)
+                        self.schedule_payload = "~text~slotName~\uF16F~65535~No station found~..."
                 if data_created:
                     self.create_schedule_payload()
-                    #inform all panels that the content has been updated
-                    for panel in self.all_panels.values():
-                        panel.content_update_info(self.name)
+                #inform all panels that the content has been updated
+                for panel in self.all_panels.values():
+                    panel.content_update_info(self.name)
                 timer = self.SCHEDULE_UPDATE_INTERVAL
             time.sleep(1)
             timer -= 1
