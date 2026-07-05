@@ -103,6 +103,9 @@ class NSPanelCardOEPNVDepartures(NSPanelCardOEPNVBase):
                     if trip.legs[0].transportation.product_id in [-1, None]:
                         self.log.debug("Trip with unknown product id found for trip %s", trip.legs[0].transportation.name)
                         continue
+                    while dep_time in schedule:
+                        #make dep_time unique
+                        dep_time += datetime.timedelta(milliseconds=1)
                     schedule[dep_time] = {}
                     schedule[dep_time]["icon"] = skin.key( "opendataProductIcons", str(trip.legs[0].transportation.product_icon_id) )
                     schedule[dep_time]["iconColor"] = str(name_to_16bit_color(skin.key( "opendataProductIconColors", str(trip.legs[0].transportation.product_icon_id) )))
