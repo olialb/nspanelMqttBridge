@@ -158,6 +158,7 @@ class NSPanelCardOEPNVDepartures(NSPanelCardOEPNVBase):
                         if len(self.station.stop_events) > 0:
                             #now find the trips to each destination in the station
                             destination_list = []
+                            self.trip_requests = []
                             for stop_event in self.station.stop_events:
                                 if stop_event.transportation.destination_name not in destination_list:
                                     destination_list.append(stop_event.transportation.destination_name)
