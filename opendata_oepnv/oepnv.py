@@ -54,7 +54,7 @@ class OpendataOEPNVObject():
         """
         if attribute in json_data:
             return json_data[attribute]
-        LOG.debug("Attribute '%s' does not exist in json data", attribute)
+        #LOG.debug("Attribute '%s' does not exist in json data", attribute)
         return default
 
     def __init__(self, json_data):

@@ -71,6 +71,7 @@ class NSPanelCard():
     CARD_POPUP_TIMER = "popupTimer"
     #opendata cards
     CARD_DEPARTURES = "cardDepartures"
+    CARD_DEPARTURES2 = "cardDepartures2"
 
 
 
@@ -95,7 +96,7 @@ class NSPanelCard():
     compatible_cards = {
         COMPATIBILITY_MODE_DEFAULT: { NAV_CARDS: [CARD_ENTITIES,CARD_THERMO,CARD_MEDIA,CARD_ALARM,
                                                   CARD_QR,CARD_QR_WIFI,CARD_POWER,CARD_MEDIA,
-                                                  CARD_GRID,CARD_GRID2,CARD_CHARD ],
+                                                  CARD_GRID,CARD_GRID2,CARD_CHARD, CARD_DEPARTURES2 ],
                                       SCREENSAVER: [CARD_SCREENSAVER,CARD_SCREENSAVER2],
                                       POPUP_CARDS: [CARD_POPUP_LIGHT, CARD_POPUP_INPUT_SEL,
                                                     CARD_POPUP_SHUTTER,CARD_POPUP_THERMO
@@ -104,7 +105,7 @@ class NSPanelCard():
         COMPATIBILITY_MODE_FORK1: { NAV_CARDS: [CARD_ENTITIES,CARD_THERMO,CARD_MEDIA,CARD_ALARM,
                                                   CARD_QR,CARD_QR_WIFI,CARD_POWER,CARD_MEDIA,
                                                   CARD_GRID,CARD_GRID2,CARD_GRID3, CARD_CHARD,
-                                                   CARD_THERMO2,CARD_SCHEDULE, CARD_DEPARTURES ],
+                                                   CARD_THERMO2,CARD_SCHEDULE, CARD_DEPARTURES,CARD_DEPARTURES2 ],
                                       SCREENSAVER: [CARD_SCREENSAVER,CARD_SCREENSAVER2,CARD_SCREENSAVER3],
                                       POPUP_CARDS: [CARD_POPUP_LIGHT, CARD_POPUP_INPUT_SEL,
                                                     CARD_POPUP_SHUTTER,CARD_POPUP_THERMO,

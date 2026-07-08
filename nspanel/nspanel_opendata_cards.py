@@ -34,6 +34,10 @@ from skin import skin
 #
 # global constants
 #
+
+#
+# Class definitions
+#
 class NSPanelCardOEPNVBase(NSPanelCardWithNav):
     """
     Represent an card of type CardSchedule in lovelace ui for NSPanels.
@@ -53,9 +57,6 @@ class NSPanelCardOEPNVBase(NSPanelCardWithNav):
             #No Server object exists. Create an Server object
             NSPanelCardOEPNVBase.openDataServer = OpendataOEPNV()
 
-#
-# Class definitions
-#
 class NSPanelCardOEPNVDepartures(NSPanelCardOEPNVBase):
     """
     Represent an card of type CardSchedule in lovelace ui for NSPanels.
@@ -78,6 +79,7 @@ class NSPanelCardOEPNVDepartures(NSPanelCardOEPNVBase):
         self.thread_semaphore = threading.Semaphore()
         self.payload_semaphore = threading.Semaphore()
         self.schedule_payload = "~text~slotName~\uF16F~65535~Waiting for data~..."
+
 
     def create_slot_payload(self, icon, icon_color, dep_time, product, destination):
         """
@@ -223,4 +225,15 @@ class NSPanelCardOEPNVDepartures(NSPanelCardOEPNVBase):
 
 #add this card class type to the factory
 NSPanelCard.card_types[NSPanelCard.CARD_DEPARTURES] = NSPanelCardOEPNVDepartures
+
+class NSPanelCardOEPNVDepartures2(NSPanelCardOEPNVDepartures):
+    """
+    Represent an card of type CardEntities with a departure Schedule in lovelace ui for NSPanels.
+    It shows the departures of a ÖPNV station
+    """
+    MY_TYPE = NSPanelCard.CARD_ENTITIES
+    MAX_SLOTS = 6
+
+#add this card class type to the factory
+NSPanelCard.card_types[NSPanelCard.CARD_DEPARTURES2] = NSPanelCardOEPNVDepartures2
 
