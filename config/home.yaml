@@ -28,6 +28,10 @@ cards:
         #icon: \uefa2a #blinds-horizontal
         item: Switch_Wintergarten
         #tiltItem: Dimmer_Flurdecke
+  - name: Fahrplan
+    title: HH Finkenwerder
+    type: cardDepartures
+    station: Hamburg,Finkenwerder
   - name: Esszimmer
     title: Esszimmer
     type: cardGrid
@@ -346,6 +350,69 @@ cards:
         item: H_Schlafzimmer_windowOpen
         iconColor: "yellow"
         icon: "\uF1DB"
+  - name: ThermoExt2
+    title: Schafzimmerthermostat
+    type: cardThermo2
+    min: 5.0
+    max: 30.0
+    steps: 0.5
+    details: True
+    slots:
+      - class: ohItem
+        type: number
+        item: H_Schlafzimmer_SetHeatTemp
+      - class: ohItem
+        type: text
+        item: H_Schlafzimmer_Temperatur
+      - class: ohItem
+        type: text
+        item: H_Schlafzimmer_Humid
+      - class: ohItem
+        type: text
+        item: H_Schlafzimmer_RunState
+
+      - class: ohItem
+        type: button
+        item: H_Schlafzimmer_SysMode
+        radioButtonState: "Off"
+        iconColor: default=green,Off=red
+      - class: ohItem
+        type: button
+        item: H_Schlafzimmer_SysMode
+        radioButtonState: "Heat"
+        iconColor: default=grey,Heat=red
+      - class: ohItem
+        type: button
+        item: H_Schlafzimmer_SysMode
+        radioButtonState: "Cool"
+        iconColor: default=grey,Cool=blue
+      - class: ohItem
+        type: button
+        item: H_Schlafzimmer_SysMode
+        radioButtonState: "Auto"
+        iconColor: default=grey,Auto=white
+
+      - class: ohItem
+        type: switch
+        item: H_Schlafzimmer_Lock
+        iconColor: ON=red,OFF=green
+        icon: ON=lock,OFF=lock-open-variant
+      - class: ohItem
+        type: switch
+        item: H_Schlafzimmer_boost
+        iconColor: ON="red",OFF=grey
+        icon: "\uFA44"
+      - class: ohItem
+        type: switch
+        item: H_Schlafzimmer_windowOpen
+        iconColor: ON=blue,OFF=grey
+        icon: ON=window-open-variant,OFF=window-closed-variant
+      - class:
+
+      - class: ohItem
+        type: input_sel
+        item: H_Schlafzimmer_OpMode
+        icon: dots-vertical-circle-outline
   - name: MyPowerChart
     title: Power consumption
     type: cardChart
@@ -410,5 +477,5 @@ cards:
         icon: Off=repeat-off,One=repeat-once,All=repeat
         iconColor: blue
         item: YamahaRepeat
-      
-    
+
+
