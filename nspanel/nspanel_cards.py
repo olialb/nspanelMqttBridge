@@ -1476,6 +1476,7 @@ class NSPanelCardSupervision(NSPanelCardWithNav): #pylint: disable=too-many-inst
         sets the result item if defined
         """
         if self.result_item is not None:
+            self.result_item.update_item()
             if self.result_item.type == "Switch":
                 if result_count > 0:
                     self.result_item.set_item_state( "ON" )
