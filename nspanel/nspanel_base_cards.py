@@ -67,6 +67,8 @@ class NSPanelCard():
     CARD_POPUP_INPUT_SEL = "popupInSel"
     CARD_POPUP_SHUTTER = "popupShutter"
     CARD_POPUP_THERMO = "popupThermo"
+    CARD_SUPERVISION = "cardSupervision"
+    CARD_SUPERVISION2 = "cardSupervision2"
     #CARD_POPUP_3_INPUT_SEL = "popup3InSel" #Not supported in UIs
     CARD_POPUP_TIMER = "popupTimer"
     #opendata cards
@@ -96,7 +98,8 @@ class NSPanelCard():
     compatible_cards = {
         COMPATIBILITY_MODE_DEFAULT: { NAV_CARDS: [CARD_ENTITIES,CARD_THERMO,CARD_MEDIA,CARD_ALARM,
                                                   CARD_QR,CARD_QR_WIFI,CARD_POWER,CARD_MEDIA,
-                                                  CARD_GRID,CARD_GRID2,CARD_CHARD, CARD_DEPARTURES2 ],
+                                                  CARD_GRID,CARD_GRID2,CARD_CHARD, CARD_DEPARTURES2,
+                                                   CARD_SUPERVISION ],
                                       SCREENSAVER: [CARD_SCREENSAVER,CARD_SCREENSAVER2],
                                       POPUP_CARDS: [CARD_POPUP_LIGHT, CARD_POPUP_INPUT_SEL,
                                                     CARD_POPUP_SHUTTER,CARD_POPUP_THERMO
@@ -105,7 +108,8 @@ class NSPanelCard():
         COMPATIBILITY_MODE_FORK1: { NAV_CARDS: [CARD_ENTITIES,CARD_THERMO,CARD_MEDIA,CARD_ALARM,
                                                   CARD_QR,CARD_QR_WIFI,CARD_POWER,CARD_MEDIA,
                                                   CARD_GRID,CARD_GRID2,CARD_GRID3, CARD_CHARD,
-                                                   CARD_THERMO2,CARD_SCHEDULE, CARD_DEPARTURES,CARD_DEPARTURES2 ],
+                                                   CARD_THERMO2,CARD_SCHEDULE, CARD_DEPARTURES,
+                                                   CARD_DEPARTURES2, CARD_SUPERVISION, CARD_SUPERVISION2 ],
                                       SCREENSAVER: [CARD_SCREENSAVER,CARD_SCREENSAVER2,CARD_SCREENSAVER3],
                                       POPUP_CARDS: [CARD_POPUP_LIGHT, CARD_POPUP_INPUT_SEL,
                                                     CARD_POPUP_SHUTTER,CARD_POPUP_THERMO,
@@ -465,18 +469,15 @@ class NSPanelCardWithNav(NSPanelCard):
         """
         Create nav card payload
         """
-        #check how many cards exist in this card
-        if len(NSPanelCard.cards_by_group[self.group]) > 1:
-            #OK generate left right navigation buttons
-            payload = "entityUpd~"+self.title
-            if self.nav_left == "":
-                payload += "~~~~~~"
-            else:
-                payload += "~button~navigate.prev~"+self.nav_icon_left+"~"+self.nav_color_left+""
-            if self.nav_right == "":
-                return payload + "~~~~~~"
-            return payload+"~~~button~navigate.next~"+self.nav_icon_right+"~"+self.nav_color_right+"~~"
-        return "entityUpd~"+self.title+"~~~~~~~~~~~~"
+        #OK generate left right navigation buttons
+        payload = "entityUpd~"+self.title
+        if self.nav_left == "":
+            payload += "~~~~~~"
+        else:
+            payload += "~button~navigate.prev~"+self.nav_icon_left+"~"+self.nav_color_left+""
+        if self.nav_right == "":
+            return payload + "~~~~~~"
+        return payload+"~~~button~navigate.next~"+self.nav_icon_right+"~"+self.nav_color_right+"~~"
 
     def create_cmd_payload(self):
         """

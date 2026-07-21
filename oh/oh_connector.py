@@ -31,7 +31,24 @@ from file_logger import file_logger as FLOGGER
 #
 # globals
 #
+OH = None #global openhab connector
 
+def create_openhab_connector(host, port, timeout, api_key):
+    """
+    creates an openhab connector object globally
+    """
+    global OH #pylint: disable=global-statement
+    if OH is not None:
+        #disconnect existing connection before creating a new one. That listener tHReads are stopped and will be restarted with new connection.
+        OH.disconnect()
+
+    OH = OHItemDB( host, port, timeout, api_key )
+
+def oh():
+    """
+    return the global oh connector
+    """
+    return OH
 
 #rest api session class
 class OHConnection():
@@ -106,6 +123,9 @@ class OHItem: #pylint: disable=too-many-instance-attributes
         self.unit = ""
         self.pattern = None
         self.last_state_change = None
+        self.last_state_update = None
+        self.members_json = []
+        self.members = []
         self.options = {}
 
         self.log.debug("OHItem '%s' constructed!", name)
@@ -192,11 +212,28 @@ class OHItem: #pylint: disable=too-many-instance-attributes
             return False
         return True
 
-    def update_item(self, local_options=None): #pylint: disable=too-many-branches
+    def create_group_member_items(self, update_callback=None):
+        """
+        creates all items objects of a group item
+        """
+        for item_json in self.members_json:
+            if "name" in item_json:
+                item = oh().item_factory( item_json["name"], update_callback )
+                item.update_json(item_json)
+                self.members.append(item)
+        return self.members
+
+    def update_item(self, local_options=None):
         """
         update the item if needed and request update from openhab
         """
         item_json = self.get_item_json()
+        self.update_json( item_json, local_options )
+
+    def update_json(self, item_json, local_options=None): #pylint: disable=too-many-branches
+        """
+        update the item if needed and request update from openhab
+        """
         self.log.debug("New Item state of '%s': %s", self.name, str(item_json))
         if "error" not in item_json:
             #valid item data receiver
@@ -210,8 +247,12 @@ class OHItem: #pylint: disable=too-many-instance-attributes
                 self.label = item_json["label"]
             if "groupType" in item_json and item_json["groupType"] != "":
                 self.group_type = item_json["groupType"]
+            if "members" in item_json:
+                self.members_json = item_json["members"]
             if "lastStateChange" in item_json and item_json["lastStateChange"] is not None:
                 self.last_state_change = datetime.datetime.fromtimestamp(item_json["lastStateChange"]/1e3)
+            if "lastStateUpdate" in item_json and item_json["lastStateUpdate"] is not None:
+                self.last_state_update = datetime.datetime.fromtimestamp(item_json["lastStateUpdate"]/1e3)
             #evaluate options in this item:
             if local_options is not None:
                 self.options = local_options

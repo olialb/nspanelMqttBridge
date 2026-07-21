@@ -54,6 +54,13 @@
     "cardGrid3": {
         "iconSize": 4
     },
+    "cardSupervision": {
+        "iconSize": 0,
+        "icon" : "icon=shield-check",
+        "iconColor": "red",
+        "iconOK": "icon=shield-check-outline",
+        "iconColorOK": "green"
+    },
     "cardQRWifi": {
         "iconSize": 0,
         "icon1": "\uF6C5",

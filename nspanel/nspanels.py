@@ -32,11 +32,12 @@ import yaml
 from nspanel.nspanel_globals import name_to_16bit_color, int2ordinal
 from nspanel.nspanel_base_cards import NSPanelCard
 from nspanel.nspanel_cards import NSPanelCardScreenSaver, NSPanelpopupNotify
-from nspanel.nspanel_card_slots import NsPanelCardSlotOhItem, NSPanelCardSlot
+from nspanel.nspanel_card_slots import NSPanelCardSlot
 from nspanel.nspanel_slot_base_card import NSPanelCardWithSlots
 from skin import skin
 from file_logger import file_logger as FLOGGER
 from lang import translate
+from oh.oh_connector import create_openhab_connector
 
 #
 # global constants
@@ -54,7 +55,7 @@ def nspanel_create_oh_connector(host, port, timeout, api_key):
     create on openhab connector
     """
     NSPanelCard.all_connected_panels = {}
-    NsPanelCardSlotOhItem.create_openhab_connector(host, port, timeout, api_key)
+    create_openhab_connector(host, port, timeout, api_key)
 
 def nspanel_set_language( path ):
     """

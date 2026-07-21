@@ -42,4 +42,4 @@ For more details, installation and configuration of the bridge have a look in th
 ![image](doc/ExampleCardThermo2Mini.png)
 ![image](doc/ExamplePopupTimerSetMini.png)
 ![image](doc/ExampleCardDepartures2Mini.png)
-
+![image](ExampleCardSupervision2Mini.png)

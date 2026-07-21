@@ -22,11 +22,13 @@ This file contain the differnt cards shown in the panel.
 
 #general imports
 import datetime
+import threading
 
 # project specific imports:
 from nspanel.nspanel_globals import name_to_16bit_color, map_state_oh2panel
-from nspanel.nspanel_base_cards import NSPanelCard
+from nspanel.nspanel_base_cards import NSPanelCard, NSPanelCardWithNav
 from nspanel.nspanel_slot_base_card import NSPanelCardWithSlots
+from oh.oh_connector import oh
 from lang import translate
 from skin import skin
 
@@ -1122,7 +1124,7 @@ class NSPanelpopupNotify(NSPanelCardWithSlots):
 
         if "titleColor" in card_yaml and card_yaml["titleColor"] is not None:
             self.heading_color =  str(name_to_16bit_color(card_yaml["titleColor"]))
-        if "textColor" in card_yaml and card_yaml[" textColor"] is not None:
+        if "textColor" in card_yaml and card_yaml["textColor"] is not None:
             self.text_color =  str(name_to_16bit_color(card_yaml[" textColor"]))
         if "b1Color" in card_yaml and card_yaml["b1Color"] is not None:
             self.b1_color =  str(name_to_16bit_color(card_yaml["b1Color"]))
@@ -1245,12 +1247,300 @@ class NSPanelpopupNotify(NSPanelCardWithSlots):
 #add this card class type to the factory
 NSPanelCard.card_types[NSPanelpopupNotify.MY_TYPE] = NSPanelpopupNotify
 
-class NSPanelCardEntities2(NSPanelCardWithSlots):
+class NSPanelCardSupervision(NSPanelCardWithNav): #pylint: disable=too-many-instance-attributes
     """
-    Represent an card of type CardSchedule in lovelace ui for NSPanels.
-    Similar to cardEnitities onyl with more 2 more slots.
+    Card to supervise the items in an openHAB group
+    """
+    MY_TYPE = NSPanelCard.CARD_ENTITIES
+    MAX_SLOTS = 6
+
+    TIMEOUT = "timeout"
+    EQUAL = "=="
+    NOT_EQUAL = "!="
+    BIGGER = ">"
+    SMALLER = "<"
+    BIGGER_OR_EQUAL = ">="
+    SMALLER_OR_EQUAL = "<="
+
+    CYCLIC_REFRESCH = 30
+
+    MODES = [ TIMEOUT,EQUAL,NOT_EQUAL,BIGGER,BIGGER_OR_EQUAL,SMALLER,SMALLER_OR_EQUAL ]
+
+    def __init__(self, name, group=NSPanelCard.CARDS_HOME):
+        """
+        Constructor of a NSPanel card supervision
+        """
+        super().__init__( name, group )
+        self.oh_group = None
+        self.mode = "timeout"
+        self.oh_value_item = None
+        self.result_item = None
+        self.icon = skin.icon(skin.key( NSPanelCard.CARD_SUPERVISION, "icon" ))
+        self.icon_color = str(name_to_16bit_color(skin.key( NSPanelCard.CARD_SUPERVISION, "iconColor")))
+        #item dictionaries
+        self.members_by_name = {}
+        self.values_by_label = {}
+        self.dict_semaphore = threading.Semaphore()
+        self.cyclic_refresh = 0
+        self.payload = None
+        self.compatibility = NSPanelCard.COMPATIBILITY_MODE_DEFAULT
+
+    def load_card_yaml(self, card_yaml):
+        """
+        Loads the panel definition from yaml dictionary
+        """
+        ret = super().load_card_yaml( card_yaml )
+
+        if "ohGroup" in card_yaml and card_yaml["ohGroup"] is not None:
+            self.oh_group = oh().item_factory(card_yaml["ohGroup"], self.group_item_update)
+            self.group_item_update(self.oh_group)
+        if "mode" in card_yaml:
+            if card_yaml["mode"] is not None and card_yaml["mode"] in self.MODES:
+                self.mode = card_yaml["mode"]
+            else:
+                self.log.error( "CardSupervision '%s' mode not suppoted: '%s'", self.name, str(card_yaml["mode"]) )
+                return False
+        if "value" in card_yaml and card_yaml["value"] is not None:
+            self.oh_value_item = oh().item_factory(card_yaml["value"], self.value_item_update)
+            self.value_item_update(self.oh_value_item)
+        if "result" in card_yaml and card_yaml["result"] is not None:
+            self.result_item = oh().item_factory(card_yaml["result"] )
+        if "icon" in card_yaml and card_yaml["icon"] is not None:
+            self.icon = skin.icon(card_yaml["icon"])
+        if "iconColor" in card_yaml and card_yaml["iconColor"] is not None:
+            self.icon_color = str(name_to_16bit_color(card_yaml["iconColor"]))
+
+        if self.mode == self.TIMEOUT:
+            #register time tick call back
+            NSPanelCard.add_time_tick_callback( self.tick )
+        return ret
+
+    def tick(self):
+        """
+        Timeout supervision. method must be called every second
+        """
+        with self.dict_semaphore:
+            for member in self.members_by_name.values():
+                member["timeout"] += 1
+        self.cyclic_refresh += 1
+        if self.cyclic_refresh >= self.CYCLIC_REFRESCH:
+            self.cyclic_refresh = 0
+            #create new payload
+            self.payload = self.prepare_update_payload(self.compatibility)
+            #inform all panels that the content has been updated
+            for panel in self.all_panels.values():
+                panel.content_update_info(self.name)
+
+
+    def group_item_update(self, gitem):
+        """
+        Called when oh group is updated
+        """
+        self.log.debug("Group item updated: '%s'",gitem.name)
+        gitem.update_item()
+        members = gitem.create_group_member_items(self.member_update)
+        members_by_name = {}
+        for member in members:
+            members_by_name[member.name] = {}
+            members_by_name[member.name]["item"] = member
+            if member.name in self.members_by_name:
+                members_by_name[member.name]["timeout"] = self.members_by_name[member.name]["timeout"]
+            else:
+                members_by_name[member.name]["timeout"] = 0
+            if member.last_state_update is not None:
+                now = datetime.datetime.now()
+                total_seconds = int((now-member.last_state_update).total_seconds())
+                members_by_name[member.name]["timeout"] = total_seconds
+        with self.dict_semaphore:
+            self.members_by_name = members_by_name
+        #create new payload
+        self.payload = self.prepare_update_payload(self.compatibility)
+        #inform all panels that the content has been updated
+        for panel in self.all_panels.values():
+            panel.content_update_info(self.name)
+
+    def value_item_update(self, item):
+        """
+        Called when value item is updated
+        """
+        self.log.debug("Value item updated: '%s'",item.name)
+        item.update_item()
+        if item.type == "Group":
+            members = item.create_group_member_items(self.value_update)
+            values_by_label = {}
+            for member in members:
+                values_by_label[member.label.strip()] = member
+            with self.dict_semaphore:
+                self.values_by_label = values_by_label
+        else:
+            self.oh_value_item.update_item()
+        #create new payload
+        self.payload = self.prepare_update_payload(self.compatibility)
+        #inform all panels that the content has been updated
+        for panel in self.all_panels.values():
+            panel.content_update_info(self.name)
+
+    def member_update(self, item):
+        """
+        called when one of the items in the group is updated
+        """
+        self.log.debug("Group '%s 'member updated: '%s'",self.oh_group, item.name)
+        with self.dict_semaphore:
+            if item.name in self.members_by_name:
+                self.members_by_name[item.name]["item"].update_item()
+                self.members_by_name[item.name]["timeout"] = 0
+        #create new payload
+        self.payload = self.prepare_update_payload(self.compatibility)
+        #inform all panels that the content has been updated
+        for panel in self.all_panels.values():
+            panel.content_update_info(self.name)
+
+    def value_update(self, item):
+        """
+        called when value item is updated
+        """
+        self.log.debug("Value '%s 'member updated: '%s'",self.oh_value_item, item.name)
+        with self.dict_semaphore:
+            if self.oh_value_item.type == "Group":
+                if item.label.strip() in self.values_by_label:
+                    self.values_by_label[item.label.strip()].update_item()
+            else:
+                self.oh_value_item.update_item()
+        #create new payload
+        self.payload = self.prepare_update_payload(self.compatibility)
+        #inform all panels that the content has been updated
+        for panel in self.all_panels.values():
+            panel.content_update_info(self.name)
+
+    def create_slot_payload(self, icon, icon_color, value, label ):
+        """
+        create a payload for a single slot
+        """
+        return f"~text~slotName~{icon}~{icon_color}~{value}~{label}"
+
+    def supervise(self, member, value):
+        """
+        supervision check
+        """
+        test = False
+        if self.mode == self.TIMEOUT:
+            if member["timeout"] > value*60:
+                #check again for the latest update
+                member["item"].update_item()
+                if member["item"].last_state_update is not None:
+                    now = datetime.datetime.now()
+                    total_seconds = int((now-member["item"].last_state_update).total_seconds())
+                    self.members_by_name[member["item"].name]["timeout"] = total_seconds
+                if member["timeout"] > value*60:
+                    test = True
+        elif self.mode == self.EQUAL:
+            if member["item"].state == value:
+                test = True
+        elif self.mode == self.BIGGER:
+            if member["item"].state > value:
+                test = True
+        elif self.mode == self.SMALLER:
+            if member["item"].state < value:
+                test = True
+        elif self.mode == self.BIGGER_OR_EQUAL:
+            if member["item"].state >= value:
+                test = True
+        elif self.mode == self.SMALLER_OR_EQUAL:
+            if member["item"].state <= value:
+                test = True
+        return test
+
+    def get_value(self, item):
+        """
+        return compare value for an item
+        """
+        value = None
+        if self.oh_value_item is not None:
+            if self.oh_value_item.type == "Group":
+                if item.label.strip() in self.values_by_label:
+                    value = self.values_by_label[item.label.strip()].state
+                else:
+                    self.log.warning("Can not get value with label '%s' for item '%s'", item.label, item.name)
+                    return None
+            else:
+                value = self.oh_value_item.state
+        #try to male a float value ot of the state for better compare
+        try:
+            value = float(value)
+        except (ValueError, TypeError):
+            self.log.debug("Value is not a float value: '%s'", str(value) )
+        return value
+
+    def set_result(self, result_count):
+        """
+        sets the result item if defined
+        """
+        if self.result_item is not None:
+            if self.result_item.type == "Switch":
+                if result_count > 0:
+                    self.result_item.set_item_state( "ON" )
+                else:
+                    self.result_item.set_item_state( "OFF" )
+            elif self.result_item.type == "Contact":
+                if result_count > 0:
+                    self.result_item.set_item_state( "CLOSED" )
+                else:
+                    self.result_item.set_item_state( "OPEN" )
+            elif self.result_item.type in ["Number", "String"]:
+                self.result_item.set_item_state( str(result_count) )
+            else:
+                self.log.error("Unsupported result item type '%s' of item '%s'",self.result_item.type,self.result_item.name )
+
+    def prepare_update_payload(self, compatibility=NSPanelCard.COMPATIBILITY_MODE_DEFAULT):
+        """
+        Create nav card payload
+        """
+        payload = super().create_update_payload(compatibility)
+        slot_count = self.MAX_SLOTS
+        result_count = 0
+
+        for member in self.members_by_name.values():
+            value = self.get_value(member["item"])
+            if value is None:
+                payload += self.create_slot_payload( self.icon, self.icon_color, member["item"].label, "XXX")
+                slot_count -= 1
+                if slot_count <= 0:
+                    break
+                continue
+
+            if self.supervise(member, value):
+                result_count += 1
+                if slot_count > 0:
+                    payload += self.create_slot_payload( self.icon, self.icon_color, member["item"].label, member["item"].state_formated)
+                    slot_count -= 1
+
+        if slot_count >= self.MAX_SLOTS:
+            #create OK entry because all items are OK
+            payload += self.create_slot_payload(
+                            skin.icon(skin.key( NSPanelCard.CARD_SUPERVISION, "iconOK" )),
+                            str(name_to_16bit_color(skin.key( NSPanelCard.CARD_SUPERVISION, "iconColorOK"))),
+                            "Status", "OK")
+        #set the result item, if defined
+        self.set_result(result_count)
+        return payload
+
+    def create_update_payload(self, compatibility=NSPanelCard.COMPATIBILITY_MODE_DEFAULT):
+        """
+        Create nav card payload
+        """
+        if self.payload is None or self.compatibility != compatibility:
+            self.compatibility = compatibility
+            self.payload = self.prepare_update_payload(compatibility)
+        return self.payload
+
+#add this card class type to the factory
+NSPanelCard.card_types[NSPanelCard.CARD_SUPERVISION] = NSPanelCardSupervision
+
+class NSPanelCardSupervision2(NSPanelCardSupervision):
+    """
+    Card to supervise the items in an openHAB group
     """
     MY_TYPE = NSPanelCard.CARD_SCHEDULE
 
 #add this card class type to the factory
-#NSPanelCard.card_types["cardEntities2"] = NSPanelCardEntities2
+NSPanelCard.card_types[NSPanelCard.CARD_SUPERVISION2] = NSPanelCardSupervision2

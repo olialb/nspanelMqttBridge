@@ -25,7 +25,8 @@ This file contain the differnt base classe for cards shown in the panel.
 # project specific imports:
 from nspanel.nspanel_globals import map_state_pannel2oh
 from nspanel.nspanel_base_cards import NSPanelCardWithNav, NSPanelCard
-from nspanel.nspanel_card_slots import NSPanelCardSlot, NsPanelCardSlotOhItem
+from nspanel.nspanel_card_slots import NSPanelCardSlot
+from oh.oh_connector import oh
 
 #
 # global constants
@@ -95,7 +96,7 @@ class NSPanelCardWithSlots(NSPanelCardWithNav):
             del NSPanelCard.all_connected_panels[nspanel.name]
         if len(NSPanelCard.all_connected_panels) == 0:
             #no panel connected anymore. Stop listner
-            NsPanelCardSlotOhItem.OH.disconnect()
+            oh().disconnect()
 
     def connect(self, nspanel):
         """
@@ -104,7 +105,7 @@ class NSPanelCardWithSlots(NSPanelCardWithNav):
         self.log.debug("Connect nspanel '%s' to card '%s'", nspanel.name, self.name )
         if len(NSPanelCard.all_connected_panels) == 0:
             #start listening on openhab items
-            NsPanelCardSlotOhItem.OH.connect()
+            oh().connect()
         self.connected_panels[nspanel.name] = nspanel
         NSPanelCard.all_connected_panels[nspanel.name] = nspanel
 

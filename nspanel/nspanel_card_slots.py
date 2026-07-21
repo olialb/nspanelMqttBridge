@@ -27,7 +27,7 @@ from datetime import datetime
 # project specific imports:
 from nspanel.nspanel_globals import interpret_options, name_to_16bit_color, map_state_oh2panel
 from nspanel.nspanel_base_cards import NSPanelCard
-from oh.oh_connector import OHItemDB
+from oh.oh_connector import oh
 from file_logger import file_logger as FLOGGER
 from lang import translate
 from skin import skin
@@ -243,29 +243,12 @@ class NsPanelCardSlotOhItem( NSPanelCardSlot ):
     """
     MY_TYPE="NsPanelCardSlotOhItem"
 
-    #openhab connector
-    OH = None
-
-    @classmethod
-    def create_openhab_connector(cls, host, port, timeout, api_key):
-        """
-        creates an openhab connector object globally used in all slots
-        """
-        if cls.OH is not None:
-            cls.log.debug("Openhab connector already exists. New connector will be created.")
-            #disconnect existing connection before creating a new one. That listener tHReads are stopped and will be restarted with new connection.
-            cls.OH.disconnect()
-
-        cls.OH = OHItemDB( host, port, timeout, api_key )
-        if cls.OH is None:
-            cls.log.error("Openhab connection could not be established.")
-
     def __init__(self, json_data, slot_index, card):
         """
         Constructor of a Slot in a NSPanelCard
         """
         super().__init__(json_data, slot_index, card)
-        self.item = self.OH.item_factory(json_data["item"], card.item_update_callback )
+        self.item = oh().item_factory(json_data["item"], card.item_update_callback )
         self.popup_on_buttonpress = None
         if "options" in json_data and json_data["options"] is not None:
             self.options = interpret_options(str(json_data["options"]))
@@ -397,13 +380,13 @@ class NsPanelCardSlotOhItemWeather( NsPanelCardSlotOhItem ):
         Constructor of a Slot with openweathermap items
         """
         super().__init__(json_data, slot_index, card)
-        self.item = self.OH.item_factory(json_data["item"], card.item_update_callback )
+        self.item = oh().item_factory(json_data["item"], card.item_update_callback )
         if "textItem" in json_data and json_data["textItem"] is not None:
-            self.text_item = self.OH.item_factory(str(json_data["textItem"]), card.item_update_callback )
+            self.text_item = oh().item_factory(str(json_data["textItem"]), card.item_update_callback )
         else:
             self.text_item = None
         if "timeItem" in json_data and json_data["timeItem"] is not None:
-            self.time_item = self.OH.item_factory(str(json_data["timeItem"]), card.item_update_callback )
+            self.time_item = oh().item_factory(str(json_data["timeItem"]), card.item_update_callback )
         else:
             self.time_item = None
 
@@ -458,17 +441,17 @@ class NsPanelCardSlotOhItemPlayer( NsPanelCardSlotOhItem ): #pylint: disable=too
         Constructor of a Slot with openweathermap items
         """
         super().__init__(json_data, slot_index, card)
-        #self.item = self.OH.item_factory(json_data["item"], card.item_update_callback )
+        #self.item = oh().item_factory(json_data["item"], card.item_update_callback )
         if "volumeItem" in json_data and json_data["volumeItem"] is not None:
-            self.volume_item = self.OH.item_factory(str(json_data["volumeItem"]), card.item_update_callback )
+            self.volume_item = oh().item_factory(str(json_data["volumeItem"]), card.item_update_callback )
         else:
             self.volume_item = None
         if "line1Item" in json_data and json_data["line1Item"] is not None:
-            self.line1_item = self.OH.item_factory(str(json_data["line1Item"]), card.item_update_callback )
+            self.line1_item = oh().item_factory(str(json_data["line1Item"]), card.item_update_callback )
         else:
             self.line1_item = None
         if "line2Item" in json_data and json_data["line2Item"] is not None:
-            self.line2_item = self.OH.item_factory(str(json_data["line2Item"]), card.item_update_callback )
+            self.line2_item = oh().item_factory(str(json_data["line2Item"]), card.item_update_callback )
         else:
             self.line2_item = None
         if "line1Color" in json_data and json_data["line1Color"] is not None:
@@ -480,7 +463,7 @@ class NsPanelCardSlotOhItemPlayer( NsPanelCardSlotOhItem ): #pylint: disable=too
         else:
             self.line2_color = str(name_to_16bit_color(skin.key(self.MY_TYPE, "line2Color")))
         if "powerItem" in json_data and json_data["powerItem"] is not None:
-            self.power_item = self.OH.item_factory(str(json_data["powerItem"]), card.item_update_callback )
+            self.power_item = oh().item_factory(str(json_data["powerItem"]), card.item_update_callback )
         else:
             self.power_item = None
         if "powerIconColor" in json_data and json_data["powerIconColor"] is not None:
@@ -488,7 +471,7 @@ class NsPanelCardSlotOhItemPlayer( NsPanelCardSlotOhItem ): #pylint: disable=too
         else:
             self.power_icon_color =interpret_options(skin.key(self.MY_TYPE, "powerIconColor"))
         if "shuffleItem" in json_data and json_data["shuffleItem"] is not None:
-            self.shuffle_item = self.OH.item_factory(str(json_data["shuffleItem"]), card.item_update_callback )
+            self.shuffle_item = oh().item_factory(str(json_data["shuffleItem"]), card.item_update_callback )
         else:
             self.shuffle_item = None
         if "shuffleIcon" in json_data and json_data["shuffleIcon"] is not None:
@@ -731,15 +714,15 @@ class NsPanelCardSlotOhItemLight( NsPanelCardSlotOhItemSwitch ):
         self.effect_item = None
 
         if "dimmerItem" in json_data and json_data["dimmerItem"] is not None:
-            self.dimmer_item = self.OH.item_factory(str(json_data["dimmerItem"]), card.item_update_callback)
+            self.dimmer_item = oh().item_factory(str(json_data["dimmerItem"]), card.item_update_callback)
         else:
             self.log.info("Attribute 'dimmerItem' not defined in slot %d of ohItem '%s'. Better use switch instead of light?", self.index, self.card.name)
         if "colorItem" in json_data and json_data["colorItem"] is not None:
-            self.color_item = self.OH.item_factory(str(json_data["colorItem"]), card.item_update_callback)
+            self.color_item = oh().item_factory(str(json_data["colorItem"]), card.item_update_callback)
         if "colTempItem" in json_data and json_data["colTempItem"] is not None:
-            self.col_temp_item = self.OH.item_factory(str(json_data["colTempItem"]), card.item_update_callback)
+            self.col_temp_item = oh().item_factory(str(json_data["colTempItem"]), card.item_update_callback)
         if "effectItem" in json_data and json_data["effectItem"] is not None:
-            self.effect_item = self.OH.item_factory(str(json_data["effectItem"]), card.item_update_callback)
+            self.effect_item = oh().item_factory(str(json_data["effectItem"]), card.item_update_callback)
 
     def create_popup_payload(self, compatibility=NSPanelCard.COMPATIBILITY_MODE_DEFAULT):
         """
@@ -839,7 +822,7 @@ class NsPanelCardSlotOhItemShutter( NsPanelCardSlotOhItem ):
         else:
             self.shutter_controls = "enable|enable|enable"
         if "tiltItem" in json_data and json_data["tiltItem"] is not None:
-            self.tilt_item = self.OH.item_factory(str(json_data["tiltItem"]), card.item_update_callback)
+            self.tilt_item = oh().item_factory(str(json_data["tiltItem"]), card.item_update_callback)
         if "tiltControls" in json_data and json_data["tiltControls"] is not None and len(str(json_data["tiltControls"]).split('|')) == 3:
             self.tilt_controls = str(json_data["tiltControls"])
         else:
@@ -1078,10 +1061,10 @@ NSPanelCardSlot.all_slot_classes["ohItem"][NSPanelCard.CARD_POPUP_INPUT_SEL] = N
 #
 #        self.item2 = None
 #        if "item2" in json_data and json_data["item2"] is not None:
-#            self.item2 = self.OH.item_factory(str(json_data["item2"]), card.item_update_callback)
+#            self.item2 = oh().item_factory(str(json_data["item2"]), card.item_update_callback)
 #        self.item2 = None
 #        if "item3" in json_data and json_data["item3"] is not None:
-#            self.item3 = self.OH.item_factory(str(json_data["item3"]), card.item_update_callback)
+#            self.item3 = oh().item_factory(str(json_data["item3"]), card.item_update_callback)
 #
 #    def create_popup_payload(self, compatibility=NSPanelCard.COMPATIBILITY_MODE_DEFAULT):
 #        """
@@ -1138,7 +1121,7 @@ class NsPanelCardSlotOhItemPopupTimer( NsPanelCardSlotOhItemButton ):
         self.timer_controls = skin.key(NSPanelCard.CARD_POPUP_TIMER, "controls")
         self.state_item = None
         if "stateItem" in self.json_data:
-            self.state_item = self.OH.item_factory(json_data["stateItem"], self.state_item_update)
+            self.state_item = oh().item_factory(json_data["stateItem"], self.state_item_update)
         if "icon" not in self.json_data:
             self.icon = interpret_options(skin.key( NSPanelCard.CARD_POPUP_TIMER, "icon" ))
         if "iconColor" not in self.json_data:
