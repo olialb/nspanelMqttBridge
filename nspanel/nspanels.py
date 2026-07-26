@@ -561,7 +561,7 @@ class NSPanel(): #pylint: disable=too-many-instance-attributes, too-many-public-
             self._cmd_timeout_counter = self._cmd_timeout_counter - self._time_tick
         else:
             if self._cmd_timeout_counter != 0:
-                self.log.warning("Panel command timeout!")
+                self.log.error("Panel command timeout!")
                 self.pop_cmd()
             else:
                 self._cmd_timeout_counter = 0
