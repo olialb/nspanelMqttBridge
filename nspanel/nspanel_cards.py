@@ -1236,12 +1236,13 @@ class NSPanelpopupNotify(NSPanelCardWithSlots):
             self.log.error("No action taken for popup notify card '%s'. Params: '%s'", self.name, str(params))
 
         notify_count = 0
-        for card in NSPanelCard.cards_by_group[NSPanelCard.NOTIFY_CARD_GROUP].values():
-            if card.is_active():
-                notify_count += 1
-                if notify_count > active_notification:
-                    #navigate to the notification card
-                    return card
+        if NSPanelCard.NOTIFY_CARD_GROUP in NSPanelCard.cards_by_group:
+            for card in NSPanelCard.cards_by_group[NSPanelCard.NOTIFY_CARD_GROUP].values():
+                if card.is_active():
+                    notify_count += 1
+                    if notify_count > active_notification:
+                        #navigate to the notification card
+                        return card
         return None
 
 #add this card class type to the factory

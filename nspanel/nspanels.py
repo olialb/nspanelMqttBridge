@@ -434,16 +434,20 @@ class NSPanel(): #pylint: disable=too-many-instance-attributes, too-many-public-
                             #user want to leave the screensaver screen. Navigate to default page
                             self.log.debug("Leave Screensaver card.")
                             #check if any notification card is active.
-                            for card in NSPanelCard.cards_by_group[NSPanelCard.NOTIFY_CARD_GROUP].values():
-                                if card.is_active():
-                                    #navigate to the notification card
-                                    self.navigate(card)
-                                    self.active_notification=1
-                                    return
+                            if NSPanelCard.NOTIFY_CARD_GROUP in NSPanelCard.cards_by_group:
+                                for card in NSPanelCard.cards_by_group[NSPanelCard.NOTIFY_CARD_GROUP].values():
+                                    if card.is_active():
+                                        #navigate to the notification card
+                                        self.navigate(card)
+                                        self.active_notification=1
+                                        return
                             #navigate to home card for this panel in current group
                             card = NSPanelCard.get_card(self.current_group, self.name)
                             if card is None:
                                 card = NSPanelCard.get_first_card(self, self.current_group)
+                                if card is None:
+                                    self.log.warning("No valid card found in configuration!")
+                                    return
                             self.navigate(card)
                             return
                         #do nothing
