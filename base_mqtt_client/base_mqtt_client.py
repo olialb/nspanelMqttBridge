@@ -174,9 +174,14 @@ class BaseMqttClient: #pylint: ...disable=too-many-instance-attributes
         if topic_key is not None:
             # call the configured command
             if "set" in inst.topic_config[topic_key]:
-                inst.topic_config[topic_key]["set"](
-                    inst.topic_config[topic_key], msg.payload.decode()
-                )
+                try:
+                    inst.topic_config[topic_key]["set"](
+                        inst.topic_config[topic_key], msg.payload.decode()
+                    )
+                except Exception as e: #pylint: disable=broad-exception-caught
+                    #fatal error during exection of the message
+                    log = FLOGGER.create_log_handler("MQTTBridge message esception")
+                    log.exception(e)
             else:
                 inst.log.info(
                     "Command for topic without command received from broker %s",
