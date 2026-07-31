@@ -39,8 +39,10 @@ LOGGING_CFG = configparser.ConfigParser()
 LOG_FILE_PATH = "log"
 LOG_FILE_NAME = None
 LOG_FILE_BACKUP =  5
-LOF_FILE_ROTATE = "midnight"
+LOG_FILE_ROTATE = "midnight"
+LOG_FORMAT = "[%(asctime)s] %(levelname)7s %(name)-20s %(message)s"
 
+LOG_FILE_HANDLER = None  # We only need ONE file-handler instance! After creating it once, we set it to ALL the loggers.
 
 # try to open ini file
 try:
@@ -60,19 +62,24 @@ if "path" in LOGGING_CFG["logging"]:
     LOG_FILE_PATH = LOGGING_CFG["logging"]["path"]
 if "file" in LOGGING_CFG["logging"]:
     LOG_FILE_NAME = LOGGING_CFG["logging"]["file"]
+if "format" in LOGGING_CFG["logging"]:
+    LOG_FORMAT = LOGGING_CFG["logging"]["format"]
 if "backup" in LOGGING_CFG["logging"]:
     LOG_FILE_BACKUP = LOGGING_CFG["logging"]["backup"]
 if "rotate" in LOGGING_CFG["logging"]:
-    LOF_FILE_ROTATE =LOGGING_CFG["logging"]["rotate"]
+    LOG_FILE_ROTATE =LOGGING_CFG["logging"]["rotate"]
 
 def create_log_handler(name):
+    global LOG_FILE_HANDLER
     """
     Create a new log handler for the given global log configuration
     """
     logger = logging.getLogger(name)
     logger.setLevel(LOG_LEVEL)
 
-    if LOG_FILE_NAME is not None and LOG_FILE_NAME != "":
+    first_call = False
+
+    if LOG_FILE_HANDLER is None and LOG_FILE_NAME is not None and LOG_FILE_NAME != "":
         #create log file path and file logger
         try:
             os.makedirs(LOG_FILE_PATH)
@@ -84,14 +91,22 @@ def create_log_handler(name):
             logger.error("Can not create Logging directory: ./%s", LOG_FILE_PATH)
 
         # create time rotating logger for log files
-        log_file_handler = logging.handlers.TimedRotatingFileHandler(
+        LOG_FILE_HANDLER = logging.handlers.TimedRotatingFileHandler(
             os.path.join(LOG_FILE_PATH, LOG_FILE_NAME),
-            when=LOF_FILE_ROTATE,
+            when=LOG_FILE_ROTATE,
             backupCount=LOG_FILE_BACKUP
         )
         # Set the formatter for the logging handler
-        log_file_handler.setFormatter(
-            logging.Formatter("%(asctime)s-%(name)s-%(levelname)s-%(message)s")
+        LOG_FILE_HANDLER.setFormatter(
+            logging.Formatter(LOG_FORMAT)
         )
-        logger.addHandler(log_file_handler)
+        first_call = True
+        logger.debug("Created new file handler (%s)", LOG_FILE_HANDLER)
+
+    if LOG_FILE_HANDLER is not None:
+        logger.addHandler(LOG_FILE_HANDLER)
+
+    if first_call:
+        logging.basicConfig(format=LOG_FORMAT, level=LOG_LEVEL)
+
     return logger

@@ -23,8 +23,6 @@ Module implements a base class for MQTT clients based on paho.mqtt
 """
 
 import configparser
-import logging
-import logging.handlers
 import os
 import sys
 import time
@@ -65,7 +63,6 @@ class BaseMqttClient: #pylint: ...disable=too-many-instance-attributes
         self.log = FLOGGER.create_log_handler("MQTTBridge")
         self.log_level = None
         self.log_file_handler = None
-        logging.basicConfig()
 
         # topic configuration
         self.topic_config = {}
