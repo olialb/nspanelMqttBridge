@@ -105,3 +105,11 @@ class CardConfigFileObserver(FileSystemEventHandler):
         if not event.is_directory and event.src_path.endswith(self.ext):
             self.log.debug("Card file modified: %s", event.src_path)
             self.stable_counter = STABLE_TICKS  # Set counter to wait for stable state before resyncing
+
+    def on_moved(self, event):
+        """
+        Triggered when a file is moved or renamed in the monitored directory.
+        """
+        if not event.is_directory:
+            self.log.debug("Card file moved: %s", event.src_path)
+            self.stable_counter = STABLE_TICKS  # Set counter to wait for stable state before resyncing
