@@ -70,7 +70,6 @@ if "rotate" in LOGGING_CFG["logging"]:
     LOG_FILE_ROTATE =LOGGING_CFG["logging"]["rotate"]
 
 def create_log_handler(name):
-    global LOG_FILE_HANDLER
     """
     Create a new log handler for the given global log configuration
     """
@@ -79,6 +78,7 @@ def create_log_handler(name):
 
     first_call = False
 
+    global LOG_FILE_HANDLER #pylint: disable=global-statement
     if LOG_FILE_HANDLER is None and LOG_FILE_NAME is not None and LOG_FILE_NAME != "":
         #create log file path and file logger
         try:
