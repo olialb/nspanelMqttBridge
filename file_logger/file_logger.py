@@ -59,8 +59,8 @@ if LOG_LEVEL.upper() not in ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]:
     raise KeyError(LOG_LEVEL)
 LOG_LEVEL = LOG_LEVEL.upper()
 
-if "console_level" in LOGGING_CFG["logging"]:
-    LOG_LEVEL_CONSOLE = LOGGING_CFG["logging"]["console_level"]
+if "consoleLevel" in LOGGING_CFG["logging"]:
+    LOG_LEVEL_CONSOLE = LOGGING_CFG["logging"]["consoleLevel"]
     if LOG_LEVEL_CONSOLE.upper() not in ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]:
         raise KeyError(LOG_LEVEL_CONSOLE)
     LOG_LEVEL_CONSOLE = LOG_LEVEL_CONSOLE.upper()
