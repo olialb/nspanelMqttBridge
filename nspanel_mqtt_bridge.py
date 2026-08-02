@@ -30,6 +30,7 @@ from xmlrpc import client
 from base_mqtt_client import base_mqtt_client as BMC
 from nspanel.nspanels import NSPanelCard, NSPanel, nspanel_create_oh_connector, nspanel_set_skin, nspanel_set_language
 from nspanel.nspanel_config_observer import CardConfigFileObserver
+from oh.oh_connector import oh
 
 #
 # global constants
@@ -68,7 +69,7 @@ class NspanelMqttBridge(BMC.BaseMqttClient): # pylint: disable=too-many-instance
         self.observe_yaml_files = "enabled"
 
         # Global config:
-        BMC.BaseMqttClient.__init__(self, config_file)
+        super().__init__(config_file)
 
         #give the cards a list of all panels
         NSPanelCard.all_panels = self.panels
@@ -87,6 +88,31 @@ class NspanelMqttBridge(BMC.BaseMqttClient): # pylint: disable=too-many-instance
         self.file_observer = None
         if self.observe_yaml_files == "enabled":
             self.file_observer = CardConfigFileObserver(self.card_files, self.resync_card_yaml_files)
+
+    def run(self):
+        self.connect()
+        #init panels
+        for panel in self.panels.values():
+            panel.restart()
+            panel.init_panel()
+
+        #start file observer for card configuration files
+        if self.file_observer is not None:
+            self.file_observer.start()
+
+        #start mqtt publish loop
+        self.publish_loop()
+        if self.file_observer is not None:
+            self.file_observer.stop()
+
+    def stop(self):
+        if self.file_observer is not None:
+            self.file_observer.stop()
+        if self.client is not None:
+            self.client.loop_stop()
+        _oh = oh()
+        if _oh is not None:
+            _oh.disconnect()
 
     def new_oh_connector(self):
         """
@@ -147,7 +173,7 @@ class NspanelMqttBridge(BMC.BaseMqttClient): # pylint: disable=too-many-instance
         if "apiKey" in config["oh"]:
             self.oh_api_key = config["oh"]["apiKey"]
         if "timeout" in config["oh"]:
-            self.oh_timeout= config["oh"]["timeout"]
+            self.oh_timeout= int(config["oh"]["timeout"])
 
         #create the global openhab connector object
         self.new_oh_connector()
@@ -538,36 +564,21 @@ https://github.com/olialb/nspanelMqttBridge#card-configuration""")
         topic_config["value"] = value
         self.client.publish( topic_config["topic"], value )
 
-def nspanel_bridge():
-    """
-    main function to start the client
-    """
-    mqtt_client = NspanelMqttBridge(CONFIG_FILE)
-    mqtt_client.connect()
-    #init panels
-    for panel in mqtt_client.panels.values():
-        panel.restart()
-        panel.init_panel()
-
-    #start file observer for card configuration files
-    if mqtt_client.file_observer is not None:
-        mqtt_client.file_observer.start()
-
-    #start mqtt publish loop
-    mqtt_client.publish_loop()
-    if mqtt_client.file_observer is not None:
-        mqtt_client.file_observer.stop()
-    return mqtt_client
-
-def signal_term_handler( sig, frame ): # pylint: disable=unused-argument
-    """
-    Call back to handle OS SIGTERM signal to terminate client.
-    """
-    CLIENT.log.warning( "Received SIGTERM. Stop client...") # pylint: disable=possibly-used-before-assignment
-    if CLIENT.file_observer is not None:
-        CLIENT.file_observer.stop()
-    sys.exit(0)
+    def signal_term_handler( self, sig, frame ): # pylint: disable=unused-argument
+        """
+        Call back to handle OS SIGTERM signal to terminate client.
+        """
+        self.log.warning( "Received SIGTERM. Stop client...")
+        self.stop()
+        sys.exit(0)
 
 if __name__ == "__main__":
-    CLIENT = nspanel_bridge()
-    signal.signal(signal.SIGTERM, signal_term_handler )
+    CLIENT = NspanelMqttBridge(CONFIG_FILE)
+    signal.signal(signal.SIGTERM, CLIENT.signal_term_handler)
+    print("Signals initialized.")
+    try:
+        CLIENT.run()
+        print("CLIENT finished properly")
+    except Exception as e:
+        print("CLIENT run crashed!", e)
+    CLIENT.stop()  # either case, we make sure to stop all potentially started threads
