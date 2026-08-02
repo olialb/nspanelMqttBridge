@@ -49,9 +49,14 @@ def key(section, entry=None):
         section = "default"
     if entry in SKIN_DB[section]:
         val = SKIN_DB[section][entry]
-        if isinstance(val,str) and val[:len(ICON_KEY)] == ICON_KEY:
+        if isinstance(val,str) and val.startswith(ICON_KEY):
             return icon((val[len(ICON_KEY):]))
         return val
+    if isinstance(entry,str):
+        if entry.startswith(ICON_KEY):  # 'icon=<name>' :: assume arbitrary named icon
+            return icon((entry[len(ICON_KEY):]))
+        elif len(entry) == 1:  # single character :: assume direct icon-ID
+            return entry
     LOGGER.error( "DB: No entry for section '%s' with entry '%s'.", section, entry)
     return None
 
