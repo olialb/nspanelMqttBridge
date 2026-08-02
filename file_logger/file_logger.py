@@ -40,6 +40,7 @@ LOG_FILE_PATH = "log"
 LOG_FILE_NAME = None
 LOG_FILE_BACKUP =  5
 LOG_FILE_ROTATE = "midnight"
+LOG_LEVEL_CONSOLE = "WARNING"  # this would be default basicConfig() setting
 LOG_FORMAT = "[%(asctime)s] %(levelname)7s %(name)-20s %(message)s"
 
 LOG_FILE_HANDLER = None  # We only need ONE file-handler instance! After creating it once, we set it to ALL the loggers.
@@ -58,6 +59,12 @@ if LOG_LEVEL.upper() not in ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]:
     raise KeyError(LOG_LEVEL)
 LOG_LEVEL = LOG_LEVEL.upper()
 
+if "consoleLevel" in LOGGING_CFG["logging"]:
+    LOG_LEVEL_CONSOLE = LOGGING_CFG["logging"]["consoleLevel"]
+    if LOG_LEVEL_CONSOLE.upper() not in ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]:
+        raise KeyError(LOG_LEVEL_CONSOLE)
+    LOG_LEVEL_CONSOLE = LOG_LEVEL_CONSOLE.upper()
+
 if "path" in LOGGING_CFG["logging"]:
     LOG_FILE_PATH = LOGGING_CFG["logging"]["path"]
 if "file" in LOGGING_CFG["logging"]:
@@ -69,14 +76,16 @@ if "backup" in LOGGING_CFG["logging"]:
 if "rotate" in LOGGING_CFG["logging"]:
     LOG_FILE_ROTATE =LOGGING_CFG["logging"]["rotate"]
 
+logging.basicConfig(format=LOG_FORMAT, level=LOG_LEVEL)
+# after basicConfig, there is a root logger with exactly ONE handler (console output)
+logging.root.handlers[0].setLevel(LOG_LEVEL_CONSOLE)  # allows further reduction of console output
+
 def create_log_handler(name):
     """
     Create a new log handler for the given global log configuration
     """
     logger = logging.getLogger(name)
     logger.setLevel(LOG_LEVEL)
-
-    first_call = False
 
     global LOG_FILE_HANDLER #pylint: disable=global-statement
     if LOG_FILE_HANDLER is None and LOG_FILE_NAME is not None and LOG_FILE_NAME != "":
@@ -100,13 +109,10 @@ def create_log_handler(name):
         LOG_FILE_HANDLER.setFormatter(
             logging.Formatter(LOG_FORMAT)
         )
-        first_call = True
+        LOG_FILE_HANDLER.setLevel(LOG_LEVEL)
         logger.debug("Created new file handler (%s)", LOG_FILE_HANDLER)
 
     if LOG_FILE_HANDLER is not None:
         logger.addHandler(LOG_FILE_HANDLER)
-
-    if first_call:
-        logging.basicConfig(format=LOG_FORMAT, level=LOG_LEVEL)
 
     return logger

@@ -152,6 +152,12 @@ class NSPanelCardWithSlots(NSPanelCardWithNav):
         for panel in self.connected_panels.values():
             panel.update()
 
+    def is_duplicate_button_press( self, slot_name ): #pylint: disable=unused-argument
+        """
+        Check if button press event is a duplicate of previous ones (default:False, this only happens for screensaver status slots)
+        """
+        return False  # default card behavior treats all button press events as unique
+
     def event_button_press( self, params, panel=None ): #pylint: disable=too-many-return-statements, disable=too-many-branches
         """
         process a button press event for this card
@@ -174,7 +180,12 @@ class NSPanelCardWithSlots(NSPanelCardWithNav):
                 if self.popup.event_button_press( slot_name, params[1:] ):
                     return self
                 return None
-            self.log.debug("Process for item '%s' the button press event: %s", slot_name, str(params))
+
+            if self.is_duplicate_button_press(slot_name):
+                self.log.debug("Ignoring duplicate button press for slot '%s' on [card:%s:%s]", slot_name, type(self).__name__, self.name)
+                return self  # consider this event "handled"
+
+            self.log.debug("Process for item '%s' the button press event: %s on [card:%s:%s]", slot_name, str(params), type(self).__name__, self.name)
 
             if params[1] == "button":
                 #button for this item was pressed => toggel the value
@@ -222,4 +233,3 @@ class NSPanelCardWithSlots(NSPanelCardWithNav):
 
         self.log.warning("Event not processed for '%s' with params '%s'.", slot_name, params)
         return super().event_button_press( params, panel )
-
