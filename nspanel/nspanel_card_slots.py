@@ -420,7 +420,8 @@ class NsPanelCardSlotOhItemWeather( NsPanelCardSlotOhItem ):
                 dt = datetime.fromisoformat(self.time_item.state)
                 time_str = dt.strftime(translate.weather_time_templ())
             except ValueError:
-                self.log.error("Could not convert content '%s' in openhab item '%s' to datetime object.", self.time_item.state, self.time_item.name )
+                # not a date, show item state as simple string value
+                time_str = f"{self.time_item.state}"
 
         payload = "~text~"+self.name+"~" + icon + '~' + icon_color + '~' + time_str + '~' + text
         self.log.debug("Weather slot payload created: %s", payload)
