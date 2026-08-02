@@ -398,7 +398,8 @@ class NsPanelCardSlotOhItemWeather( NsPanelCardSlotOhItem ):
         """
         #example :~"+main_icon+"~"+main_icon_color+"~~"+"9:00"
         self.item.update_item()
-        self.time_item.update_item()
+        if self.time_item is not None:
+            self.time_item.update_item()
 
         weather_id = skin.key("openweathermap", self.item.state)
         if weather_id is None:
