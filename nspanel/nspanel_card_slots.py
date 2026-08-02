@@ -285,23 +285,40 @@ class NsPanelCardSlotOhItem( NSPanelCardSlot ):
         """
         returns the best matching icon color for this slot
         """
+        for key, value in self.icon_color.items():
+            if len(key.split("-") ) == 2:
+                #this is a range definition
+                try:
+                    range_start = float(key.split("-")[0])
+                    range_end = float(key.split("-")[1])
+                    state = float(self.item.state)
+                except ValueError:
+                    range_start = key.split("-")[0].upper()
+                    range_end = key.split("-")[1].upper()
+                    state = str(self.item.state).upper()
+                    self.log.debug("State '%s' or start/end value '%s-%s'in iconColor dict for slot '%s' can not be compared as number", state, range_start, range_end, self.name )
+                if state >= range_start and state <= range_end: #pylint: disable=chained-comparison
+                    return str(name_to_16bit_color(value))
+            if str(self.item.state).upper() == key:
+                #state value matches key in dict. Return the corresponding icon color
+                return str(name_to_16bit_color(value))
         if str(self.item.state).upper() in self.icon_color:
             return str(name_to_16bit_color(self.icon_color[str(self.item.state).upper()]))
         #use first entry in dict as color
         return str(name_to_16bit_color(list(self.icon_color.values())[0]))
 
-    def create_payload(self, stateText="empty"):
+    def create_payload(self):
         """
-        create upstate payload for ohitem slot
+        create update payload for ohitem slot
         """
         #take label from openhab item as text if no text available
-        self.item.update_item()
+        #self.item.update_item()
         text = self.text
         if text is None:
             text = self.item.label
         else:
             if text == "=itemState":
-                text = stateText
+                text = translate.key( "openhabStates", self.item.state_formated )
 
         payload = '~' + self.type + "~" + self.name + "~"
         payload = payload + self.get_icon()+self.card.icon_size_payload() + "~" + self.get_icon_color() + "~"
@@ -368,13 +385,13 @@ class NsPanelCardSlotOhItemText( NsPanelCardSlotOhItem ):
     """
     MY_TYPE=NSPanelCardSlot.SLOT_TEXT
 
-    def create_payload(self, stateText="empty"):
+    def create_payload(self):
         """
         create upstate payload for text slot
         """
         #overwrite options in openhab item with locally defined options, if availbale:
         self.item.update_item(self.options)
-        payload = super().create_payload(self.item.state_formated)
+        payload = super().create_payload()
         payload = payload + self.item.state_formated
         self.log.debug("Text payload created: %s", payload)
         return payload
@@ -405,7 +422,7 @@ class NsPanelCardSlotOhItemWeather( NsPanelCardSlotOhItem ):
 
         self.log.debug("NsPanelCardSlotOhItemWaether '%s' constructed!", self.name )
 
-    def create_payload(self, stateText="empty"):
+    def create_payload(self):
         """
         create upstate payload for text slot
         """
@@ -513,7 +530,7 @@ class NsPanelCardSlotOhItemPlayer( NsPanelCardSlotOhItem ): #pylint: disable=too
             #use first entry in dict as color
             return str(name_to_16bit_color(list(self.power_icon_color.values())[0]))
 
-    def create_payload(self, stateText="empty"):
+    def create_payload(self):
         """
         create upstate payload for text slot
         """
@@ -557,7 +574,7 @@ class NsPanelCardSlotOhItemPlayer( NsPanelCardSlotOhItem ): #pylint: disable=too
             return payload
         else:
             #create a standard payload for other slots
-            return super().create_payload(stateText)
+            return super().create_payload()
 
     def player_event(self, params): #pylint: disable=too-many-return-statements
         """
@@ -604,17 +621,14 @@ class NsPanelCardSlotOhItemSwitch( NsPanelCardSlotOhItem ):
     """
     MY_TYPE=NSPanelCardSlot.SLOT_SWITCH
 
-    def create_payload(self, stateText="empty"):
+    def create_payload(self):
         """
         create update payload for switch slot
         """
         #overwrite options in openhab item with locally defined options, if availbale:
-        self.get_icon_color()
+        self.item.update_item(self.options)
         state = map_state_oh2panel("switch", self.item.state)
-        payload = super().create_payload(translate.key( "openhabStates", self.item.state_formated ))
-
-        #create payload with new state now
-        payload = payload + state
+        payload = super().create_payload()+state
         self.log.debug("Switch payload created. State=%s: %s", state, payload)
         return payload
 
@@ -640,17 +654,16 @@ class NsPanelCardSlotOhItemButton( NsPanelCardSlotOhItem ):
 
         self.log.debug("NsPanelCardSlotOhItemButton '%s' constructed!", self.name )
 
-    def create_payload(self, stateText="empty"):
+    def create_payload(self):
         """
-        create updtate payload for button slot
+        create update payload for button slot
         """
         #example: button~button.entityName~3~17299~bt-name~bt-text
         #overwrite options in openhab item with locally defined options, if availbale:
         self.item.update_item(self.options)
         #take the plain state data from openhab as button state text but check if it acn be translated in other language!
         state = translate.key( "openhabStates", self.item.state_formated )
-        payload = super().create_payload(state)
-        payload = payload + state
+        payload = super().create_payload()+state
         self.log.debug("Number payload created: %s", payload)
         return payload
 
@@ -686,13 +699,13 @@ class NsPanelCardSlotOhItemNumber( NsPanelCardSlotOhItem ):
             self.log.debug("Attribute max not defined in slot %d of ohItem '%s'. Value '%s' will be used.", self.index, self.card.name, self.DEFAULT_MAX)
         self.log.debug("Constructed!" )
 
-    def create_payload(self, stateText="empty"):
+    def create_payload(self):
         """
-        create upstate payload for number slot
+        create update payload for number slot
         """
         #overwrite options in openhab item with locally defined options, if availbale:
         self.item.update_item(self.options)
-        payload = super().create_payload(self.item.state_formated)
+        payload = super().create_payload()
         if self.card.MY_TYPE == NSPanelCard.CARD_ENTITIES:
             #for card power the state is only used for the animation. The slider position is defined by the payload values min and max. So we send the current state as text but not as slider position.
             payload = payload + str(self.item.state)+"|" + self.min + "|" + self.max
@@ -846,7 +859,7 @@ class NsPanelCardSlotOhItemShutter( NsPanelCardSlotOhItem ):
             self.invert = False
         self.log.debug("Constructed!")
 
-    def create_payload(self, stateText="empty"):
+    def create_payload(self):
         """
         create update payload for slot with an ohItem
         """
@@ -856,7 +869,7 @@ class NsPanelCardSlotOhItemShutter( NsPanelCardSlotOhItem ):
         icon_down = skin.key( self.MY_TYPE, "shutter_down" )
         icon_stop = skin.key( self.MY_TYPE, "shutter_stop" )
         #example shutter state: "A|B|C|enable|enable|enable"
-        payload = super().create_payload(self.item.state_formated)+icon_up+"|"+icon_stop+"|"+icon_down+"|"+self.shutter_controls
+        payload = super().create_payload()+icon_up+"|"+icon_stop+"|"+icon_down+"|"+self.shutter_controls
         self.log.debug("Shutter payload created: %s", payload)
         return payload
 
@@ -1020,14 +1033,14 @@ class NsPanelCardSlotOhItemInputSel( NsPanelCardSlotOhItem ):
     """
     MY_TYPE=NSPanelCardSlot.SLOT_INPUT_SEL
 
-    def create_payload(self, stateText="empty"):
+    def create_payload(self):
         """
         create update payload for slot with an ohItem
         """
         #overwrite options in openhab item with locally defined options, if availbale:
         self.item.update_item(self.options)
         #create payload with new state now
-        payload = super().create_payload(self.item.state_formated)+self.item.state_formated
+        payload = super().create_payload()+self.item.state_formated
         self.log.debug("InpuSel payload created: %s", payload)
         return payload
 
