@@ -24,6 +24,7 @@ Module implements a MQTT client as bridge to openhab for NsPanels with lovelace 
 import signal
 import sys
 import os
+import traceback
 from xmlrpc import client
 
 # project specific imports:
@@ -580,5 +581,5 @@ if __name__ == "__main__":
         CLIENT.run()
         print("CLIENT finished properly")
     except Exception as e:
-        print("CLIENT run crashed!", e)
+        print("CLIENT run crashed!", traceback.format_exc())
     CLIENT.stop()  # either case, we make sure to stop all potentially started threads

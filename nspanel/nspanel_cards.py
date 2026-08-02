@@ -60,6 +60,8 @@ class NSPanelCardScreenSaver(NSPanelCardWithSlots):
         self.colors = {}
         for color_name in self.COLORS:
             self.colors[color_name] = str(name_to_16bit_color(skin.key("default", color_name)))
+        self.last_pressed_slot = None
+        self.last_pressed_time = None
 
     def load_card_yaml(self, card_yaml):
         """
@@ -92,6 +94,17 @@ class NSPanelCardScreenSaver(NSPanelCardWithSlots):
         Create screensaver payload
         """
         return "weatherUpdate" + self.create_slots_payload()
+
+    def is_duplicate_button_press(self, slot_name ):
+        """
+        Return true if the same slot has been pressed last within less than 2 seconds
+        """
+        lasttime = self.last_pressed_time
+        self.last_pressed_time = datetime.datetime.now()
+        if self.last_pressed_slot == slot_name and lasttime is not None and self.last_pressed_time-lasttime < datetime.timedelta(seconds=2):
+            return True
+        self.last_pressed_slot = slot_name
+        return False
 
 #add this card class type to the factory
 NSPanelCard.card_types[NSPanelCardScreenSaver.MY_TYPE] = NSPanelCardScreenSaver
