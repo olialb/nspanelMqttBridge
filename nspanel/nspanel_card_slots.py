@@ -261,11 +261,25 @@ class NsPanelCardSlotOhItem( NSPanelCardSlot ):
         """
         returns the best matching icon for this slot
         """
-        if str(self.item.state).upper() in self.icon:
-            return skin.icon( self.icon[str(self.item.state).upper()] )
-        else:
-            #use first entry in dict as icon
-            return skin.icon(list(self.icon.values())[0])
+        for key, value in self.icon.items():
+            if len(key.split("-") ) == 2:
+                #this is a range definition
+                try:
+                    range_start = float(key.split("-")[0])
+                    range_end = float(key.split("-")[1])
+                    state = float(self.item.state)
+                except ValueError:
+                    range_start = key.split("-")[0].upper()
+                    range_end = key.split("-")[1].upper()
+                    state = str(self.item.state).upper()
+                    self.log.debug("State '%s' or start/end value '%s-%s'in icon dict for slot '%s' can not be compared as number", state, range_start, range_end, self.name )
+                if state >= range_start and state <= range_end: #pylint: disable=chained-comparison
+                    return skin.icon(value)
+            if str(self.item.state).upper() == key:
+                #state value matches key in dict. Return the corresponding icon
+                return skin.icon( value )
+        #use first entry in dict as icon, because there was no other match
+        return skin.icon(list(self.icon.values())[0])
 
     def get_icon_color(self):
         """
@@ -273,9 +287,8 @@ class NsPanelCardSlotOhItem( NSPanelCardSlot ):
         """
         if str(self.item.state).upper() in self.icon_color:
             return str(name_to_16bit_color(self.icon_color[str(self.item.state).upper()]))
-        else:
-            #use first entry in dict as color
-            return str(name_to_16bit_color(list(self.icon_color.values())[0]))
+        #use first entry in dict as color
+        return str(name_to_16bit_color(list(self.icon_color.values())[0]))
 
     def create_payload(self, stateText="empty"):
         """
