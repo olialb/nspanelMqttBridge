@@ -1426,7 +1426,7 @@ class NSPanelCardSupervision(NSPanelCardWithNav): #pylint: disable=too-many-inst
         for panel in self.all_panels.values():
             panel.content_update_info(self.name)
 
-    def create_slot_payload(self, icon, icon_color, value, label ):
+    def create_slot_payload(self, icon, icon_color, value, label ): # pylint: disable=no-self-use
         """
         create a payload for a single slot
         """

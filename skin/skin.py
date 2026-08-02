@@ -23,7 +23,6 @@ Module implements a simple translator based on json files
 """
 
 import json
-import sys
 
 #project imports
 from file_logger import file_logger as FLOGGER
@@ -55,7 +54,7 @@ def key(section, entry=None):
     if isinstance(entry,str):
         if entry.startswith(ICON_KEY):  # 'icon=<name>' :: assume arbitrary named icon
             return icon((entry[len(ICON_KEY):]))
-        elif len(entry) == 1:  # single character :: assume direct icon-ID
+        if len(entry) == 1:  # single character :: assume direct icon-ID
             return entry
     LOGGER.error( "DB: No entry for section '%s' with entry '%s'.", section, entry)
     return None

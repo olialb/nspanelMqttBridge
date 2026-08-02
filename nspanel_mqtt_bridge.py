@@ -25,7 +25,6 @@ import signal
 import sys
 import os
 import traceback
-from xmlrpc import client
 
 # project specific imports:
 from base_mqtt_client import base_mqtt_client as BMC
@@ -91,6 +90,9 @@ class NspanelMqttBridge(BMC.BaseMqttClient): # pylint: disable=too-many-instance
             self.file_observer = CardConfigFileObserver(self.card_files, self.resync_card_yaml_files)
 
     def run(self):
+        """
+        Start all listening/observing threads and run main application loop
+        """
         self.connect()
         #init panels
         for panel in self.panels.values():
@@ -107,6 +109,9 @@ class NspanelMqttBridge(BMC.BaseMqttClient): # pylint: disable=too-many-instance
             self.file_observer.stop()
 
     def stop(self):
+        """
+        Stop all listening/observing threads to allow graceful shutdown
+        """
         if self.file_observer is not None:
             self.file_observer.stop()
         if self.client is not None:
@@ -580,6 +585,6 @@ if __name__ == "__main__":
     try:
         CLIENT.run()
         print("CLIENT finished properly")
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-except
         print("CLIENT run crashed!", traceback.format_exc())
     CLIENT.stop()  # either case, we make sure to stop all potentially started threads
