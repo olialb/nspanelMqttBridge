@@ -316,7 +316,7 @@ Each .yaml file will be loaded in the overall card data base.
 You can find example yaml files in the ./config directory of the github repository of the bridge.
 https://github.com/olialb/nspanelMqttBridge/tree/main/config
 The how to create your own yaml files is described in the documentation:
-https://github.com/olialb/nspanelMqttBridge#card-configuration""")
+https://github.com/olialb/nspanelMqttBridge/wiki/YamlOverview""")
             except OSError as error:
                 self.log.error("Error creating directory '%s': %s", self.card_files, error)
                 sys.exit()
