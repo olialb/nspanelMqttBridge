@@ -119,6 +119,7 @@ class NSPanelCardOEPNVDepartures(NSPanelCardOEPNVBase):
 
         # create the payload string
         slot_num = 0
+        slot_payload_list = []
         for dep_time in schedule:
             #calculate in how many minutes the departure is
             dep_time_seconds = dep_time.hour * 60 * 60 + dep_time.minute * 60 + dep_time.second
@@ -131,10 +132,14 @@ class NSPanelCardOEPNVDepartures(NSPanelCardOEPNVBase):
             if int(minutes_until_departure) <= 0:
                 #do not show entries with 0 minutes until departure
                 continue
-            payload += self.create_slot_payload( schedule[dep_time]["icon"], schedule[dep_time]["iconColor"], f"{int(minutes_until_departure)} min", schedule[dep_time]["name"], schedule[dep_time]["destination"] )
-            slot_num += 1
-            if slot_num >= self.MAX_SLOTS:
-                break
+            #add only entries to the payload which don't exsist yet (there can be multiple trips with the same departure time)
+            slot_payload = self.create_slot_payload( schedule[dep_time]["icon"], schedule[dep_time]["iconColor"], f"{int(minutes_until_departure)} min", schedule[dep_time]["name"], schedule[dep_time]["destination"] )
+            if slot_payload not in slot_payload_list:
+                slot_payload_list.append(slot_payload)
+                payload += slot_payload
+                slot_num += 1
+                if slot_num >= self.MAX_SLOTS:
+                    break
 
         self.log.debug("Schedule payload created: %s", payload)
         with self.payload_semaphore:
