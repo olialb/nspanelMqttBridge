@@ -40,7 +40,7 @@ CONFIG_FILE = "nspanelMqttBridge.ini"  # name of the ini file
 #
 # define main class
 #
-class NspanelMqttBridge(BMC.BaseMqttClient): # pylint: disable=too-many-instance-attributes
+class NspanelMqttBridge(BMC.BaseMqttClient): # pylint: disable=too-many-instance-attributes, too-many-public-methods
     """
     Main class of MQTT client for Nspanels with lovelace UI
     """
@@ -158,7 +158,7 @@ class NspanelMqttBridge(BMC.BaseMqttClient): # pylint: disable=too-many-instance
             panel.navigate(panel.get_screensaver_card())
 
 
-    def read_client_config(self, config):
+    def read_client_config(self, config): #pylint: disable=too-many-statements
         """
         Reads the configured ini file and sets attributes based on the config
         """

@@ -469,11 +469,6 @@ class NSPanelCardAlarm(NSPanelCardWithSlots):
             slot.item.update_item()
             opt_icon = slot.get_icon()
             opt_icon_color = slot.get_icon_color()
-#            if slot.icon_state_color is not None:
-#                if slot.item.state == "ON":
-#                    opt_icon_color = slot.icon_state_color[0]
-#                else:
-#                    opt_icon_color = slot.icon_state_color[1]
 
         #finally make slot payload ot of it
         payload = "~CardAlarm"
@@ -699,7 +694,7 @@ class NSPanelCardThermo2(NSPanelCardThermo):
     """
     MY_TYPE = NSPanelCard.CARD_THERMO2
 
-    def create_slots_payload(self):
+    def create_slots_payload(self): #pylint: disable=too-many-statements, too-many-branches
         """
         evaluate the thermo slots and create the payload:
         """
@@ -860,7 +855,7 @@ class NSPanelCardChart(NSPanelCardWithSlots):
         self.color = str(name_to_16bit_color(skin.key( self.MY_TYPE, "color")))
         self.life = False
 
-    def load_card_yaml(self, card_yaml):
+    def load_card_yaml(self, card_yaml): #pylint: disable=too-many-branches
         """
         Loads the panel definition from yaml dictionary
         """
@@ -1098,7 +1093,7 @@ class NSPanelCardChart(NSPanelCardWithSlots):
 #add this card class type to the factory
 NSPanelCard.card_types[NSPanelCardChart.MY_TYPE] = NSPanelCardChart
 
-class NSPanelpopupNotify(NSPanelCardWithSlots):
+class NSPanelpopupNotify(NSPanelCardWithSlots): #pylint: disable=too-many-instance-attributes
     """
     Represent an card of type popupNotify in lovelace ui for NSPanels
     """
@@ -1426,13 +1421,13 @@ class NSPanelCardSupervision(NSPanelCardWithNav): #pylint: disable=too-many-inst
         for panel in self.all_panels.values():
             panel.content_update_info(self.name)
 
-    def create_slot_payload(self, icon, icon_color, value, label ): # pylint: disable=no-self-use
+    def create_slot_payload(self, icon, icon_color, value, label ):
         """
         create a payload for a single slot
         """
         return f"~text~slotName~{icon}~{icon_color}~{value}~{label}"
 
-    def supervise(self, member, value):
+    def supervise(self, member, value): #pylint: disable=too-many-branches
         """
         supervision check
         """

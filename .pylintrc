@@ -1,3 +1,5 @@
+[MAIN]
+max-module-lines=1800
 [MESSAGES CONTROL]
 #disable=C0303
 #disable=C0103

@@ -40,7 +40,7 @@ MAX_TRIPS=4
 #global logger
 LOG = FLOGGER.create_log_handler( "OpendataOEPNV:" )
 
-class OpendataOEPNVObject():
+class OpendataOEPNVObject(): #pylint: disable=too-few-public-methods
     """
     Base class for all open data Json objects
     """
@@ -61,7 +61,7 @@ class OpendataOEPNVObject():
         self.id = self.get_json(json_data, "id")
         self.name = self.get_json(json_data, "name")
 
-class OpendataOEPNVPlace(OpendataOEPNVObject):
+class OpendataOEPNVPlace(OpendataOEPNVObject): #pylint: disable=too-few-public-methods
     """
     Represent a Place in the OPNV network
     """
@@ -70,7 +70,7 @@ class OpendataOEPNVPlace(OpendataOEPNVObject):
         self.type = self.get_json(json_data, "type")
 
 
-class OpendataOEPNVLocation(OpendataOEPNVObject):
+class OpendataOEPNVLocation(OpendataOEPNVObject): #pylint: disable=too-few-public-methods
     """
     Represent a location in the OPNV network
     """
@@ -85,7 +85,7 @@ class OpendataOEPNVLocation(OpendataOEPNVObject):
         else:
             self.parent = None
 
-class OpendataOEPNVTransportation(OpendataOEPNVObject):
+class OpendataOEPNVTransportation(OpendataOEPNVObject): #pylint: disable=too-few-public-methods
     """
     Represent a transportation in the OPNV network
     """
@@ -173,7 +173,7 @@ class OpendataOEPNVLeg(OpendataOEPNVObject):
         """
         return self.departure_time_estimated < other.departure_time_estimated
 
-class OpendataOEPNVJourney(OpendataOEPNVObject):
+class OpendataOEPNVJourney(OpendataOEPNVObject): #pylint: disable=too-few-public-methods
     """
     Represent a Journey in the OPNV network
     """
@@ -267,7 +267,7 @@ class OpendataOEPNV():
             LOG.error( "Exception while getting item data: %s", error)
             return json.loads( '{ "error": {"message": "Connection error!"} }' )
 
-class OpendataOEPNVStation():
+class OpendataOEPNVStation(): #pylint: disable=too-few-public-methods
     """
     Represent a station in the OPNV network
     """
@@ -301,7 +301,7 @@ class OpendataOEPNVStation():
         else:
             LOG.error("Could not update departure list")
 
-class OpendataOEPNVTrips():
+class OpendataOEPNVTrips(): #pylint: disable=too-few-public-methods
     """
     Represent a trip in the OPNV network
     """

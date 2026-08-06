@@ -151,7 +151,6 @@ class NSPanelCardSlot(): #pylint: disable=too-many-instance-attributes
         create the payload for the poplight card
         """
         self.log.debug("Create popupLight called and not implemented for slot '%s'. Compatibility=%s", self.name, compatibility)
-        return None
 
     @classmethod
     def factory( cls, json_data, slot_index, card ): #pylint: disable=too-many-return-statements
@@ -468,7 +467,7 @@ class NsPanelCardSlotOhItemPlayer( NsPanelCardSlotOhItem ): #pylint: disable=too
     """
     MY_TYPE=NSPanelCardSlot.SLOT_PLAYER
 
-    def __init__(self, json_data, slot_index, card):
+    def __init__(self, json_data, slot_index, card): #pylint: disable=too-many-branches
         """
         Constructor of a Slot with openweathermap items
         """
@@ -528,9 +527,8 @@ class NsPanelCardSlotOhItemPlayer( NsPanelCardSlotOhItem ): #pylint: disable=too
         """
         if str(self.power_item.state).upper() in self.power_icon_color:
             return str(name_to_16bit_color(self.power_icon_color[str(self.power_item.state).upper()]))
-        else:
-            #use first entry in dict as color
-            return str(name_to_16bit_color(list(self.power_icon_color.values())[0]))
+        #use first entry in dict as color
+        return str(name_to_16bit_color(list(self.power_icon_color.values())[0]))
 
     def create_payload(self):
         """
@@ -574,9 +572,8 @@ class NsPanelCardSlotOhItemPlayer( NsPanelCardSlotOhItem ): #pylint: disable=too
             payload += "~" + color_on_off_icon + "~" + color_shuffle_icon
 
             return payload
-        else:
-            #create a standard payload for other slots
-            return super().create_payload()
+        #create a standard payload for other slots
+        return super().create_payload()
 
     def player_event(self, params): #pylint: disable=too-many-return-statements
         """
@@ -1125,7 +1122,7 @@ NSPanelCardSlot.all_slot_classes["ohItem"][NSPanelCard.CARD_POPUP_INPUT_SEL] = N
 #add ohItem class to factory dictionary
 #NSPanelCardSlot.all_slot_classes["ohItem"][NSPanelCard.CARD_POPUP_3_INPUT_SEL] = NsPanelCardSlotOhItemPopupMultiInputSel
 
-class NsPanelCardSlotOhItemPopupTimer( NsPanelCardSlotOhItemButton ):
+class NsPanelCardSlotOhItemPopupTimer( NsPanelCardSlotOhItemButton ): #pylint: disable=too-many-instance-attributes
     """
     Popup with timer content
     """

@@ -91,7 +91,7 @@ class NSPanelCardPopup(NSPanelCard):
         payload = self.create_select_payload( compatibility )
         if payload is None:
             #create standard popup payload
-                payload = self.popup_payload("pageType~"+self.MY_TYPE)
+            payload = self.popup_payload("pageType~"+self.MY_TYPE)
         return payload
 
 class NSPanelCardPopupLight(NSPanelCardPopup):
@@ -227,7 +227,7 @@ class NSPanelCardPopupShutter(NSPanelCardPopup):
                                              "payload": "pageType~popupShutter2" }
         }
 
-    def event_button_press( self, slot_name, params ):
+    def event_button_press( self, slot_name, params ): #pylint: disable=too-many-return-statements
         """
         process a button press event for this card
         """
@@ -275,8 +275,8 @@ class NSPanelCardPopupThermo(NSPanelCardPopup):
         #Error in documentation of lovelace ui! There is one additonal parameter after each heading with the slot id!
 
         if isinstance(self.slot_obj, NSPanelCardSlot):
-             #cretae standart slot payload
-             return super().create_update_payload(compatibility)
+            #create standard slot payload
+            return super().create_update_payload(compatibility)
 
         #is a popup of cardThemo and payload is based on the card content not on slot content:
         payload = "entityUpdateDetail~CardThermo~" + skin.key(self.MY_TYPE, "icon") + '~'+\
@@ -387,4 +387,3 @@ class NSPanelCardPopupTimer(NSPanelCardPopup):
 
 #add this card class type to the factory
 NSPanelCard.card_types[NSPanelCardPopupTimer.MY_TYPE] = NSPanelCardPopupTimer
-

@@ -758,13 +758,13 @@ class NSPanel(): #pylint: disable=too-many-instance-attributes, too-many-public-
         #self.send_panel_cmd("entityUpdateDetail~*internalName*~*tHeading*~65535~*b1*~65535~*b2*~65535~Dies ist\r\nein sehr\r\nlanger text~65535~10~4~A~65535")
 
     @classmethod
-    def load_cards( cls, path ):
+    def load_cards( cls, path ): #pylint: disable=too-many-branches
         """
         Load all page definitions in the given path
         """
         #clean up existing cards
         if NSPanelCard.cards_by_group is not None:
-            for group in NSPanelCard.cards_by_group:
+            for group in NSPanelCard.cards_by_group: #pylint: disable=consider-using-dict-items
                 for card in NSPanelCard.cards_by_group[group].values():
                     card.destroy()
         NSPanelCard.cards_by_group = {}

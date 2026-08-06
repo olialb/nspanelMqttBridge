@@ -1,6 +1,11 @@
 # python
+# pylint: disable=too-many-lines
 # This file contains the mapping of icon names to their corresponding unicode characters.
 # source: https://github.com/joBr99/nspanel-lovelace-ui/blob/main/apps/nspanel-lovelace-ui/luibackend/icon_mapping.py
+"""
+Icon mapping for the NSPanel. Taken from the nspanel-lovelace-ui project. This dictionary maps icon names to their corresponding unicode characters, which can be used in the NSPanel interface.
+"""
+import json
 
 icons = {
     'ab-testing': '',
@@ -6900,8 +6905,6 @@ icons = {
     'zodiac-taurus': '',
     'zodiac-virgo': '',
 }
-
-import json
 
 if __name__ == "__main__":
     #write it to icons.json

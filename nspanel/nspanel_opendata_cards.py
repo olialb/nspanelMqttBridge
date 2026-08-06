@@ -57,7 +57,7 @@ class NSPanelCardOEPNVBase(NSPanelCardWithNav):
             #No Server object exists. Create an Server object
             NSPanelCardOEPNVBase.openDataServer = OpendataOEPNV()
 
-class NSPanelCardOEPNVDepartures(NSPanelCardOEPNVBase):
+class NSPanelCardOEPNVDepartures(NSPanelCardOEPNVBase): #pylint: disable=too-many-instance-attributes
     """
     Represent an card of type CardSchedule in lovelace ui for NSPanels.
     It shows the departures of a ÖPNV station
@@ -241,4 +241,3 @@ class NSPanelCardOEPNVDepartures2(NSPanelCardOEPNVDepartures):
 
 #add this card class type to the factory
 NSPanelCard.card_types[NSPanelCard.CARD_DEPARTURES2] = NSPanelCardOEPNVDepartures2
-
