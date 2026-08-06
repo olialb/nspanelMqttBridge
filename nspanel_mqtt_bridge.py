@@ -163,173 +163,173 @@ class NspanelMqttBridge(BMC.BaseMqttClient): # pylint: disable=too-many-instance
         Reads the configured ini file and sets attributes based on the config
         """
         # read ini file values
-        #try:
-        # read brigtness config
-        self.brighness_screensaver = int(config["global"]["screensaver"])
-        self.brighness_standard = int(config["global"]["standard"])
-        self.brighness_timeout = int(config["global"]["saverTimeout"])
-        self.saver_update = (int(config["global"]["saverUpdate"])*60)/self.publish_delay
-        # read command config
-        self.cmd_timeout_value = int(config["global"]["cmdTimeout"])
+        try:
+            # read brigtness config
+            self.brighness_screensaver = int(config["global"]["screensaver"])
+            self.brighness_standard = int(config["global"]["standard"])
+            self.brighness_timeout = int(config["global"]["saverTimeout"])
+            self.saver_update = (int(config["global"]["saverUpdate"])*60)/self.publish_delay
+            # read command config
+            self.cmd_timeout_value = int(config["global"]["cmdTimeout"])
 
-        # read openhab config
-        self.oh_host = config["oh"]["host"]
-        if "port" in config["oh"]:
-            self.oh_port = config["oh"]["port"]
-        if "apiKey" in config["oh"]:
-            self.oh_api_key = config["oh"]["apiKey"]
-        if "timeout" in config["oh"]:
-            self.oh_timeout= int(config["oh"]["timeout"])
+            # read openhab config
+            self.oh_host = config["oh"]["host"]
+            if "port" in config["oh"]:
+                self.oh_port = config["oh"]["port"]
+            if "apiKey" in config["oh"]:
+                self.oh_api_key = config["oh"]["apiKey"]
+            if "timeout" in config["oh"]:
+                self.oh_timeout= int(config["oh"]["timeout"])
 
-        #create the global openhab connector object
-        self.new_oh_connector()
+            #create the global openhab connector object
+            self.new_oh_connector()
 
-        #read localization
-        self.lang = config["localize"]["lang"]
-        nspanel_set_language( self.lang )
+            #read localization
+            self.lang = config["localize"]["lang"]
+            nspanel_set_language( self.lang )
 
-        #panel skin
-        self.skin_file = config["skin"]["skinFile"]
-        nspanel_set_skin( self.skin_file )
+            #panel skin
+            self.skin_file = config["skin"]["skinFile"]
+            nspanel_set_skin( self.skin_file )
 
-        #define topic configuration for all panels
-        self.topic_config["status_left"] = {
-            "topic": self.topic_root + "/status_left",
-            "publish": None,
-            "set":  self.set_status_left_mqtt,
-            "value":"OFF"
-            }
-        self.topic_config["status_right"] = {
-            "topic": self.topic_root + "/status_right",
-            "publish": None,
-            "set":  self.set_status_right_mqtt,
-            "value": "OFF"
-            }
-        self.topic_config["status_card"] = {
-            "topic": self.topic_root + "/status_card",
-            "publish": None,
-            "set":  self.set_status_card_mqtt,
-            "value": NSPanelCard.CARD_DEFAULT_STATUS
-            }
-        self.topic_config["notification"] = {
-            "topic": self.topic_root + "/notification",
-            "publish": None,
-            "set":  self.set_notification_mqtt,
-            "value": "|"
-            }
-        self.topic_config["brightness"] = {
-            "topic": self.topic_root + "/brightness",
-            "publish": None,
-            "set":  self.set_brightness_mqtt,
-            "value": self.brighness_standard
-            }
-        self.topic_config["brightness_saver"] = {
-            "topic": self.topic_root + "/brightness_saver",
-            "publish": None,
-            "set":  self.set_brightness_saver_mqtt,
-            "value": self.brighness_screensaver
-            }
-        self.topic_config["timeout"] = {
-            "topic": self.topic_root + "/timeout",
-            "publish": None,
-            "set":  self.set_timeout_mqtt,
-            "value": self.brighness_timeout
-            }
-        self.topic_config["card"] = {
-            "topic": self.topic_root + "/card",
-            "publish": None,
-            "set":  self.set_card_mqtt,
-            "value": '{ "class": "home", "name": "'+ NSPanelCard.CARD_SCREENSAVER +'"}'
-            }
-
-
-        #define specific topic configuration for each panel
-        #read list of panels
-
-        for name, topic in config.items("panels"):
-            #check for additional parameters in the topic definition
-            params = topic.split(",")
-            compatibility_mode = NSPanelCard.COMPATIBILITY_MODE_DEFAULT
-            if len(params) >= 1:
-                topic = params[0]
-                if len(params) >= 2 and params[1].lower() in NSPanelCard.COMPATIBILITY_MODES:
-                    compatibility_mode = params[1].lower()
-            panel = NSPanel(self, name, topic, compatibility_mode=compatibility_mode)
-            self.panels[name] = panel
-            # topic configuration
-            #configure tasmota result
-            self.topic_config[topic] = {
-                "topic": topic+"/RESULT",
-                "set":  panel.panel_callback
-                }
-            #configure additional topics for commands and pulbishing for each panel
-            self.topic_config[name+"_"+"brightness"] = {
-                "topic": self.topic_root + '/'+name + "/brightness",
-                "publish": panel.publish_mqtt,
-                "set":  panel.set_brightness_mqtt,
-                "value": self.brighness_standard
-                }
-            self.topic_config[name+"_"+"brightness_saver"] = {
-                "topic": self.topic_root + '/'+ name + "/brightness_saver",
-                "publish": panel.publish_mqtt,
-                "set":  panel.set_brightness_saver_mqtt,
-                "value": self.brighness_screensaver
-                }
-            self.topic_config[name+"_"+"timeout"] = {
-                "topic": self.topic_root + '/'+ name + "/timeout",
-                "publish": panel.publish_mqtt,
-                "set":  panel.set_timeout_mqtt,
-                "value": self.brighness_timeout
-                }
-            self.topic_config[name+"_"+"card"] = {
-                "topic": self.topic_root + '/'+ name + "/card",
-                "publish": panel.publish_mqtt,
-                "set":  panel.set_card_mqtt,
-                "value": '{ "class": "home", "name": "'+ NSPanelCard.CARD_SCREENSAVER +'"}'
-                }
-            self.topic_config[name+"_"+"version"] = {
-                "topic": self.topic_root + '/'+ name + "/version",
-                "publish": panel.publish_mqtt,
-                "value": None
-                }
-            self.topic_config[name+"_"+"status_left"] = {
-                "topic": self.topic_root + '/'+ name + "/status_left",
-                "publish": panel.publish_mqtt,
-                "set":  panel.set_status_left_mqtt,
+            #define topic configuration for all panels
+            self.topic_config["status_left"] = {
+                "topic": self.topic_root + "/status_left",
+                "publish": None,
+                "set":  self.set_status_left_mqtt,
                 "value":"OFF"
                 }
-            self.topic_config[name+"_"+"status_right"] = {
-                "topic": self.topic_root + '/'+ name + "/status_right",
-                "publish": panel.publish_mqtt,
-                "set":  panel.set_status_right_mqtt,
+            self.topic_config["status_right"] = {
+                "topic": self.topic_root + "/status_right",
+                "publish": None,
+                "set":  self.set_status_right_mqtt,
                 "value": "OFF"
                 }
-            self.topic_config[name+"_"+"status_card"] = {
-                "topic": self.topic_root + '/'+ name + "/status_card",
-                "publish": panel.publish_mqtt,
-                "set":  panel.set_status_card_mqtt,
+            self.topic_config["status_card"] = {
+                "topic": self.topic_root + "/status_card",
+                "publish": None,
+                "set":  self.set_status_card_mqtt,
                 "value": NSPanelCard.CARD_DEFAULT_STATUS
                 }
-            self.topic_config[name+"_"+"notification"] = {
-                "topic": self.topic_root + '/'+ name + "/notification",
-                "publish": panel.publish_mqtt,
-                "set":  panel.set_notification_mqtt,
+            self.topic_config["notification"] = {
+                "topic": self.topic_root + "/notification",
+                "publish": None,
+                "set":  self.set_notification_mqtt,
                 "value": "|"
+                }
+            self.topic_config["brightness"] = {
+                "topic": self.topic_root + "/brightness",
+                "publish": None,
+                "set":  self.set_brightness_mqtt,
+                "value": self.brighness_standard
+                }
+            self.topic_config["brightness_saver"] = {
+                "topic": self.topic_root + "/brightness_saver",
+                "publish": None,
+                "set":  self.set_brightness_saver_mqtt,
+                "value": self.brighness_screensaver
+                }
+            self.topic_config["timeout"] = {
+                "topic": self.topic_root + "/timeout",
+                "publish": None,
+                "set":  self.set_timeout_mqtt,
+                "value": self.brighness_timeout
+                }
+            self.topic_config["card"] = {
+                "topic": self.topic_root + "/card",
+                "publish": None,
+                "set":  self.set_card_mqtt,
+                "value": '{ "class": "home", "name": "'+ NSPanelCard.CARD_SCREENSAVER +'"}'
                 }
 
 
-            #pages definition file location
-            if "configPath" in config:
-                if "cards" in config["configPath"]:
-                    self.card_files = config["configPath"]["cards"]
-                    self.check_card_filepath()
+            #define specific topic configuration for each panel
+            #read list of panels
 
-                if "observer" in config["configPath"]:
-                    self.observe_yaml_files = config["configPath"]["observer"]
+            for name, topic in config.items("panels"):
+                #check for additional parameters in the topic definition
+                params = topic.split(",")
+                compatibility_mode = NSPanelCard.COMPATIBILITY_MODE_DEFAULT
+                if len(params) >= 1:
+                    topic = params[0]
+                    if len(params) >= 2 and params[1].lower() in NSPanelCard.COMPATIBILITY_MODES:
+                        compatibility_mode = params[1].lower()
+                panel = NSPanel(self, name, topic, compatibility_mode=compatibility_mode)
+                self.panels[name] = panel
+                # topic configuration
+                #configure tasmota result
+                self.topic_config[topic] = {
+                    "topic": topic+"/RESULT",
+                    "set":  panel.panel_callback
+                    }
+                #configure additional topics for commands and pulbishing for each panel
+                self.topic_config[name+"_"+"brightness"] = {
+                    "topic": self.topic_root + '/'+name + "/brightness",
+                    "publish": panel.publish_mqtt,
+                    "set":  panel.set_brightness_mqtt,
+                    "value": self.brighness_standard
+                    }
+                self.topic_config[name+"_"+"brightness_saver"] = {
+                    "topic": self.topic_root + '/'+ name + "/brightness_saver",
+                    "publish": panel.publish_mqtt,
+                    "set":  panel.set_brightness_saver_mqtt,
+                    "value": self.brighness_screensaver
+                    }
+                self.topic_config[name+"_"+"timeout"] = {
+                    "topic": self.topic_root + '/'+ name + "/timeout",
+                    "publish": panel.publish_mqtt,
+                    "set":  panel.set_timeout_mqtt,
+                    "value": self.brighness_timeout
+                    }
+                self.topic_config[name+"_"+"card"] = {
+                    "topic": self.topic_root + '/'+ name + "/card",
+                    "publish": panel.publish_mqtt,
+                    "set":  panel.set_card_mqtt,
+                    "value": '{ "class": "home", "name": "'+ NSPanelCard.CARD_SCREENSAVER +'"}'
+                    }
+                self.topic_config[name+"_"+"version"] = {
+                    "topic": self.topic_root + '/'+ name + "/version",
+                    "publish": panel.publish_mqtt,
+                    "value": None
+                    }
+                self.topic_config[name+"_"+"status_left"] = {
+                    "topic": self.topic_root + '/'+ name + "/status_left",
+                    "publish": panel.publish_mqtt,
+                    "set":  panel.set_status_left_mqtt,
+                    "value":"OFF"
+                    }
+                self.topic_config[name+"_"+"status_right"] = {
+                    "topic": self.topic_root + '/'+ name + "/status_right",
+                    "publish": panel.publish_mqtt,
+                    "set":  panel.set_status_right_mqtt,
+                    "value": "OFF"
+                    }
+                self.topic_config[name+"_"+"status_card"] = {
+                    "topic": self.topic_root + '/'+ name + "/status_card",
+                    "publish": panel.publish_mqtt,
+                    "set":  panel.set_status_card_mqtt,
+                    "value": NSPanelCard.CARD_DEFAULT_STATUS
+                    }
+                self.topic_config[name+"_"+"notification"] = {
+                    "topic": self.topic_root + '/'+ name + "/notification",
+                    "publish": panel.publish_mqtt,
+                    "set":  panel.set_notification_mqtt,
+                    "value": "|"
+                    }
 
-        #except (KeyError, RuntimeError) as error:
-        #    self.log.error("Error while reading ini file: %s", error)
-        #    sys.exit()
+
+                #pages definition file location
+                if "configPath" in config:
+                    if "cards" in config["configPath"]:
+                        self.card_files = config["configPath"]["cards"]
+                        self.check_card_filepath()
+
+                    if "observer" in config["configPath"]:
+                        self.observe_yaml_files = config["configPath"]["observer"]
+
+        except (KeyError, RuntimeError) as error:
+            self.log.error("Error while reading ini file: %s", error)
+            sys.exit()
 
         self.log.debug("Constructed!")
 
