@@ -108,17 +108,24 @@ class NspanelMqttBridge(BMC.BaseMqttClient): # pylint: disable=too-many-instance
         if self.file_observer is not None:
             self.file_observer.stop()
 
+
     def stop(self):
         """
         Stop all listening/observing threads to allow graceful shutdown
         """
+        #stop file observer for card configuration files
         if self.file_observer is not None:
             self.file_observer.stop()
-        if self.client is not None:
-            self.client.loop_stop()
+        #stop openhab connector
         _oh = oh()
         if _oh is not None:
             _oh.disconnect()
+        #delete all cards in memory to stop all threads related to cards
+        NSPanelCard.destroy_cards()
+        #stop mqtt client
+        if self.client is not None:
+            self.client.loop_stop()
+        self.log.info("Bridge stopped.")
 
     def new_oh_connector(self):
         """

@@ -425,6 +425,19 @@ class NSPanelCard():
             cls.log.warning("get_first_card: Unknown card group '%s'", group_name)
         return None
 
+    @classmethod
+    def destroy_cards( cls ):
+        """
+        Destroy all cards in memory. This is needed if the card definitions are reloaded from yaml files.
+        """
+        #clean up existing cards
+        if cls.cards_by_group is not None:
+            for group in cls.cards_by_group: #pylint: disable=consider-using-dict-items
+                for card in cls.cards_by_group[group].values():
+                    card.destroy()
+        cls.cards_by_group = {}
+        cls.time_tick_callbacks =[]
+        cls.log.debug("All cards deleted." )
 
 class NSPanelCardWithNav(NSPanelCard):
     """

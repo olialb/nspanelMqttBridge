@@ -763,12 +763,9 @@ class NSPanel(): #pylint: disable=too-many-instance-attributes, too-many-public-
         Load all page definitions in the given path
         """
         #clean up existing cards
-        if NSPanelCard.cards_by_group is not None:
-            for group in NSPanelCard.cards_by_group: #pylint: disable=consider-using-dict-items
-                for card in NSPanelCard.cards_by_group[group].values():
-                    card.destroy()
-        NSPanelCard.cards_by_group = {}
-        NSPanelCard.time_tick_callbacks =[]
+        NSPanelCard.destroy_cards()
+
+        #start to load cards from yaml files
         cls.LOG.debug("Load cards from path '%s'", path )
         for root, dirs, files in os.walk(path):
             for filename in files:
