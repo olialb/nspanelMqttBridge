@@ -133,7 +133,7 @@ class NSPanelCard():
     time_tick_callbacks = []
 
     #global card logger
-    log = FLOGGER.create_log_handler("NSPanelcard")
+    log = FLOGGER.create_logger("NSPanelcard")
 
     @classmethod
     def set_translator_db( cls, db):

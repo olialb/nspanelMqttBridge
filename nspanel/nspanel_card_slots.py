@@ -60,7 +60,7 @@ class NSPanelCardSlot(): #pylint: disable=too-many-instance-attributes
     #all classes which ar instantiable:
     all_slot_classes = {}
     #global slot logger
-    log = FLOGGER.create_log_handler("NSPanelcardSlot")
+    log = FLOGGER.create_logger("NSPanelcardSlot")
 
     @classmethod
     def set_translator_db( cls, db):

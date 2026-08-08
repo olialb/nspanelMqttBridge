@@ -31,7 +31,7 @@ from file_logger import file_logger as FLOGGER
 # global definitions
 #
 TRANSLATE_DB = None
-LOGGER = FLOGGER.create_log_handler("Translate")
+LOGGER = FLOGGER.create_logger("Translate")
 
 def weekdays(day):
     """

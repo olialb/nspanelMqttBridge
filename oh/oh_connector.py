@@ -103,7 +103,7 @@ class OHItem: #pylint: disable=too-many-instance-attributes
     """
     OHConnection=None
     #create global item logger
-    log = FLOGGER.create_log_handler( "OHItem:" )
+    log = FLOGGER.create_logger( "OHItem" )
 
     def __init__(self, name, update_callback=None):
         """
@@ -345,7 +345,7 @@ class OHItemDB:
     OH_ERROR_TYPE = "_error_"
 
     #global OH ItemDB log handler
-    log = FLOGGER.create_log_handler( "OHItemDB" )
+    log = FLOGGER.create_logger( "OHItemDB" )
 
     def __init__(self, host, port, timeout=5, api_key=None ):
         """

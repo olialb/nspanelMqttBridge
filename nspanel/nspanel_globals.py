@@ -29,7 +29,7 @@ from file_logger import file_logger as FLOGGER
 #
 # global constants
 #
-LOGGER = FLOGGER.create_log_handler("Helpers")
+LOGGER = FLOGGER.create_logger("Helpers")
 #
 # some helper functions
 #

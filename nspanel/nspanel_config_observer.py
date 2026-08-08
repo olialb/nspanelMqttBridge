@@ -34,7 +34,7 @@ class CardConfigFileObserver(FileSystemEventHandler):
     Observer class based on the watchdog library to monitor changes in the specified directory.
     """
     #create global log handler for the file observer
-    log =  FLOGGER.create_log_handler("FileObserver:")
+    log =  FLOGGER.create_logger("FileObserver")
 
     def __init__(self, path, call_resync):
         """

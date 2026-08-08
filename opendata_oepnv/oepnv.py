@@ -38,7 +38,7 @@ MAX_DEPARTURES=20
 MAX_TRIPS=4
 
 #global logger
-LOG = FLOGGER.create_log_handler( "OpendataOEPNV:" )
+LOG = FLOGGER.create_logger( "OpendataOEPNV:" )
 
 class OpendataOEPNVObject(): #pylint: disable=too-few-public-methods
     """

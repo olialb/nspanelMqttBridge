@@ -77,7 +77,6 @@ if "rotate" in logging_cfg["logging"]:
     log_file_rotate =logging_cfg["logging"]["rotate"]
 
 root_logger = logging.getLogger() #get root logger
-#root_logger.setLevel(LOG_LEVEL)
 
 if log_file_name is not None and log_file_name != "":
     #create log file path and file logger
@@ -111,11 +110,8 @@ if log_file_name is not None and log_file_name != "":
     root_logger.addHandler(log_file_handler)
     root_logger.addHandler(console_handler)
 
-#logging.basicConfig(format=LOG_FORMAT, level=LOG_LEVEL)
-# after basicConfig, there is a root logger with exactly ONE handler (console output)
-#logging.root.handlers[0].setLevel(LOG_LEVEL_CONSOLE)  # allows further reduction of console output
 
-def create_log_handler(name):
+def create_logger(name):
     """
     Create a new log handler for the given global log configuration
     """

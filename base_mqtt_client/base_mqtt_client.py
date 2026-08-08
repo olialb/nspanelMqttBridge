@@ -61,7 +61,7 @@ class BaseMqttClient: #pylint: ...disable=too-many-instance-attributes
         self.password = ""
 
         # initialize logger
-        self.log = FLOGGER.create_log_handler("MQTTBridge")
+        self.log = FLOGGER.create_logger("MQTTBridge")
         self.log_level = None
         self.log_file_handler = None
 
@@ -189,7 +189,7 @@ class BaseMqttClient: #pylint: ...disable=too-many-instance-attributes
                     )
                 except Exception as e: #pylint: disable=broad-exception-caught
                     #fatal error during exection of the message
-                    log = FLOGGER.create_log_handler("MQTTBridge message esception")
+                    log = FLOGGER.create_logger("MQTTBridge message esception")
                     log.exception(e)
             else:
                 inst.log.info(

@@ -36,7 +36,7 @@ SKIN_DB = None
 #idetify an iconname in the entries
 ICON_KEY = "icon="
 
-LOGGER = FLOGGER.create_log_handler("Skin")
+LOGGER = FLOGGER.create_logger("Skin")
 
 def key(section, entry=None):
     """

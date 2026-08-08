@@ -85,7 +85,7 @@ class NSPanel(): #pylint: disable=too-many-instance-attributes, too-many-public-
     CMD_TIMEOUT="timeout~"
     CMD_PAGETYPE="pageType~"
 
-    LOG = FLOGGER.create_log_handler("NSPanel")
+    LOG = FLOGGER.create_logger("NSPanel")
 
     def __init__(self, client, name, topic, compatibility_mode=NSPanelCard.COMPATIBILITY_MODE_DEFAULT):
         #nspanel root topic
@@ -115,7 +115,7 @@ class NSPanel(): #pylint: disable=too-many-instance-attributes, too-many-public-
         self.compatibility_mode = compatibility_mode
 
         #logger for this class
-        self.log = FLOGGER.create_log_handler(f"NSPanel:{name.upper()}" )
+        self.log = FLOGGER.create_logger(f"NSPanel:{name.upper()}" )
 
         self.log.debug("NSPanel with name '%s' created.", name)
 
