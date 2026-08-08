@@ -52,6 +52,7 @@ class BaseMqttClient: #pylint: ...disable=too-many-instance-attributes
         self.topic_root = None  # Root path for all topics
         self.unpublished = True  # set to true if the topics are not published yet
         self.client = None  # mqtt client
+        self.reconnect = True  # set to true if the client should reconnect after disconnect
 
         # broker config:
         self.broker = None
@@ -69,6 +70,14 @@ class BaseMqttClient: #pylint: ...disable=too-many-instance-attributes
 
         #read ini file
         self.read_config_file()
+
+    def disconnect(self):
+        """
+        Method to disconnect from the mqtt broker
+        """
+        if self.client is not None:
+            self.reconnect = False
+            self.client.disconnect()
 
     def read_config_file(self):
         """
@@ -131,7 +140,7 @@ class BaseMqttClient: #pylint: ...disable=too-many-instance-attributes
         inst.log.info("Disconnected with result code: %s", rc)
         inst.unpublished = True
         inst.brightness = -1
-        while True:
+        while inst.reconnect is True:
             inst.log.info("Reconnecting in %s seconds...", inst.reconnect_delay)
             time.sleep(inst.reconnect_delay)
 
@@ -141,6 +150,9 @@ class BaseMqttClient: #pylint: ...disable=too-many-instance-attributes
                 return
             except OSError as err:
                 inst.log.warning("%s. Reconnect failed. Retrying...", err)
+        if inst.reconnect is False:
+            inst.log.info("Stopping client...")
+            client.loop_stop()
 
     @classmethod
     def on_message(cls, client, inst, msg):  # pylint: disable=unused-argument

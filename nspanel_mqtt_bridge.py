@@ -31,6 +31,7 @@ from base_mqtt_client import base_mqtt_client as BMC
 from nspanel.nspanels import NSPanelCard, NSPanel, nspanel_create_oh_connector, nspanel_set_skin, nspanel_set_language
 from nspanel.nspanel_config_observer import CardConfigFileObserver
 from oh.oh_connector import oh
+from file_logger.file_logger import global_logger
 
 #
 # global constants
@@ -123,8 +124,7 @@ class NspanelMqttBridge(BMC.BaseMqttClient): # pylint: disable=too-many-instance
         #delete all cards in memory to stop all threads related to cards
         NSPanelCard.destroy_cards()
         #stop mqtt client
-        if self.client is not None:
-            self.client.loop_stop()
+        self.disconnect()
         self.log.info("Bridge stopped.")
 
     def new_oh_connector(self):
@@ -588,10 +588,16 @@ https://github.com/olialb/nspanelMqttBridge/wiki/YamlOverview""")
 if __name__ == "__main__":
     CLIENT = NspanelMqttBridge(CONFIG_FILE)
     signal.signal(signal.SIGTERM, CLIENT.signal_term_handler)
+    global_logger().info("Signals initialized.")
     print("Signals initialized.")
     try:
         CLIENT.run()
+        global_logger().info("CLIENT finished properly")
         print("CLIENT finished properly")
+    except KeyboardInterrupt:
+        global_logger().info("CLIENT stopped by user")
+        print("CLIENT stopped by user")
     except Exception as e:  # pylint: disable=broad-except
+        global_logger().error("CLIENT run crashed!", exc_info=True)
         print("CLIENT run crashed!", traceback.format_exc())
     CLIENT.stop()  # either case, we make sure to stop all potentially started threads
