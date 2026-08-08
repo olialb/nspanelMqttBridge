@@ -31,7 +31,7 @@ import sys
 #
 # global constants
 #
-config_file = "nspanelMqttBridge.ini"  # name of the ini file
+CONFIG_FILE = "nspanelMqttBridge.ini"  # name of the ini file
 
 # import from the configuration file only the feature configuraion
 logging_cfg = configparser.ConfigParser()
@@ -47,10 +47,10 @@ log_file_handler = None  # We only need ONE file-handler instance! After creatin
 
 # try to open ini file
 try:
-    if os.path.exists(config_file) is True:
-        logging_cfg.read(config_file)
+    if os.path.exists(CONFIG_FILE) is True:
+        logging_cfg.read(CONFIG_FILE)
 except OSError:
-    print(f"Error while reading ini file: {config_file}")
+    print(f"Error while reading ini file: {CONFIG_FILE}")
     sys.exit()
 
 # read logging config
