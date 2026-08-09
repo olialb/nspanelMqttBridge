@@ -40,8 +40,15 @@ log_file_path = "log"
 log_file_name = None
 log_file_backup =  5
 log_file_rotate = "midnight"
-log_level_console = "WARNING"  # this would be default basicConfig() setting
+log_level_console = logging.WARNING  #console logging level
 log_format = "[%(asctime)s] %(levelname)7s %(name)-20s %(message)s"
+log_level_name_2_level = {
+    "DEBUG": logging.DEBUG,
+    "INFO": logging.INFO,
+    "WARNING": logging.WARNING,
+    "ERROR": logging.ERROR,
+    "CRITICAL": logging.CRITICAL
+}
 
 log_file_handler = None  # We only need ONE file-handler instance! After creating it once, we set it to ALL the loggers.
 
@@ -57,13 +64,13 @@ except OSError:
 log_level = logging_cfg["logging"]["level"]
 if log_level.upper() not in ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]:
     raise KeyError(log_level)
-log_level = log_level.upper()
+log_level = log_level_name_2_level[log_level.upper()]
 
 if "consoleLevel" in logging_cfg["logging"]:
     log_level_console = logging_cfg["logging"]["consoleLevel"]
     if log_level_console.upper() not in ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]:
         raise KeyError(log_level_console)
-    log_level_console = log_level_console.upper()
+    log_level_console = log_level_name_2_level[log_level_console.upper()]
 
 if "path" in logging_cfg["logging"]:
     log_file_path = logging_cfg["logging"]["path"]
@@ -77,6 +84,11 @@ if "rotate" in logging_cfg["logging"]:
     log_file_rotate =logging_cfg["logging"]["rotate"]
 
 root_logger = logging.getLogger() #get root logger
+
+#create a stream handler for console output
+console_handler = logging.StreamHandler()
+console_handler.setFormatter( logging.Formatter(log_format) )
+console_handler.setLevel(log_level_console)
 
 if log_file_name is not None and log_file_name != "":
     #create log file path and file logger
@@ -101,15 +113,11 @@ if log_file_name is not None and log_file_name != "":
     )
     log_file_handler.setLevel(log_level)
 
-    #create a stream handler for console output
-    console_handler = logging.StreamHandler()
-    console_handler.setFormatter( logging.Formatter(log_format) )
-    console_handler.setLevel(log_level_console)
-
     #add the file handler to the root logger
     root_logger.addHandler(log_file_handler)
-    root_logger.addHandler(console_handler)
 
+# add the console handler to the root logger
+root_logger.addHandler(console_handler)
 
 def create_logger(name):
     """
@@ -118,14 +126,5 @@ def create_logger(name):
     logger = logging.getLogger(name)
     logger.setLevel(log_level)
 
-    #if log_file_handler is not None:
-    #    logger.addHandler(log_file_handler)
-
     root_logger.debug("Created new logger (%s)", name)
     return logger
-
-def global_logger():
-    """
-    Return the global logger instance
-    """
-    return root_logger
