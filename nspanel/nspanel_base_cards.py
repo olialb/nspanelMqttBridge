@@ -283,7 +283,8 @@ class NSPanelCard():
         """
         Must be implemented in sub class
         """
-        self.log.error("create_color_payload(self) not implemented")
+        self.log.info("create_color_payload(self) not implemented")
+        return None
 
     def create_update_payload(self, compatibility=C_MODE_DEFAULT):
         """

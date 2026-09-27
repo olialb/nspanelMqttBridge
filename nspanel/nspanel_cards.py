@@ -1098,6 +1098,7 @@ class NSPanelpopupNotify(NSPanelCardWithSlots): #pylint: disable=too-many-instan
     Represent an card of type popupNotify in lovelace ui for NSPanels
     """
     MY_TYPE = NSPanelCard.CARD_POPUP_NOTIFY
+    MAX_NOTIFICATION_TEXT_LENGTH = 120
 
     def __init__(self, name, group=NSPanelCard.NOTIFY_CARD_GROUP):
         """
@@ -1171,6 +1172,8 @@ class NSPanelpopupNotify(NSPanelCardWithSlots): #pylint: disable=too-many-instan
             slot = self.slots["slot_1"]
             slot.item.update_item()
             text = slot.item.state_formated
+            if len(text) > self.MAX_NOTIFICATION_TEXT_LENGTH:
+                text = text[:self.MAX_NOTIFICATION_TEXT_LENGTH]
         return text
 
     def create_update_payload(self, compatibility=NSPanelCard.COMPATIBILITY_MODE_DEFAULT):
@@ -1241,7 +1244,7 @@ class NSPanelpopupNotify(NSPanelCardWithSlots): #pylint: disable=too-many-instan
                     #slot 0 must contain a string item
                     self.slots["slot_0"].item.set_item_state("OFF")
         else:
-            self.log.error("No action taken for popup notify card '%s'. Params: '%s'", self.name, str(params))
+            self.log.info("No action taken for popup notify card '%s'. Params: '%s'", self.name, str(params))
 
         notify_count = 0
         if NSPanelCard.NOTIFY_CARD_GROUP in NSPanelCard.cards_by_group:

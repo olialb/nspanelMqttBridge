@@ -230,6 +230,5 @@ class NSPanelCardWithSlots(NSPanelCardWithNav):
                     if slot.player_event(params[1:]):
                         self.log.debug("Player event '%s' for slot '%s processed'", params, slot.name)
                         return self
-
-        self.log.warning("Event not processed for '%s' with params '%s'.", slot_name, params)
+        #use default event processing for this card
         return super().event_button_press( params, panel )
