@@ -520,4 +520,4 @@ class NSPanelCardWithNav(NSPanelCard):
                 return NSPanelCard.card_by_path( self.nav_left, panel)
 
         self.log.warning("Event not processed for '%s'", str(params))
-        return None
+
