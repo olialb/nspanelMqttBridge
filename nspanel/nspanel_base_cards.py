@@ -284,7 +284,6 @@ class NSPanelCard():
         Must be implemented in sub class
         """
         self.log.info("create_color_payload(self) not implemented")
-        return None
 
     def create_update_payload(self, compatibility=C_MODE_DEFAULT):
         """
@@ -520,4 +519,4 @@ class NSPanelCardWithNav(NSPanelCard):
                 return NSPanelCard.card_by_path( self.nav_left, panel)
 
         self.log.warning("Event not processed for '%s'", str(params))
-
+        return None
