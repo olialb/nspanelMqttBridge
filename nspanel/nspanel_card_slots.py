@@ -76,7 +76,7 @@ class NSPanelCardSlot(): #pylint: disable=too-many-instance-attributes
         """
         skin.set_skin_db( db )
 
-    def __init__(self, json_data, slot_index, card):
+    def __init__(self, json_data, slot_index, card): #pylint: disable=too-many-branches
         """
         Constructor of a Slot in a NSPanelCard
         """
