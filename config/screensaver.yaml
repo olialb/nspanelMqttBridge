@@ -94,6 +94,9 @@ cards:
         icon: lamp
         iconColor: OFF=grey,ON=yellow
         item: Switch_Kugellampe
+        # Optional: keep only the state-colored icon on the screensaver.
+        showText: false
+        stateText: OFF=Leer,ON=Voll
       - class: ohItem               #button 2
         type: switch
         icon: cards-heart

@@ -639,7 +639,7 @@ class NSPanel(): #pylint: disable=too-many-instance-attributes, too-many-public-
         self.log.debug("Navigate to card '%s'.", card.name )
 
         #disconnect current card from openhab
-        if self.current_card is not None and not isinstance(self.current_card,NSPanelCardScreenSaver):
+        if self.current_card is not None:
             if self.current_card.popup is not None:
                 self.current_card.popup.disconnect(self)
                 self.current_card.popup = None
@@ -647,8 +647,8 @@ class NSPanel(): #pylint: disable=too-many-instance-attributes, too-many-public-
                 self.current_card.disconnect(self)
 
         self.send_panel_cmd( card.create_cmd_payload() )
-        if not isinstance(card,NSPanelCardScreenSaver) and isinstance(card,NSPanelCardWithSlots):
-            #cards with slots and not screensavers need to be connected to openhab to receive events from the slots
+        if isinstance(card,NSPanelCardWithSlots):
+            #Cards with slots, including screensavers, need item events for immediate updates.
             card.connect(self)
 
         #fill card with content

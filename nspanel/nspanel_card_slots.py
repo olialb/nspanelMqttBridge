@@ -109,6 +109,17 @@ class NSPanelCardSlot(): #pylint: disable=too-many-instance-attributes
         self.slot_class = json_data["class"]
         if "text" in json_data:
             self.text = str(json_data["text"])
+        # Text and state are separate fields in some panel slot payloads.
+        # Keep both visible by default for backwards compatibility.
+        self.show_text = json_data.get("showText", True) is not False
+        self.show_state = json_data.get("showState", True) is not False
+        state_text = json_data.get("stateText")
+        if isinstance(state_text, dict):
+            self.state_text = {str(key).upper(): str(value) for key, value in state_text.items()}
+        elif state_text is not None:
+            self.state_text = interpret_options(str(state_text))
+        else:
+            self.state_text = {}
 
         if "icon" in json_data and json_data["icon"] is not None:
             self.icon = interpret_options(str(json_data["icon"]))
@@ -306,6 +317,10 @@ class NsPanelCardSlotOhItem( NSPanelCardSlot ):
         #use first entry in dict as color
         return str(name_to_16bit_color(list(self.icon_color.values())[0]))
 
+    def get_state_text(self, default_state):
+        """Return a configured display label for the current item state."""
+        return self.state_text.get(str(self.item.state).upper(), default_state)
+
     def create_payload(self):
         """
         create update payload for ohitem slot
@@ -318,6 +333,8 @@ class NsPanelCardSlotOhItem( NSPanelCardSlot ):
         else:
             if text == "=itemState":
                 text = translate.key( "openhabStates", self.item.state_formated )
+        if not self.show_text:
+            text = ""
 
         payload = '~' + self.type + "~" + self.name + "~"
         payload = payload + self.get_icon()+self.card.icon_size_payload() + "~" + self.get_icon_color() + "~"
@@ -627,6 +644,10 @@ class NsPanelCardSlotOhItemSwitch( NsPanelCardSlotOhItem ):
         #overwrite options in openhab item with locally defined options, if availbale:
         self.item.update_item(self.options)
         state = map_state_oh2panel("switch", self.item.state)
+        if not self.show_state:
+            state = ""
+        else:
+            state = self.get_state_text(state)
         payload = super().create_payload()+state
         self.log.debug("Switch payload created. State=%s: %s", state, payload)
         return payload
@@ -662,6 +683,10 @@ class NsPanelCardSlotOhItemButton( NsPanelCardSlotOhItem ):
         self.item.update_item(self.options)
         #take the plain state data from openhab as button state text but check if it acn be translated in other language!
         state = translate.key( "openhabStates", self.item.state_formated )
+        if not self.show_state:
+            state = ""
+        else:
+            state = self.get_state_text(state)
         payload = super().create_payload()+state
         self.log.debug("Number payload created: %s", payload)
         return payload
